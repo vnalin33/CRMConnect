@@ -1,14 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { COLORS, SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/theme';
 
-export interface AppCardProps {
-    children: React.ReactNode;
-    style?: ViewStyle;
-    variant?: 'elevated' | 'outlined' | 'flat';
-}
-
-export const AppCard: React.FC<AppCardProps> = ({
+export const AppCard = ({
     children,
     style,
     variant = 'elevated',
@@ -23,7 +17,7 @@ export const AppCard: React.FC<AppCardProps> = ({
                 };
             case 'flat':
                 return {
-                    backgroundColor: COLORS.background, // Or a slightly darker shade if needed
+                    backgroundColor: COLORS.background,
                 };
             case 'elevated':
             default:

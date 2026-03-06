@@ -2,54 +2,39 @@ export const COLORS = {
     primary: '#0066FF',
     primaryDark: '#0047B3',
     primaryLight: '#E5F0FF',
-
     secondary: '#FF9F0A',
-
     background: '#F8F9FA',
     surface: '#FFFFFF',
-
     text: '#1C1C1E',
     textSecondary: '#8E8E93',
     textTertiary: '#C7C7CC',
-
     success: '#34C759',
     warning: '#FFCC00',
     error: '#FF3B30',
     info: '#32ADE6',
-
     border: '#E5E5EA',
     divider: '#C6C6C8',
-
     transparent: 'transparent',
     overlay: 'rgba(0,0,0,0.5)',
 };
 
 export const SPACING = {
-    xs: 4,
-    sm: 8,
-    md: 16,
-    lg: 24,
-    xl: 32,
-    xxl: 40,
+    xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 40,
 };
 
 export const BORDER_RADIUS = {
-    sm: 4,
-    md: 8,
-    lg: 12,
-    xl: 16,
-    round: 9999,
+    sm: 4, md: 8, lg: 12, xl: 16, round: 9999,
 };
 
 export const TYPOGRAPHY = {
-    h1: { fontSize: 32, fontWeight: '700' as const },
-    h2: { fontSize: 24, fontWeight: '700' as const },
-    h3: { fontSize: 20, fontWeight: '600' as const },
-    h4: { fontSize: 18, fontWeight: '600' as const },
-    body1: { fontSize: 16, fontWeight: '400' as const },
-    body2: { fontSize: 14, fontWeight: '400' as const },
-    caption: { fontSize: 12, fontWeight: '400' as const },
-    label: { fontSize: 14, fontWeight: '500' as const },
+    h1: { fontSize: 32, fontWeight: '700' },
+    h2: { fontSize: 24, fontWeight: '700' },
+    h3: { fontSize: 20, fontWeight: '600' },
+    h4: { fontSize: 18, fontWeight: '600' },
+    body1: { fontSize: 16, fontWeight: '400' },
+    body2: { fontSize: 14, fontWeight: '400' },
+    caption: { fontSize: 12, fontWeight: '400' },
+    label: { fontSize: 14, fontWeight: '500' },
 };
 
 export const SHADOWS = {

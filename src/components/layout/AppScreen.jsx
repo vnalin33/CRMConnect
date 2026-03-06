@@ -1,14 +1,8 @@
 import React from 'react';
-import { SafeAreaView, KeyboardAvoidingView, Platform, StyleSheet, ViewStyle } from 'react-native';
+import { SafeAreaView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { COLORS } from '../../constants/theme';
 
-interface AppScreenProps {
-    children: React.ReactNode;
-    style?: ViewStyle;
-    safeAreaColor?: string;
-}
-
-export const AppScreen: React.FC<AppScreenProps> = ({
+export const AppScreen = ({
     children,
     style,
     safeAreaColor = COLORS.background,
