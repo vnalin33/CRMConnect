@@ -1,13 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { AppScreen } from '../components/layout/AppScreen';
-import { TYPOGRAPHY, COLORS } from '../constants/theme';
+import { StyleSheet, View, Text } from 'react-native';
+import { useTheme } from '../theme';
 
-export const ContactsScreen = () => {
+const ContactsScreen = () => {
+    const { colors } = useTheme();
     return (
-        <AppScreen style={styles.container}>
-            <Text style={styles.title}>Contacts</Text>
-        </AppScreen>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>Contacts</Text>
+        </View>
     );
 };
 
@@ -18,7 +18,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     title: {
-        ...TYPOGRAPHY.h2,
-        color: COLORS.text,
+        fontSize: 24,
+        fontWeight: '700',
     },
 });
+
+export default ContactsScreen;

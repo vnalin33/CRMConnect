@@ -1,16 +1,13 @@
 import React from 'react';
 import { SafeAreaView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
-import { COLORS } from '../../constants/theme';
+import { useTheme } from '../../theme';
 
-export const AppScreen = ({
-    children,
-    style,
-    safeAreaColor = COLORS.background,
-}) => {
+const AppScreen = ({ children, style }) => {
+    const { colors } = useTheme();
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: safeAreaColor }]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <KeyboardAvoidingView
-                style={[styles.keyboardView, style]}
+                style={[styles.keyboardView, { backgroundColor: colors.background }, style]}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
                 {children}
@@ -20,11 +17,8 @@ export const AppScreen = ({
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    keyboardView: {
-        flex: 1,
-        backgroundColor: COLORS.background,
-    },
+    container: { flex: 1 },
+    keyboardView: { flex: 1 },
 });
+
+export default AppScreen;

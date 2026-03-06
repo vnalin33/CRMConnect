@@ -2,58 +2,58 @@ import React from 'react';
 import { Text } from 'react-native';
 import { useTheme } from '../../theme';
 
-const variantWeightMap = {
-    display: '700', h1: '700', h2: '600', h3: '600',
-    bodyLg: '400', body: '400', bodySm: '400',
-    label: '500', caption: '400',
-    amount: '700', amountSm: '600',
+const SIZES = {
+    display: 34, h1: 24, h2: 20, h3: 17,
+    bodyLg: 16, body: 14, bodySm: 13,
+    label: 11, caption: 11, amount: 26, amountSm: 17,
 };
 
-export const AppText = ({
-    variant = 'body',
-    color = 'primary',
-    align,
-    uppercase = false,
-    style,
-    children,
-    ...rest
+const WEIGHTS = {
+    display: '800', h1: '700', h2: '600', h3: '600',
+    bodyLg: '400', body: '400', bodySm: '400',
+    label: '600', caption: '400', amount: '700', amountSm: '600',
+};
+
+const AppText = ({
+    variant = 'body', color = 'primary', align,
+    uppercase = false, numberOfLines, style, children, ...rest
 }) => {
-    const { colors, typography } = useTheme();
+    const { colors } = useTheme();
 
     const resolveColor = () => {
         const map = {
-            primary: colors.textPrimary,
-            secondary: colors.textSecondary,
-            disabled: colors.textDisabled,
-            link: colors.textLink,
-            inverse: colors.textInverse,
-            error: colors.error,
-            success: colors.success,
-            warning: colors.warning,
-            cyan: colors.cyan,
+            primary: colors.textPrimary, secondary: colors.textSecondary,
+            disabled: colors.textDisabled, link: colors.textLink,
+            inverse: colors.textInverse, error: colors.error,
+            success: colors.success, warning: colors.warning,
+            cyan: colors.cyan, brand: colors.textBrand,
         };
         return map[color] ?? color;
     };
 
-    const fontSize = typography[variant];
+    const size = SIZES[variant] ?? 14;
 
     return (
         <Text
-            {...rest}
+            numberOfLines={numberOfLines}
             style={[
                 {
-                    fontSize,
-                    fontWeight: variantWeightMap[variant],
+                    fontSize: size,
+                    fontWeight: WEIGHTS[variant] ?? '400',
                     color: resolveColor(),
                     textAlign: align,
-                    textTransform: uppercase ? 'uppercase' : 'none',
-                    letterSpacing: variant === 'label' ? 0.8 : variant === 'display' ? -0.5 : 0,
-                    lineHeight: fontSize * (variant === 'display' || variant.startsWith('h') ? 1.2 : 1.5),
+                    letterSpacing: variant === 'label' ? 0.8 : variant === 'display' ? -0.8 : 0,
+                    lineHeight: size * (['display', 'h1', 'h2', 'h3'].includes(variant) ? 1.2 : 1.5),
+                    textTransform: uppercase || variant === 'label' ? 'uppercase' : 'none',
+                    includeFontPadding: false,
                 },
-                ...(Array.isArray(style) ? style : style ? [style] : []),
+                style,
             ]}
+            {...rest}
         >
             {children}
         </Text>
     );
 };
+
+export default AppText;

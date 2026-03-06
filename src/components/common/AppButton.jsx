@@ -1,10 +1,7 @@
 import React, { useRef } from 'react';
-import {
-    TouchableOpacity, View, ActivityIndicator,
-    StyleSheet, Animated,
-} from 'react-native';
+import { TouchableOpacity, View, ActivityIndicator, Animated, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme';
-import { AppText } from './AppText';
+import AppText from './AppText';
 
 const sizeMap = {
     sm: { height: 36, paddingH: 16, fontSize: 13 },
@@ -13,14 +10,15 @@ const sizeMap = {
     full: { height: 54, paddingH: 24, fontSize: 16 },
 };
 
-export const AppButton = ({
+const AppButton = ({
     title, onPress, variant = 'gradient', size = 'lg',
     loading = false, disabled = false,
     leftIcon, rightIcon, style, textStyle,
 }) => {
-    const { colors, spacing, radius, elevation } = useTheme();
+    const { colors, spacing, radius } = useTheme();
     const scaleAnim = useRef(new Animated.Value(1)).current;
-    const { height, paddingH, fontSize } = sizeMap[size];
+    const { height, paddingH, fontSize } = sizeMap[size] ?? sizeMap.lg;
+    const isDisabled = disabled || loading;
 
     const onPressIn = () =>
         Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true, speed: 30 }).start();
@@ -29,19 +27,14 @@ export const AppButton = ({
 
     const getContainerStyle = () => {
         const base = {
-            height,
-            borderRadius: radius.full,
-            paddingHorizontal: paddingH,
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexDirection: 'row',
-            overflow: 'hidden',
-            width: size === 'full' ? '100%' : undefined,
+            height, borderRadius: radius.full, paddingHorizontal: paddingH,
+            justifyContent: 'center', alignItems: 'center', flexDirection: 'row',
+            overflow: 'hidden', width: size === 'full' ? '100%' : undefined,
         };
         switch (variant) {
             case 'gradient':
             case 'primary':
-                return { ...base, backgroundColor: colors.primary, ...elevation.sm };
+                return { ...base, backgroundColor: colors.primary };
             case 'outline':
                 return { ...base, backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primary };
             case 'ghost':
@@ -55,38 +48,21 @@ export const AppButton = ({
 
     const getTextColor = () => {
         if (variant === 'outline' || variant === 'ghost') return colors.primary;
-        return colors.textInverse;
+        return '#FFFFFF';
     };
 
     return (
-        <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
-            {variant === 'gradient' && !disabled && (
-                <View
-                    style={[
-                        StyleSheet.absoluteFillObject,
-                        {
-                            borderRadius: radius.full,
-                            backgroundColor: colors.primaryGradStart,
-                            opacity: 0.85,
-                        },
-                    ]}
-                    pointerEvents="none"
-                />
-            )}
-
+        <Animated.View style={[{ transform: [{ scale: scaleAnim }], opacity: isDisabled ? 0.55 : 1 }, style]}>
             <TouchableOpacity
                 onPress={onPress}
                 onPressIn={onPressIn}
                 onPressOut={onPressOut}
-                disabled={disabled || loading}
+                disabled={isDisabled}
                 activeOpacity={0.9}
-                style={[
-                    getContainerStyle(),
-                    disabled && { opacity: 0.5 },
-                ]}
+                style={getContainerStyle()}
                 accessibilityRole="button"
                 accessibilityLabel={title}
-                accessibilityState={{ disabled: disabled || loading, busy: loading }}
+                accessibilityState={{ disabled: isDisabled, busy: loading }}
             >
                 {loading ? (
                     <ActivityIndicator color={getTextColor()} size="small" />
@@ -95,7 +71,7 @@ export const AppButton = ({
                         {leftIcon && <View style={{ marginRight: spacing.sm }}>{leftIcon}</View>}
                         <AppText
                             variant={size === 'sm' ? 'bodySm' : 'bodyLg'}
-                            style={[{ fontWeight: '600', fontSize, color: getTextColor() }, textStyle]}
+                            style={[{ fontWeight: '700', fontSize, color: getTextColor() }, textStyle]}
                         >
                             {title}
                         </AppText>
@@ -106,3 +82,5 @@ export const AppButton = ({
         </Animated.View>
     );
 };
+
+export default AppButton;

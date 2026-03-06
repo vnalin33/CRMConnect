@@ -1,0 +1,101 @@
+/**
+ * colors.js
+ * CRM Connect — Color System
+ */
+
+export const BRAND_GRADIENT = {
+    colors: ['#816FF5', '#6395EC', '#2DBFE6'],
+    locations: [0, 0.5, 1],
+    start: { x: 0, y: 0 },
+    end: { x: 1, y: 0 },
+};
+
+export const BRAND_GRADIENT_DIAGONAL = {
+    colors: ['#816FF5', '#6395EC', '#2DBFE6'],
+    locations: [0, 0.5, 1],
+    start: { x: 0, y: 0 },
+    end: { x: 1, y: 1 },
+};
+
+export const BRAND_GRADIENT_VERTICAL = {
+    colors: ['#816FF5', '#6395EC', '#2DBFE6'],
+    locations: [0, 0.5, 1],
+    start: { x: 0, y: 0 },
+    end: { x: 0, y: 1 },
+};
+
+export const lightColors = {
+    background: '#C8D0E0',
+    surface: '#FFFFFF',
+    surfaceElevated: '#F8FAFC',
+    inputBg: 'rgba(255,255,255,0.55)',
+    inputBorder: 'rgba(180,190,210,0.8)',
+    inputBorderFocus: '#816FF5',
+    primary: '#6C63FF',
+    primaryLight: '#EFEFFF',
+    textPrimary: '#1A1D2E',
+    textSecondary: '#6B7280',
+    textDisabled: '#9CA3AF',
+    textPlaceholder: '#A0A8C0',
+    textLink: '#6C63FF',
+    textInverse: '#FFFFFF',
+    textBrand: '#7060E8',
+    success: '#00C896',
+    successBg: '#E6FAF5',
+    successText: '#065F46',
+    warning: '#F59E0B',
+    warningBg: '#FFF8E6',
+    warningText: '#92400E',
+    error: '#F44336',
+    errorBg: 'rgba(244,67,54,0.1)',
+    errorBorder: '#F44336',
+    errorText: '#D32F2F',
+    info: '#6C63FF',
+    infoBg: '#EFEFFF',
+    cyan: '#00BCD4',
+    cyanBg: '#E0F7FA',
+    border: '#DDE3EE',
+    divider: '#F1F5F9',
+    iconColor: '#9CA3AF',
+    shadow: 'rgba(108,99,255,0.15)',
+    overlay: 'rgba(0,0,0,0.5)',
+    statusBarStyle: 'dark-content',
+};
+
+export const darkColors = {
+    background: '#0D0F1A',
+    surface: '#161B2E',
+    surfaceElevated: '#1E2440',
+    inputBg: '#1A1F35',
+    inputBorder: '#2A3050',
+    inputBorderFocus: '#816FF5',
+    primary: '#7B72FF',
+    primaryLight: '#1E1B4B',
+    textPrimary: '#F1F5F9',
+    textSecondary: '#94A3B8',
+    textDisabled: '#475569',
+    textPlaceholder: '#475569',
+    textLink: '#818CF8',
+    textInverse: '#0D0F1A',
+    textBrand: '#9D8FFF',
+    success: '#34D399',
+    successBg: '#064E3B',
+    successText: '#6EE7B7',
+    warning: '#FBBF24',
+    warningBg: '#451A03',
+    warningText: '#FDE68A',
+    error: '#F87171',
+    errorBg: 'rgba(248,113,113,0.1)',
+    errorBorder: '#F87171',
+    errorText: '#FCA5A5',
+    info: '#818CF8',
+    infoBg: '#1E1B4B',
+    cyan: '#22D3EE',
+    cyanBg: '#164E63',
+    border: '#2A3050',
+    divider: '#1E2440',
+    iconColor: '#475569',
+    shadow: 'rgba(0,0,0,0.5)',
+    overlay: 'rgba(0,0,0,0.75)',
+    statusBarStyle: 'light-content',
+};

@@ -1,35 +1,31 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { COLORS, SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/theme';
+import { useTheme } from '../../theme';
 
-export const AppCard = ({
-    children,
-    style,
-    variant = 'elevated',
-}) => {
+const AppCard = ({ children, style, variant = 'elevated' }) => {
+    const { colors, spacing, radius } = useTheme();
+
     const getVariantStyles = () => {
         switch (variant) {
             case 'outlined':
-                return {
-                    borderWidth: 1,
-                    borderColor: COLORS.border,
-                    backgroundColor: COLORS.surface,
-                };
+                return { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface };
             case 'flat':
-                return {
-                    backgroundColor: COLORS.background,
-                };
+                return { backgroundColor: colors.background };
             case 'elevated':
             default:
                 return {
-                    backgroundColor: COLORS.surface,
-                    ...SHADOWS.small,
+                    backgroundColor: colors.surface,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 3.84,
+                    elevation: 2,
                 };
         }
     };
 
     return (
-        <View style={[styles.card, getVariantStyles(), style]}>
+        <View style={[styles.card, { borderRadius: radius.lg, padding: spacing.md }, getVariantStyles(), style]}>
             {children}
         </View>
     );
@@ -37,8 +33,8 @@ export const AppCard = ({
 
 const styles = StyleSheet.create({
     card: {
-        borderRadius: BORDER_RADIUS.lg,
-        padding: SPACING.md,
-        marginVertical: SPACING.xs,
+        marginVertical: 4,
     },
 });
+
+export default AppCard;

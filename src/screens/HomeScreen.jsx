@@ -1,14 +1,14 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { AppScreen } from '../components/layout/AppScreen';
-import { TYPOGRAPHY, COLORS } from '../constants/theme';
+import { StyleSheet, View, Text } from 'react-native';
+import { useTheme } from '../theme';
 
-export const HomeScreen = () => {
+const HomeScreen = () => {
+    const { colors } = useTheme();
     return (
-        <AppScreen style={styles.container}>
-            <Text style={styles.title}>Home Dashboard</Text>
-            <Text style={styles.subtitle}>Welcome to CRM Connect</Text>
-        </AppScreen>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <Text style={[styles.title, { color: colors.primary }]}>Home Dashboard</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Welcome to CRM Connect</Text>
+        </View>
     );
 };
 
@@ -20,12 +20,14 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     title: {
-        ...TYPOGRAPHY.h1,
-        color: COLORS.primary,
+        fontSize: 32,
+        fontWeight: '700',
         marginBottom: 10,
     },
     subtitle: {
-        ...TYPOGRAPHY.body1,
-        color: COLORS.textSecondary,
+        fontSize: 16,
+        fontWeight: '400',
     },
 });
+
+export default HomeScreen;
