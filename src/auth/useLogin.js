@@ -9,9 +9,7 @@ import {useState, useCallback} from 'react';
 // ── Mock API — replace with real service ──────
 const loginAPI = async ({identifier, password}) => {
   await new Promise(r => setTimeout(r, 1500)); // simulate network
-  if (password !== 'password123') {
-    throw new Error('Invalid credentials. Please check and try again.');
-  }
+  // Demo mode — accepts any credentials if format is valid
   return {
     token:        'jwt_token_' + Date.now(),
     refreshToken: 'refresh_token_xyz',
