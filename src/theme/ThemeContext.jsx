@@ -1,13 +1,35 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useColorScheme } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { lightColors, darkColors } from './colors';
 import { spacing, radius } from './metrics';
+
+const THEME_STORAGE_KEY = '@crm_theme_mode';
 
 const ThemeContext = createContext(undefined);
 
 export const ThemeProvider = ({ children }) => {
     const systemColorScheme = useColorScheme();
-    const [themeMode, setThemeMode] = useState('light'); // Changed to 'light' to always show light theme by default
+    const [themeMode, setThemeModeState] = useState('dark');
+    const [isReady, setIsReady] = useState(false);
+
+    // Restore persisted theme on mount
+    useEffect(() => {
+        AsyncStorage.getItem(THEME_STORAGE_KEY)
+            .then(saved => {
+                if (saved === 'light' || saved === 'dark' || saved === 'system') {
+                    setThemeModeState(saved);
+                }
+            })
+            .catch(() => { })
+            .finally(() => setIsReady(true));
+    }, []);
+
+    // Persist whenever theme changes
+    const setThemeMode = useCallback(mode => {
+        setThemeModeState(mode);
+        AsyncStorage.setItem(THEME_STORAGE_KEY, mode).catch(() => { });
+    }, []);
 
     const isDark = themeMode === 'system'
         ? systemColorScheme === 'dark'
@@ -15,9 +37,9 @@ export const ThemeProvider = ({ children }) => {
 
     const colors = isDark ? darkColors : lightColors;
 
-    const toggleTheme = () => {
-        setThemeMode(prev => (prev === 'light' ? 'dark' : 'light'));
-    };
+    const toggleTheme = useCallback(() => {
+        setThemeMode(isDark ? 'light' : 'dark');
+    }, [isDark, setThemeMode]);
 
     const value = {
         colors,
@@ -28,6 +50,9 @@ export const ThemeProvider = ({ children }) => {
         spacing,
         radius,
     };
+
+    // Don't render until theme is restored so we avoid a flash
+    if (!isReady) return null;
 
     return (
         <ThemeContext.Provider value={value}>

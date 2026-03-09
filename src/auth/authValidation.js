@@ -16,7 +16,6 @@ export const loginSchema = z.object({
         .min(6, 'Password must be at least 6 characters'),
 });
 
-// ─── Forgot Password Schema ───────────────────
 export const forgotPasswordSchema = z.object({
     identifier: z
         .string()
@@ -27,3 +26,22 @@ export const forgotPasswordSchema = z.object({
             return isEmail || isMobile;
         }, 'Enter a valid email or 10-digit mobile number'),
 });
+
+// ─── Validation Helpers ───────────────────────
+
+export const validateLoginForm = (data) => {
+    const result = loginSchema.safeParse(data);
+    if (result.success) {
+        return { isValid: true, errors: {} };
+    }
+
+    const errors = {};
+    if (result.error && result.error.issues) {
+        result.error.issues.forEach(issue => {
+            if (issue.path && issue.path.length > 0) {
+                errors[issue.path[0]] = issue.message;
+            }
+        });
+    }
+    return { isValid: false, errors };
+};
