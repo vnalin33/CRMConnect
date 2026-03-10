@@ -36,7 +36,7 @@ const LoginScreen = ({ navigation }) => {
   const passwordRef = useRef(null);
 
   const { login, isLoading, error: apiError } = useLogin({
-    onSuccess: () => navigation?.navigate('Home'),
+    onSuccess: () => navigation.replace('MainTabs'),
   });
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -202,7 +202,7 @@ const LoginScreen = ({ navigation }) => {
                     ? <PhoneIcon color={colors.iconColor || colors.textDisabled} />
                     : <MailIcon color={colors.iconColor || colors.textDisabled} />
                 }
-                inputStyle={[inputType === 'phone' ? styles.phoneInputPadding : null, { color: colors.textPrimary }]}
+                style={inputType === 'phone' ? styles.phoneInputPadding : null}
               />
 
             </View>
@@ -225,7 +225,6 @@ const LoginScreen = ({ navigation }) => {
               onSubmitEditing={handleSubmit}
               error={formErrors.password}
               leftIcon={<LockIcon color={colors.iconColor || colors.textDisabled} />}
-
             />
 
 
@@ -299,24 +298,24 @@ const styles = StyleSheet.create({
 
   identifierContainer: { position: 'relative' },
 
-  prefixText:{
-    position:'absolute',
-    left:45,
-    top:37,
-    fontSize:14,
-    color:'#6B7280',
-    zIndex:10
+  prefixText: {
+    position: 'absolute',
+    left: 45,
+    top: 37,
+    fontSize: 14,
+    color: '#6B7280',
+    zIndex: 10
   },
 
-  phoneInputPadding:{
-    paddingLeft:32
+  phoneInputPadding: {
+    paddingLeft: 32
   },
 
-  forgotBtn:{ alignSelf:'flex-end', marginTop:4, marginBottom:4 },
+  forgotBtn: { alignSelf: 'flex-end', marginTop: 4, marginBottom: 4 },
 
-  errorBanner:{},
+  errorBanner: {},
 
-  footer:{ marginTop:'auto', paddingTop:32, paddingBottom:8 }
+  footer: { marginTop: 'auto', paddingTop: 32, paddingBottom: 8 }
 
 });
 

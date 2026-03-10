@@ -39,7 +39,7 @@ const AppText = ({
             style={[
                 {
                     fontSize: size,
-                    fontWeight: WEIGHTS[variant] ?? '400',
+                    fontWeight: style?.fontWeight ?? WEIGHTS[variant] ?? '600',
                     color: resolveColor(),
                     textAlign: align,
                     letterSpacing: variant === 'label' ? 0.8 : variant === 'display' ? -0.8 : 0,

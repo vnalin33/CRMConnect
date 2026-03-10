@@ -10,7 +10,7 @@ const ThemeContext = createContext(undefined);
 
 export const ThemeProvider = ({ children }) => {
     const systemColorScheme = useColorScheme();
-    const [themeMode, setThemeModeState] = useState('dark');
+    const [themeMode, setThemeModeState] = useState('light');
     const [isReady, setIsReady] = useState(false);
 
     // Restore persisted theme on mount
