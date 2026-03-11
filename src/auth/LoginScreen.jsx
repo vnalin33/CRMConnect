@@ -13,8 +13,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { BRAND_GRADIENT } from '../theme/colors';
 
-import useLogin from './useLogin';
-import { validateLoginForm } from './authValidation';
+import useLogin from '../hooks/useLogin';
+import { validateLoginForm } from '../utils/authValidation';
 
 const { width: SW } = Dimensions.get('window');
 const IS_TABLET = SW >= 768;

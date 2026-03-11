@@ -1,11 +1,4 @@
-/**
- * colors.js
- * CRM Connect — Color System
- * Semantic tokens for light & dark themes.
- * Never use raw hex in components — always reference these tokens via useTheme().
- */
 
-// ── Brand Gradients ─────────────────────────────
 export const BRAND_GRADIENT = {
     colors: ['#816FF5', '#6395EC', '#2DBFE6'],
     locations: [0, 0.5, 1],

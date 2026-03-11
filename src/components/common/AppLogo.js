@@ -9,7 +9,7 @@ import { Animated, Image, View, Text, StyleSheet } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
 // ── Your actual logo ──────────────────────────
-const LOGO = require('../../assests/images/logo.png');
+const LOGO = require('../../assets/images/logo.png');
 // ─────────────────────────────────────────────
 
 const BRAND_GRADIENT = {
