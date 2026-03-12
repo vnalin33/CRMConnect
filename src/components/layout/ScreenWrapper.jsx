@@ -21,8 +21,8 @@ const ScreenWrapper = ({
         <SafeAreaView edges={edges} style={[styles.flex, { backgroundColor: colors.background }, style]}>
             <StatusBar
                 barStyle={isDark ? 'light-content' : 'dark-content'}
-                backgroundColor={colors.background}
-                translucent={false}
+                backgroundColor="transparent"
+                translucent={true}
             />
             <KeyboardAvoidingView
                 style={styles.flex}

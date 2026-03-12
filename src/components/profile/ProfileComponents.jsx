@@ -3,20 +3,21 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { useTheme } from '../../theme';
 import AppText from '../common/AppText';
+import GradientText from '../common/GradientText';
 
 export const HeaderRow = ({ title, showEdit = false, isEditing = false, onPressEdit }) => {
     const { colors, spacing } = useTheme();
     return (
         <View style={[styles.headerRow, { paddingHorizontal: spacing.base }]}>
-            <AppText variant="label" style={{ color: colors.textBrand, letterSpacing: 0.5, fontWeight: '700' }}>
+            <GradientText variant="label" style={{ letterSpacing: 0.5, fontWeight: '700', fontSize: 13 }}>
                 {title.toUpperCase()}
-            </AppText>
+            </GradientText>
             {showEdit && (
                 <TouchableOpacity onPress={onPressEdit} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                     {isEditing ? (
                         <Feather name="check" size={18} color={colors.success} />
                     ) : (
-                        <Feather name="edit" size={16} color={colors.textSecondary} />
+                        <Feather name="edit" size={16} color={colors.primary} />
                     )}
                 </TouchableOpacity>
             )}
@@ -35,12 +36,11 @@ export const InfoRow = ({ icon, label, value, isLast = false }) => {
                 borderBottomColor: colors.divider
             }
         ]}>
-            <View style={[styles.iconBubble, { backgroundColor: colors.surfaceElevated }]}>
-                <Feather name={icon} size={15} color={colors.iconColor} />
+            <View style={[styles.iconBubble, { backgroundColor: colors.profileIconBg }]}>
+                <Feather name={icon} size={15} color={colors.primary} />
             </View>
-
             <View style={styles.infoContent}>
-                <AppText variant="caption" color="secondary" style={{ marginBottom: 2 }}>{label}</AppText>
+                <AppText variant="caption" color="secondary" style={{ marginBottom: 2, fontSize: 11 }}>{label}</AppText>
                 <AppText variant="bodySm" style={{
                     color: value === 'Not Provided' ? colors.textDisabled : colors.textPrimary,
                     fontStyle: value === 'Not Provided' ? 'italic' : 'normal',
@@ -53,12 +53,12 @@ export const InfoRow = ({ icon, label, value, isLast = false }) => {
     );
 };
 
-export const ActionRow = ({ icon, title, subtitle, rightElement, onPress, isLast = false }) => {
+export const ActionRow = ({ icon, title, subtitle, rightElement, onPress, isLast = false, iconColor }) => {
     const { colors, spacing } = useTheme();
     return (
         <TouchableOpacity
             activeOpacity={0.7}
-            disabled={!onPress}
+            disabled={!onPress && !rightElement}
             onPress={onPress}
             style={[
                 styles.actionRow,
@@ -69,17 +69,15 @@ export const ActionRow = ({ icon, title, subtitle, rightElement, onPress, isLast
                 }
             ]}
         >
-            <View style={[styles.iconBubble, { backgroundColor: colors.surfaceElevated }]}>
-                <Feather name={icon} size={15} color={title === 'Report an Issue' ? colors.error : colors.iconColor} />
+            <View style={[styles.iconBubble, { backgroundColor: colors.profileIconBg }]}>
+                <Feather name={icon} size={15} color={iconColor || colors.primary} />
             </View>
-
             <View style={styles.actionContent}>
                 <AppText variant="bodySm" style={{ fontWeight: '600', color: colors.textPrimary }}>{title}</AppText>
                 {subtitle ? (
-                    <AppText variant="caption" color="secondary" style={{ marginTop: 2 }}>{subtitle}</AppText>
+                    <AppText variant="caption" color="secondary" style={{ marginTop: 2, fontSize: 11 }}>{subtitle}</AppText>
                 ) : null}
             </View>
-
             <View style={styles.rightElement}>
                 {rightElement ? rightElement : <Feather name="chevron-right" size={16} color={colors.iconColor} />}
             </View>
@@ -105,9 +103,9 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
     },
     iconBubble: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
+        width: 34,
+        height: 34,
+        borderRadius: 17,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 14,

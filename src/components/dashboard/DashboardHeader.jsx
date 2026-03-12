@@ -6,7 +6,7 @@ import AppText from '../common/AppText';
 import AppLogo from '../common/AppLogo';
 
 const DashboardHeader = ({ onNotification, onMenu }) => {
-    const { colors, spacing } = useTheme();
+    const { spacing } = useTheme();
 
     return (
         <View style={[styles.container, { paddingHorizontal: spacing.base, paddingVertical: spacing.md }]}>
@@ -14,7 +14,7 @@ const DashboardHeader = ({ onNotification, onMenu }) => {
                 <AppLogo size={36} animated={false} />
                 <AppText
                     variant="h2"
-                    style={{ marginLeft: spacing.sm, color: colors.textPrimary, fontWeight: '700' }}
+                    style={{ marginLeft: spacing.sm, color: '#FFFFFF', fontWeight: '700' }}
                 >
                     CRM Connect
                 </AppText>
@@ -28,7 +28,7 @@ const DashboardHeader = ({ onNotification, onMenu }) => {
                     accessibilityLabel="Notifications"
                     style={styles.iconBtn}
                 >
-                    <Feather name="bell" size={22} color={colors.textPrimary} />
+                    <Feather name="bell" size={22} color="#FFFFFF" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -38,7 +38,7 @@ const DashboardHeader = ({ onNotification, onMenu }) => {
                     accessibilityLabel="Menu"
                     style={[styles.iconBtn, { marginLeft: spacing.base }]}
                 >
-                    <Feather name="menu" size={22} color={colors.textPrimary} />
+                    <Feather name="menu" size={22} color="#FFFFFF" />
                 </TouchableOpacity>
             </View>
         </View>

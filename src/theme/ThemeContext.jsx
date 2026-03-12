@@ -12,8 +12,6 @@ export const ThemeProvider = ({ children }) => {
     const systemColorScheme = useColorScheme();
     const [themeMode, setThemeModeState] = useState('light');
     const [isReady, setIsReady] = useState(false);
-
-    // Restore persisted theme on mount
     useEffect(() => {
         AsyncStorage.getItem(THEME_STORAGE_KEY)
             .then(saved => {
@@ -24,8 +22,6 @@ export const ThemeProvider = ({ children }) => {
             .catch(() => { })
             .finally(() => setIsReady(true));
     }, []);
-
-    // Persist whenever theme changes
     const setThemeMode = useCallback(mode => {
         setThemeModeState(mode);
         AsyncStorage.setItem(THEME_STORAGE_KEY, mode).catch(() => { });
@@ -50,8 +46,6 @@ export const ThemeProvider = ({ children }) => {
         spacing,
         radius,
     };
-
-    // Don't render until theme is restored so we avoid a flash
     if (!isReady) return null;
 
     return (
