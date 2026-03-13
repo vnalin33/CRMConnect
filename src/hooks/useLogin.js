@@ -1,28 +1,32 @@
 /**
  * useLogin.js
  * CRM Connect — Login Hook
- * Replace loginAPI with your real authService
+ * Integrated with Real Node.js / PostgreSQL Backend
  */
 
 import { useState, useCallback } from 'react';
+import { ENV } from '../config/env';
 
-// ── Mock API — replace with real service ──────
 const loginAPI = async ({ identifier, password }) => {
-  await new Promise(r => setTimeout(r, 1500)); // simulate network
-  // Demo mode — accepts any credentials if format is valid
-  return {
-    token: 'jwt_token_' + Date.now(),
-    refreshToken: 'refresh_token_xyz',
-    user: {
-      id: 'user_001',
-      name: 'User1234',
-      email: identifier,
-      mobile: '+91 XXXXX XXXXX',
-      role: 'Finance Agent',
-      rating: 4.2,
-      isTopPerformer: true,
-    },
-  };
+  try {
+    const response = await fetch(`${ENV.API_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ identifier, password }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error?.message || 'Login failed');
+    }
+
+    return result.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 const useLogin = ({ onSuccess, onError } = {}) => {

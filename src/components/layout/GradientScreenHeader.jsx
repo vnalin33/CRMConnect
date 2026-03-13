@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
     View,
     TouchableOpacity,
@@ -62,7 +62,7 @@ const GradientScreenHeader = ({
         if (!isFocused && isSearchActive) {
             handleCloseSearch();
         }
-    }, [isFocused]);
+    }, [isFocused, isSearchActive, handleCloseSearch]);
 
     useEffect(() => {
         if (isSearchActive) {
@@ -87,11 +87,11 @@ const GradientScreenHeader = ({
         }
     };
 
-    const handleCloseSearch = () => {
+    const handleCloseSearch = useCallback(() => {
         onSearchChange?.('');
         setIsSearchActive(false);
         Keyboard.dismiss();
-    };
+    }, [onSearchChange]);
 
     // In dark mode render a solid dark strip instead of the gradient
     const GradientOrDark = isDark ? View : LinearGradient;

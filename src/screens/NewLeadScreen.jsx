@@ -2,6 +2,7 @@ import React from 'react';
 import {
     View,
     StyleSheet,
+    TouchableOpacity,
     Alert,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
@@ -17,7 +18,7 @@ import DropdownSelect from '../components/common/DropdownSelect';
 import { useNewLead } from '../hooks/useNewLead';
 
 const NewLeadScreen = ({ navigation }) => {
-    const { colors, spacing, radius } = useTheme();
+    const { colors, spacing } = useTheme();
 
     const {
         formData,
@@ -53,7 +54,7 @@ const NewLeadScreen = ({ navigation }) => {
     };
 
     return (
-        <ScreenWrapper scrollable withPadding={false} edges={['bottom', 'left', 'right']} style={{ backgroundColor: colors.background }}>
+        <ScreenWrapper scrollable withPadding={false} edges={['bottom', 'left', 'right']} style={styles.root}>
 
             <GradientScreenHeader
                 title="Add Contact"
@@ -63,13 +64,12 @@ const NewLeadScreen = ({ navigation }) => {
             />
 
             <View style={[styles.formContainer, { paddingHorizontal: spacing.base }]}>
-
                 <GradientText variant="label" style={styles.sectionTitle}>
                     PERSONAL INFO
                 </GradientText>
 
                 <View style={styles.nameRow}>
-                    <View style={[styles.flex1, { marginRight: spacing.sm }]}>
+                    <View style={styles.flexItemWithMargin}>
                         <AppInput
                             label="FIRST NAME"
                             placeholder="First Name"
@@ -79,7 +79,7 @@ const NewLeadScreen = ({ navigation }) => {
                             leftIcon={<Feather name="user" size={16} color={colors.textPlaceholder} />}
                         />
                     </View>
-                    <View style={styles.flex1}>
+                    <View style={styles.flexItem}>
                         <AppInput
                             label="LAST NAME"
                             placeholder="Last Name"
@@ -111,8 +111,8 @@ const NewLeadScreen = ({ navigation }) => {
                     error={errors.mobile}
                     leftIcon={
                         <View style={styles.flagContainer}>
-                            <MaterialCommunityIcons name="flag-in" size={20} color={colors.success} style={{ marginRight: 2 }} />
-                            <Feather name="chevron-down" size={12} color={colors.textSecondary} style={{ marginLeft: 2 }} />
+                            <MaterialCommunityIcons name="flag-in" size={20} color={colors.success} style={styles.flagIcon} />
+                            <Feather name="chevron-down" size={12} color={colors.textSecondary} style={styles.chevronIcon} />
                         </View>
                     }
                 />
@@ -178,7 +178,7 @@ const NewLeadScreen = ({ navigation }) => {
                     multiline
                     inputStyle={styles.notesInput}
                 />
-                <AppText variant="caption" color="secondary" style={[styles.notesLimit, { marginBottom: spacing.md }]}>
+                <AppText variant="caption" color="secondary" style={styles.notesHelpText}>
                     * Max 200 Words
                 </AppText>
 
@@ -188,7 +188,7 @@ const NewLeadScreen = ({ navigation }) => {
                     size="full"
                     loading={submitting}
                     onPress={onSubmit}
-                    style={{ marginBottom: spacing.md }}
+                    style={styles.submitBtn}
                 />
 
                 <AppButton
@@ -198,7 +198,7 @@ const NewLeadScreen = ({ navigation }) => {
                     onPress={onDraft}
                     disabled={submitting}
                     leftIcon={<Feather name="save" size={18} color={colors.primary} />}
-                    style={{ marginBottom: spacing.xxxl }}
+                    style={styles.draftBtn}
                 />
 
             </View>
@@ -219,22 +219,19 @@ const styles = StyleSheet.create({
     nameRow: {
         flexDirection: 'row',
     },
-    flex1: {
-        flex: 1,
-    },
     flagContainer: {
         flexDirection: 'row',
         alignItems: 'center',
     },
-    notesInput: {
-        minHeight: 80,
-        textAlignVertical: 'top',
-        paddingTop: 12,
-    },
-    notesLimit: {
-        textAlign: 'right',
-        marginTop: -8,
-    },
+    root: { backgroundColor: '#F9FAFB' },
+    flexItem: { flex: 1 },
+    flexItemWithMargin: { flex: 1, marginRight: 8 },
+    flagIcon: { marginRight: 2 },
+    chevronIcon: { marginLeft: 2 },
+    notesInput: { minHeight: 80, textAlignVertical: 'top', paddingTop: 12 },
+    notesHelpText: { textAlign: 'right', marginTop: -8, marginBottom: 16 },
+    submitBtn: { marginBottom: 16 },
+    draftBtn: { marginBottom: 40 },
 });
 
 export default NewLeadScreen;

@@ -34,8 +34,6 @@ const WalletCard = ({
                     <AppText variant="caption" style={styles.walletBadgeText}>Wallet A/C</AppText>
                 </TouchableOpacity>
             </View>
-
-            {/* Amount */}
             <AppText variant="amount" style={styles.amount}>
                 ₹{balance}
             </AppText>

@@ -20,38 +20,48 @@ const PAYOUT_DATA = [
         id: '1',
         name: 'Manoj Kumar',
         loanType: 'Home Loan',
-        loanAmount: '₹ 45.0L',
+        loanAmount: '₹45,00,000',
         cycle: 'Instant',
-        payoutAmount: '₹ 67,500',
-        payoutRaw: 67500,
+        payoutAmount: '₹45,000',
+        payoutRaw: 45000,
         status: 'paid',
-        date: 'Paid on 15 Jan 2025',
+        date: '12 Jan 2026',
     },
     {
         id: '2',
-        name: 'Sujith Singh Barnala',
+        name: 'Sujith Singh',
         loanType: 'Business Loan',
-        loanAmount: '₹ 20.0L',
+        loanAmount: '₹20,00,000',
         cycle: 'Cycle',
-        payoutAmount: '₹ 35,000',
-        payoutRaw: 35000,
+        payoutAmount: '₹30,000',
+        payoutRaw: 30000,
         status: 'pending',
-        date: 'Expected on 15 Jan 2025',
+        date: '14 Feb 2026',
     },
     {
         id: '3',
-        name: 'Priya Sharma',
-        loanType: 'Car Loan',
-        loanAmount: '₹ 10.0L',
+        name: 'Harigaran',
+        loanType: 'Personal Loan',
+        loanAmount: '₹25,00,000',
         cycle: 'Instant',
-        payoutAmount: '₹ 15,000',
-        payoutRaw: 15000,
+        payoutAmount: '₹25,000',
+        payoutRaw: 25000,
         status: 'paid',
-        date: 'Paid on 10 Jan 2025',
+        date: '20 Jan 2026',
+    },
+    {
+        id: '4',
+        name: 'Nalin',
+        loanType: 'Property Loan',
+        loanAmount: '₹30,00,000',
+        cycle: 'Cycle',
+        payoutAmount: '₹45,000',
+        payoutRaw: 45000,
+        status: 'pending',
+        date: '25 Jan 2026',
     },
 ];
 
-/** Format a number as ₹X,XX,XXX (Indian locale) */
 const formatINR = (n) =>
     '₹' + n.toLocaleString('en-IN');
 
@@ -93,11 +103,11 @@ const PayoutSummaryCard = React.memo(({ summary }) => {
         >
             <View style={styles.summaryTopRow}>
                 <Feather name="trending-up" size={16} color="rgba(255,255,255,0.9)" />
-                <AppText variant="body" style={[styles.whiteText, { marginLeft: 6, fontWeight: '600' }]}>
+                <AppText variant="body" style={styles.summaryTitle}>
                     Total Payout
                 </AppText>
             </View>
-            <AppText variant="display" style={[styles.whiteText, { fontWeight: '800', marginTop: 6 }]}>
+            <AppText variant="display" style={styles.summaryValue}>
                 {summary.total}
             </AppText>
             <View style={[styles.summaryDivider, { backgroundColor: 'rgba(255,255,255,0.25)' }]} />
@@ -105,9 +115,9 @@ const PayoutSummaryCard = React.memo(({ summary }) => {
                 <View style={styles.summaryCol}>
                     <View style={styles.summaryLabelRow}>
                         <MaterialCommunityIcons name="check-circle-outline" size={13} color="rgba(255,255,255,0.8)" />
-                        <AppText variant="caption" style={[styles.whiteSubText, { marginLeft: 4 }]}>Paid Amount</AppText>
+                        <AppText variant="caption" style={styles.summarySubLabel}>Paid Amount</AppText>
                     </View>
-                    <AppText variant="amountSm" style={[styles.whiteText, { fontWeight: '700', marginTop: 2 }]}>
+                    <AppText variant="amountSm" style={styles.summaryAmount}>
                         {summary.paidAmount}
                     </AppText>
                     <AppText variant="caption" style={styles.whiteSubText}>
@@ -118,9 +128,9 @@ const PayoutSummaryCard = React.memo(({ summary }) => {
                 <View style={styles.summaryCol}>
                     <View style={styles.summaryLabelRow}>
                         <MaterialCommunityIcons name="clock-outline" size={13} color="rgba(255,255,255,0.8)" />
-                        <AppText variant="caption" style={[styles.whiteSubText, { marginLeft: 4 }]}>Pending Amount</AppText>
+                        <AppText variant="caption" style={styles.summarySubLabel}>Pending Amount</AppText>
                     </View>
-                    <AppText variant="amountSm" style={[styles.whiteText, { fontWeight: '700', marginTop: 2 }]}>
+                    <AppText variant="amountSm" style={styles.summaryAmount}>
                         {summary.pendingAmount}
                     </AppText>
                     <AppText variant="caption" style={styles.whiteSubText}>
@@ -142,14 +152,7 @@ const PayoutItem = React.memo(({ item }) => {
                 backgroundColor: colors.cardBg,
                 borderColor: colors.border,
                 borderRadius: radius.lg,
-                padding: spacing.base,
-                marginHorizontal: spacing.base,
-                marginBottom: spacing.sm,
                 shadowColor: colors.shadow,
-                shadowOffset: { width: 0, height: 3 },
-                shadowOpacity: 1,
-                shadowRadius: 8,
-                elevation: 3,
             },
         ]}>
             <View style={styles.itemTopRow}>
@@ -160,31 +163,31 @@ const PayoutItem = React.memo(({ item }) => {
                 {isPaid ? (
                     <LinearGradient
                         colors={['rgba(0,200,150,0.15)', 'rgba(0,200,150,0.08)']}
-                        style={[styles.statusBadge, { borderRadius: radius.full, borderColor: colors.success, borderWidth: 1 }]}
+                        style={[styles.statusBadge, { borderRadius: radius.full, borderColor: colors.success }]}
                     >
                         <MaterialCommunityIcons name="check-circle-outline" size={13} color={colors.success} />
-                        <AppText variant="caption" style={{ color: colors.success, fontWeight: '700', marginLeft: 4 }}>Paid</AppText>
+                        <AppText variant="caption" style={[styles.statusText, { color: colors.success }]}>Paid</AppText>
                     </LinearGradient>
                 ) : (
                     <LinearGradient
                         colors={['rgba(129,111,245,0.15)', 'rgba(129,111,245,0.08)']}
-                        style={[styles.statusBadge, { borderRadius: radius.full, borderColor: colors.primary, borderWidth: 1 }]}
+                        style={[styles.statusBadge, { borderRadius: radius.full, borderColor: colors.primary }]}
                     >
                         <MaterialCommunityIcons name="clock-outline" size={13} color={colors.primary} />
-                        <AppText variant="caption" style={{ color: colors.primary, fontWeight: '700', marginLeft: 4 }}>Pending</AppText>
+                        <AppText variant="caption" style={[styles.statusText, { color: colors.primary }]}>Pending</AppText>
                     </LinearGradient>
                 )}
             </View>
-            <View style={[styles.itemAmountRow, { marginTop: spacing.sm, borderTopColor: colors.divider, borderTopWidth: 1, paddingTop: spacing.sm }]}>
+            <View style={[styles.itemAmountRow, { borderTopColor: colors.divider }]}>
                 <View>
                     <AppText variant="caption" color="secondary">Loan Amount</AppText>
-                    <AppText variant="bodySm" style={{ color: colors.textPrimary, fontWeight: '600', marginTop: 2 }}>
+                    <AppText variant="bodySm" style={[styles.itemDetailText, { color: colors.textPrimary }]}>
                         {item.loanAmount} · {item.cycle}
                     </AppText>
                 </View>
-                <View style={{ alignItems: 'flex-end' }}>
+                <View style={styles.alignEnd}>
                     <AppText variant="caption" color="secondary">Payout Amount</AppText>
-                    <AppText variant="amountSm" style={{ color: colors.textBrand, fontWeight: '700', marginTop: 2 }}>
+                    <AppText variant="amountSm" style={[styles.itemAmountText, { color: colors.textBrand }]}>
                         {item.payoutAmount}
                     </AppText>
                 </View>
@@ -202,7 +205,6 @@ const CYCLE_TABS = [
     { id: 'cycle', label: 'Cycle' },
 ];
 
-// ─── Main Screen ─────────────────────────────────────────────────────────────
 const PayoutScreen = ({ navigation }) => {
     const { colors, spacing } = useTheme();
 
@@ -250,11 +252,12 @@ const PayoutScreen = ({ navigation }) => {
 
     const ListHeader = useMemo(() => (
         <View>
-            <View style={{ marginTop: spacing.base }}>
+            <View style={styles.summaryWrapper}>
                 <PayoutSummaryCard summary={summary} />
             </View>
 
-            <View style={[styles.tabRow, { marginHorizontal: spacing.base, marginTop: spacing.base, backgroundColor: colors.surfaceElevated, borderRadius: 50, borderColor: colors.border, borderWidth: 1 }]}>
+            {/* Status tabs */}
+            <View style={[styles.statusTabRow, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
                 {statusTabs.map(tab => (
                     <TabPill
                         key={tab.id}
@@ -266,7 +269,8 @@ const PayoutScreen = ({ navigation }) => {
                 ))}
             </View>
 
-            <View style={[styles.tabRow, { marginHorizontal: spacing.base, marginTop: spacing.sm, backgroundColor: colors.surfaceElevated, borderRadius: 50, borderColor: colors.border, borderWidth: 1 }]}>
+            {/* Cycle tabs */}
+            <View style={[styles.cycleTabRow, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
                 {CYCLE_TABS.map(tab => (
                     <TabPill
                         key={tab.id}
@@ -278,14 +282,14 @@ const PayoutScreen = ({ navigation }) => {
                 ))}
             </View>
 
-            <View style={{ marginHorizontal: spacing.base, marginTop: spacing.base, marginBottom: spacing.sm }}>
+            <View style={styles.recordsCountRow}>
                 <AppText variant="caption" color="secondary">
                     {filtered.length} {filtered.length === 1 ? 'record' : 'records'} found
                 </AppText>
             </View>
         </View>
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    ), [summary, statusTab, cycleTab, statusTabs, filtered.length, colors, spacing]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    ), [summary, statusTab, cycleTab, statusTabs, filtered.length, colors]);
 
     const ListEmpty = useMemo(() => (
         <View style={styles.emptyState}>
@@ -297,7 +301,7 @@ const PayoutScreen = ({ navigation }) => {
     ), [colors.textSecondary, spacing.sm]);
 
     return (
-        <ScreenWrapper withPadding={false} edges={['bottom', 'left', 'right']} style={{ backgroundColor: colors.background }}>
+        <ScreenWrapper withPadding={false} edges={['bottom', 'left', 'right']} style={styles.root}>
             <GradientScreenHeader
                 title="Payouts"
                 subtitle="Track your earnings & settlements"
@@ -323,8 +327,8 @@ const PayoutScreen = ({ navigation }) => {
     );
 };
 
-// ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
+    root: { flex: 1 },
     summaryCard: {
         shadowColor: '#816FF5',
         shadowOffset: { width: 0, height: 6 },
@@ -333,23 +337,64 @@ const styles = StyleSheet.create({
         elevation: 8,
     },
     summaryTopRow: { flexDirection: 'row', alignItems: 'center' },
+    summaryTitle: { color: '#FFFFFF', marginLeft: 6, fontWeight: '600' },
+    summaryValue: { color: '#FFFFFF', fontWeight: '800', marginTop: 6 },
     summaryDivider: { height: 1, marginVertical: 14 },
     summaryBottomRow: { flexDirection: 'row' },
     summaryCol: { flex: 1 },
     summaryLabelRow: { flexDirection: 'row', alignItems: 'center' },
+    summarySubLabel: { color: 'rgba(255,255,255,0.75)', marginLeft: 4 },
+    summaryAmount: { color: '#FFFFFF', fontWeight: '700', marginTop: 2 },
     summaryVertDivider: { width: 1, marginHorizontal: 16, alignSelf: 'stretch' },
-    whiteText: { color: '#FFFFFF' },
+    summaryWrapper: { marginTop: 16 },
     whiteSubText: { color: 'rgba(255,255,255,0.75)' },
-    tabRow: { flexDirection: 'row', alignItems: 'center', padding: 4 },
+    statusTabRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 4,
+        marginHorizontal: 16,
+        marginTop: 16,
+        borderRadius: 50,
+        borderWidth: 1,
+    },
+    cycleTabRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 4,
+        marginHorizontal: 16,
+        marginTop: 8,
+        borderRadius: 50,
+        borderWidth: 1,
+    },
+    recordsCountRow: { marginHorizontal: 16, marginTop: 16, marginBottom: 8 },
     tabFlex: { flex: 1, alignItems: 'center', paddingVertical: 9 },
     pillBase: { alignItems: 'center', justifyContent: 'center' },
     pillGradient: { alignItems: 'center', justifyContent: 'center', paddingVertical: 9, width: '100%' },
     pillActiveText: { color: '#FFFFFF', fontWeight: '700' },
-    payoutItem: { borderWidth: 1 },
+    payoutItem: {
+        borderWidth: 1,
+        padding: 16,
+        marginHorizontal: 16,
+        marginBottom: 12,
+        shadowOffset: { width: 0, height: 3 },
+        shadowRadius: 8,
+        elevation: 3,
+    },
     itemTopRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
-    statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5 },
-    itemAmountRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-    itemDateRow: { flexDirection: 'row', alignItems: 'center' },
+    statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1 },
+    statusText: { fontWeight: '700', marginLeft: 4 },
+    itemAmountRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-end',
+        marginTop: 12,
+        borderTopWidth: 1,
+        paddingTop: 12,
+    },
+    itemDetailText: { fontWeight: '600', marginTop: 2 },
+    itemAmountText: { fontWeight: '700', marginTop: 2 },
+    alignEnd: { alignItems: 'flex-end' },
+    itemDateRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
     emptyState: { alignItems: 'center', marginTop: 60 },
 });
 

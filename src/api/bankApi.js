@@ -1,6 +1,3 @@
-/**
- * Service for fetching Bank details
- */
 
 const IFSC_API_URL = 'https://ifsc.razorpay.com';
 
@@ -13,7 +10,7 @@ export const fetchBankDetailsByIfsc = async (ifscCode) => {
                 error: 'Invalid IFSC Code'
             };
         }
-        
+
         const data = await response.json();
         return {
             success: true,

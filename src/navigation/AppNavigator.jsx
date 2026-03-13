@@ -15,10 +15,12 @@ import CustomTabBar from './CustomTabBar';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
+const CustomTabBarWrapper = (props) => <CustomTabBar {...props} />;
+
 function MainTabs() {
     return (
         <Tab.Navigator
-            tabBar={(props) => <CustomTabBar {...props} />}
+            tabBar={CustomTabBarWrapper}
             screenOptions={{ 
                 headerShown: false,
                 tabBarHideOnKeyboard: true 

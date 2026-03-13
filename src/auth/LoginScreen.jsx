@@ -47,7 +47,7 @@ const LoginScreen = ({ navigation }) => {
       Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
       Animated.spring(slideAnim, { toValue: 0, tension: 60, friction: 10, useNativeDriver: true }),
     ]).start();
-  }, []);
+  }, [fadeAnim, slideAnim]);
 
   const clearFieldError = field =>
     setFormErrors(prev => ({ ...prev, [field]: null }));
@@ -159,8 +159,6 @@ const LoginScreen = ({ navigation }) => {
 
           </View>
 
-
-          {/* Welcome */}
           <View style={{ marginTop: IS_TABLET ? spacing.xxxl : spacing.xxl }}>
 
             <AppText
@@ -176,8 +174,6 @@ const LoginScreen = ({ navigation }) => {
 
           </View>
 
-
-          {/* FORM */}
           <View style={{ marginTop: IS_TABLET ? spacing.xxxl : spacing.xxl }}>
 
             <View style={styles.identifierContainer}>

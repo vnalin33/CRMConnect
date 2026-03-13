@@ -10,11 +10,10 @@ import DashboardHeader from '../components/dashboard/DashboardHeader';
 import WalletCard from '../components/dashboard/WalletCard';
 import SearchBar from '../components/dashboard/SearchBar';
 import SnapshotRow from '../components/dashboard/SnapshotRow';
+import QuickActionsMenu from '../components/dashboard/QuickActionsMenu';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MOCK DATA
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ─── Mock Data ────────────────────────────────────────────────────────────────
+// Replace with API data in the future.
 const DASHBOARD_DATA = {
   wallet: {
     balance: '0.00',
@@ -28,21 +27,36 @@ const DASHBOARD_DATA = {
   ],
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN SCREEN
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ─── Screen ───────────────────────────────────────────────────────────────────
 const HomeScreen = () => {
   const { colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
+  const [menuVisible, setMenuVisible] = useState(false);
+
+  const handleMenuAction = (actionId) => {
+    // TODO: Navigate to individual screens when they're built
+    // e.g. if (actionId === 'customers') navigation.navigate('Customers');
+  };
 
   return (
     <View style={[screenSt.root, { backgroundColor: colors.background }]}>
+
+      {/* ── Quick Actions Modal — floats above everything, layout-independent ── */}
+      <QuickActionsMenu
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        onAction={handleMenuAction}
+        topOffset={75}
+      />
+
       <ScrollView showsVerticalScrollIndicator={false}>
 
         {/* ── Gradient header with dashboard top bar inside ── */}
         <GradientScreenHeader gradientStyle={screenSt.headerGradient}>
-          <DashboardHeader />
+          <DashboardHeader
+            onMenu={() => setMenuVisible(true)}
+            onNotification={() => {/* TODO */}}
+          />
         </GradientScreenHeader>
 
         {/* ── Wallet card overlapping the gradient bottom ── */}

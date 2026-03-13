@@ -69,7 +69,7 @@ const ProfileScreen = ({ navigation }) => {
             scrollable
             withPadding={false}
             edges={['bottom', 'left', 'right']}
-            style={{ backgroundColor: colors.background }}
+            style={styles.root}
         >
             <GradientScreenHeader
                 title="My Profile"
@@ -117,9 +117,9 @@ const ProfileScreen = ({ navigation }) => {
                         </TouchableOpacity>
 
                         <View style={styles.profileNameContainer}>
-                            <GradientText variant="h2" style={styles.boldText}>{profileData.name}</GradientText>
+                            <GradientText variant="h2" style={styles.profileNameText}>{profileData.name}</GradientText>
                             <View style={[styles.badge, { backgroundColor: colors.successBg, borderRadius: radius.full }]}>
-                                <AppText variant="caption" style={{ color: colors.successText, fontWeight: '600', fontSize: 10 }}>
+                                <AppText variant="caption" style={styles.badgeText}>
                                     {profileData.role}
                                 </AppText>
                             </View>
@@ -161,7 +161,6 @@ const ProfileScreen = ({ navigation }) => {
             </View>
 
             <View style={{ paddingHorizontal: spacing.base, paddingBottom: spacing.xxxl }}>
-                {/* Helper for filtering */}
                 {(() => {
                     const q = searchQuery.toLowerCase().trim();
                     const matches = (str) => !q || str?.toLowerCase().includes(q);
@@ -199,7 +198,7 @@ const ProfileScreen = ({ navigation }) => {
 
                     if (!hasResults && q) {
                         return (
-                            <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+                            <View style={styles.noResultsContainer}>
                                 <Feather name="search" size={48} color={colors.textDisabled} />
                                 <AppText variant="body" style={{ color: colors.textSecondary, marginTop: 16 }}>
                                     No matches found for "{searchQuery}"
@@ -336,13 +335,13 @@ const ProfileScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+    root: {
+        flex: 1,
+    },
     centered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    searchIconBtn: {
-        padding: 8,
     },
     profileHeader: {
         flexDirection: 'row',
@@ -379,7 +378,7 @@ const styles = StyleSheet.create({
         marginLeft: 14,
         justifyContent: 'center',
     },
-    boldText: {
+    profileNameText: {
         fontWeight: '700',
     },
     badge: {
@@ -388,6 +387,11 @@ const styles = StyleSheet.create({
         paddingVertical: 3,
         marginTop: 4,
         marginBottom: 4,
+    },
+    badgeText: {
+        color: '#FFF',
+        fontWeight: '600',
+        fontSize: 10,
     },
     statsCard: {
         flexDirection: 'row',
@@ -423,6 +427,13 @@ const styles = StyleSheet.create({
         elevation: 0,
         shadowOpacity: 0,
         borderWidth: 1,
+    },
+    formPadding: {
+        paddingTop: 8,
+    },
+    noResultsContainer: {
+        paddingVertical: 40,
+        alignItems: 'center',
     },
     signOutBtn: {
         flexDirection: 'row',

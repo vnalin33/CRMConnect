@@ -19,14 +19,12 @@ const PerformanceChart = ({
     const chartHeight = 140;
     const chartWidth = '100%';
 
-    // Simple View-based line chart
     const renderChart = () => {
         const points = chartData;
         const maxVal = chartMax || 100;
 
         return (
             <View style={[styles.chartArea, { height: chartHeight, marginTop: spacing.md }]}>
-                {/* Y-axis labels */}
                 <View style={styles.yAxis}>
                     {['80k', '60k', '40k', '20k'].map(label => (
                         <AppText key={label} variant="caption" color="disabled" style={styles.yLabel}>
@@ -35,9 +33,8 @@ const PerformanceChart = ({
                     ))}
                 </View>
 
-                {/* Chart body */}
+
                 <View style={styles.chartBody}>
-                    {/* Grid lines */}
                     {[0, 1, 2, 3].map(i => (
                         <View
                             key={i}
@@ -50,8 +47,6 @@ const PerformanceChart = ({
                             ]}
                         />
                     ))}
-
-                    {/* Data points + connecting lines */}
                     <View style={styles.pointsRow}>
                         {points.map((val, idx) => {
                             const pct = val / maxVal;
@@ -72,8 +67,6 @@ const PerformanceChart = ({
                             );
                         })}
                     </View>
-
-                    {/* X-axis labels */}
                     <View style={styles.xAxis}>
                         {weekLabels && weekLabels.map((label, idx) => (
                             <AppText key={idx} variant="caption" color="disabled" style={styles.xLabel}>
@@ -107,7 +100,6 @@ const PerformanceChart = ({
                 },
             ]}
         >
-            {/* Header */}
             <View style={styles.headerRow}>
                 <AppText variant="h3" style={{ color: colors.textPrimary, fontWeight: '700' }}>
                     Performance Overview
@@ -116,8 +108,6 @@ const PerformanceChart = ({
                     <AppText variant="caption" style={{ color: colors.pillText }}>{monthLabel}</AppText>
                 </View>
             </View>
-
-            {/* Tabs */}
             <View style={[styles.tabRow, { marginTop: spacing.md }]}>
                 {tabs && tabs.map((tab, idx) => (
                     <TouchableOpacity
@@ -148,11 +138,7 @@ const PerformanceChart = ({
                     </TouchableOpacity>
                 ))}
             </View>
-
-            {/* Chart */}
             {renderChart()}
-
-            {/* Bottom stats */}
             <View style={[styles.statsRow, { marginTop: spacing.lg, borderTopColor: colors.divider }]}>
                 <StatItem value={filesInProgress} label="Files in Progress" />
                 <StatItem value={disbursedFiles} label="Disbursed Files" />

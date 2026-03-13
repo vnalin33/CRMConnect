@@ -73,7 +73,7 @@ const PayoutCard = ({
                 </View>
             </View>
 
-            {/* Footer link */}
+
             <TouchableOpacity
                 onPress={onViewHistory}
                 style={[styles.linkRow, { marginTop: spacing.lg }]}

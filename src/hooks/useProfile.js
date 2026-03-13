@@ -32,7 +32,7 @@ export const useProfile = () => {
                 const data = await fetchProfileData();
                 if (isMounted) setProfileData(data);
             } catch (error) {
-                // Silently handle or use a professional error reporting service
+                // Silently handle error
             } finally {
                 if (isMounted) setLoading(false);
             }
@@ -61,7 +61,7 @@ export const useProfile = () => {
             }));
             setImageModalVisible(false);
         } catch (error) {
-            // Handle picker cancellation or other errors professionally
+            // Handle picker cancellation
         }
     };
 
@@ -85,7 +85,7 @@ export const useProfile = () => {
             }));
             setImageModalVisible(false);
         } catch (error) {
-            // Handle camera errors professionally
+            // Handle camera errors
         }
     };
 
