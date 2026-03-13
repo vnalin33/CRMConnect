@@ -1,57 +1,59 @@
 import { useState } from 'react';
-
-const LOAN_TYPES = [
-    'Home Loan',
-    'Personal Loan',
-    'Loan Against Property',
-    'Business Loan',
-];
-
-const EMPLOYMENT_TYPES = [
-    'Salaried',
-    'Self Employed',
-    'Business Owner',
-];
+import { LOAN_TYPES, EMPLOYMENT_TYPES } from '../api/mockData';
 
 export const useNewLead = () => {
-    // Form Fields
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [email, setEmail] = useState('');
-    const [mobile, setMobile] = useState('');
-    const [loanType, setLoanType] = useState('');
-    const [loanAmount, setLoanAmount] = useState('');
-    const [annualIncome, setAnnualIncome] = useState('');
-    const [employmentType, setEmploymentType] = useState('');
-    const [notes, setNotes] = useState('');
+    // Form State
+    const [formData, setFormData] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+        mobile: '',
+        loanType: '',
+        loanAmount: '',
+        annualIncome: '',
+        employmentType: '',
+        notes: '',
+    });
 
-    // Dropdown Visibility
-    const [showLoanDropdown, setShowLoanDropdown] = useState(false);
-    const [showEmploymentDropdown, setShowEmploymentDropdown] = useState(false);
+    // UI States
+    const [dropdowns, setDropdowns] = useState({
+        loan: false,
+        employment: false,
+    });
 
-    // Validation Errors
     const [errors, setErrors] = useState({});
-
-    // Submission State
     const [submitting, setSubmitting] = useState(false);
+
+    const updateField = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+        if (errors[field]) {
+            setErrors(prev => ({ ...prev, [field]: null }));
+        }
+    };
+
+    const toggleDropdown = (field) => {
+        setDropdowns(prev => ({
+            loan: field === 'loan' ? !prev.loan : false,
+            employment: field === 'employment' ? !prev.employment : false,
+        }));
+    };
 
     const validate = () => {
         const newErrors = {};
+        const { firstName, lastName, email, mobile, loanType, loanAmount, annualIncome, employmentType, notes } = formData;
 
         if (!firstName.trim()) {
             newErrors.firstName = 'First name is required';
-        } else if (!/^[A-Za-z]+$/.test(firstName.trim())) {
-            newErrors.firstName = 'Only letters allowed';
+        } else if (!/^[A-Za-z\s]+$/.test(firstName.trim())) {
+            newErrors.firstName = 'Only letters and spaces allowed';
         } else if (firstName.trim().length < 2) {
             newErrors.firstName = 'Minimum 2 characters';
         }
 
         if (!lastName.trim()) {
             newErrors.lastName = 'Last name is required';
-        } else if (!/^[A-Za-z]+$/.test(lastName.trim())) {
-            newErrors.lastName = 'Only letters allowed';
-        } else if (lastName.trim().length < 2) {
-            newErrors.lastName = 'Minimum 2 characters';
+        } else if (!/^[A-Za-z\s]+$/.test(lastName.trim())) {
+            newErrors.lastName = 'Only letters and spaces allowed';
         }
 
         if (!email.trim()) {
@@ -70,19 +72,14 @@ export const useNewLead = () => {
 
         if (!loanAmount.trim()) {
             newErrors.loanAmount = 'Loan amount is required';
-        } else if (isNaN(Number(loanAmount.replace(/,/g, '')))) {
-            newErrors.loanAmount = 'Enter a valid amount';
         }
 
         if (!annualIncome.trim()) {
             newErrors.annualIncome = 'Annual income is required';
-        } else if (isNaN(Number(annualIncome.replace(/,/g, '')))) {
-            newErrors.annualIncome = 'Enter a valid amount';
         }
 
         if (!employmentType) newErrors.employmentType = 'Please select employment type';
 
-        // 200 Word Limit Validation on Submit
         if (notes.trim()) {
             const wordCount = notes.trim().split(/\s+/).filter(word => word.length > 0).length;
             if (wordCount > 200) {
@@ -95,42 +92,30 @@ export const useNewLead = () => {
     };
 
     const resetForm = () => {
-        setFirstName('');
-        setLastName('');
-        setEmail('');
-        setMobile('');
-        setLoanType('');
-        setLoanAmount('');
-        setAnnualIncome('');
-        setEmploymentType('');
-        setNotes('');
+        setFormData({
+            firstName: '',
+            lastName: '',
+            email: '',
+            mobile: '',
+            loanType: '',
+            loanAmount: '',
+            annualIncome: '',
+            employmentType: '',
+            notes: '',
+        });
         setErrors({});
     };
 
     const handleSubmit = async () => {
-        if (!validate()) return;
+        if (!validate()) return { success: false };
 
         setSubmitting(true);
         try {
-            // Simulate API call
             await new Promise(r => setTimeout(r, 1500));
-            const payload = {
-                firstName: firstName.trim(),
-                lastName: lastName.trim(),
-                email: email.trim(),
-                mobile: mobile.trim(),
-                loanType,
-                loanAmount: loanAmount.replace(/,/g, ''),
-                annualIncome: annualIncome.replace(/,/g, ''),
-                employmentType,
-                notes: notes.trim(),
-            };
-            console.log('Lead submitted:', payload);
             resetForm();
             return { success: true };
         } catch (error) {
-            console.error('Submit error:', error);
-            return { success: false, error };
+            return { success: false, error: 'Failed to submit lead' };
         } finally {
             setSubmitting(false);
         }
@@ -140,77 +125,25 @@ export const useNewLead = () => {
         setSubmitting(true);
         try {
             await new Promise(r => setTimeout(r, 800));
-            const payload = {
-                firstName: firstName.trim(),
-                lastName: lastName.trim(),
-                email: email.trim(),
-                mobile: mobile.trim(),
-                loanType,
-                loanAmount: loanAmount.replace(/,/g, ''),
-                annualIncome: annualIncome.replace(/,/g, ''),
-                employmentType,
-                notes: notes.trim(),
-                isDraft: true,
-            };
-            console.log('Draft saved:', payload);
             return { success: true };
         } catch (error) {
-            console.error('Draft error:', error);
-            return { success: false, error };
+            return { success: false, error: 'Failed to save draft' };
         } finally {
             setSubmitting(false);
         }
     };
 
-    const selectLoanType = (type) => {
-        setLoanType(type);
-        setShowLoanDropdown(false);
-        setErrors(prev => ({ ...prev, loanType: null }));
-    };
-
-    const selectEmploymentType = (type) => {
-        setEmploymentType(type);
-        setShowEmploymentDropdown(false);
-        setErrors(prev => ({ ...prev, employmentType: null }));
-    };
-
     return {
-        // Field values
-        firstName,
-        lastName,
-        email,
-        mobile,
-        loanType,
-        loanAmount,
-        annualIncome,
-        employmentType,
-        notes,
-
-        // Setters
-        setFirstName,
-        setLastName,
-        setEmail,
-        setMobile,
-        setLoanAmount,
-        setAnnualIncome,
-        setNotes,
-
-        // Dropdown
-        showLoanDropdown,
-        setShowLoanDropdown,
-        showEmploymentDropdown,
-        setShowEmploymentDropdown,
-        selectLoanType,
-        selectEmploymentType,
-        LOAN_TYPES,
-        EMPLOYMENT_TYPES,
-
-        // Validation & Actions
+        formData,
+        updateField,
+        dropdowns,
+        toggleDropdown,
         errors,
-        setErrors,
         submitting,
         handleSubmit,
         handleSaveDraft,
         resetForm,
+        LOAN_TYPES,
+        EMPLOYMENT_TYPES,
     };
 };

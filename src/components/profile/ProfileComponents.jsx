@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
+import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from '../../theme';
+import { BRAND_GRADIENT } from '../../theme/colors';
 import AppText from '../common/AppText';
 import GradientText from '../common/GradientText';
 
@@ -17,7 +19,9 @@ export const HeaderRow = ({ title, showEdit = false, isEditing = false, onPressE
                     {isEditing ? (
                         <Feather name="check" size={18} color={colors.success} />
                     ) : (
-                        <Feather name="edit" size={16} color={colors.primary} />
+                        <View style={{ backgroundColor: colors.profileIconBg, padding: 6, borderRadius: 8 }}>
+                            <Feather name="edit-3" size={14} color={colors.primary} />
+                        </View>
                     )}
                 </TouchableOpacity>
             )}
@@ -36,8 +40,8 @@ export const InfoRow = ({ icon, label, value, isLast = false }) => {
                 borderBottomColor: colors.divider
             }
         ]}>
-            <View style={[styles.iconBubble, { backgroundColor: colors.profileIconBg }]}>
-                <Feather name={icon} size={15} color={colors.primary} />
+            <View style={[styles.iconBubble, { backgroundColor: colors.searchBg, borderColor: colors.border, borderWidth: 1 }]}>
+                <Feather name={icon} size={14} color={colors.primary} />
             </View>
             <View style={styles.infoContent}>
                 <AppText variant="caption" color="secondary" style={{ marginBottom: 2, fontSize: 11 }}>{label}</AppText>
@@ -69,8 +73,8 @@ export const ActionRow = ({ icon, title, subtitle, rightElement, onPress, isLast
                 }
             ]}
         >
-            <View style={[styles.iconBubble, { backgroundColor: colors.profileIconBg }]}>
-                <Feather name={icon} size={15} color={iconColor || colors.primary} />
+            <View style={[styles.iconBubble, { backgroundColor: colors.searchBg, borderColor: colors.border, borderWidth: 1 }]}>
+                <Feather name={icon} size={14} color={iconColor || colors.primary} />
             </View>
             <View style={styles.actionContent}>
                 <AppText variant="bodySm" style={{ fontWeight: '600', color: colors.textPrimary }}>{title}</AppText>
@@ -82,6 +86,78 @@ export const ActionRow = ({ icon, title, subtitle, rightElement, onPress, isLast
                 {rightElement ? rightElement : <Feather name="chevron-right" size={16} color={colors.iconColor} />}
             </View>
         </TouchableOpacity>
+    );
+};
+
+export const GradientToggle = ({ value, onValueChange }) => {
+    const { colors } = useTheme();
+    return (
+        <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => onValueChange(!value)}
+            style={styles.gradientToggleTrack}
+        >
+            <LinearGradient
+                colors={value ? BRAND_GRADIENT.colors : ['#CDD5DF', '#CDD5DF']}
+                start={BRAND_GRADIENT.start}
+                end={BRAND_GRADIENT.end}
+                locations={BRAND_GRADIENT.locations}
+                style={styles.gradientToggleTrackBg}
+            >
+                <View style={[styles.gradientToggleThumb, { left: value ? 22 : 2 }]} />
+            </LinearGradient>
+        </TouchableOpacity>
+    );
+};
+
+export const GradientThemeSwitcher = ({ isDark, toggleTheme, colors, spacing, radius }) => {
+    return (
+        <View style={[styles.themeSwitcherOuter, { backgroundColor: colors.searchBg, borderColor: colors.border }]}>
+            <View style={styles.themeSwitcher}>
+                <TouchableOpacity
+                    onPress={() => { if (isDark) toggleTheme(); }}
+                    activeOpacity={0.8}
+                    style={styles.themeBtn}
+                >
+                    {!isDark ? (
+                        <LinearGradient
+                            colors={BRAND_GRADIENT.colors}
+                            start={BRAND_GRADIENT.start}
+                            end={BRAND_GRADIENT.end}
+                            locations={BRAND_GRADIENT.locations}
+                            style={[styles.themeBtnGradient, { borderRadius: radius.full }]}
+                        >
+                            <Feather name="sun" size={16} color="#FFF" />
+                        </LinearGradient>
+                    ) : (
+                        <View style={styles.themeBtnInactive}>
+                            <Feather name="sun" size={16} color={colors.textSecondary} />
+                        </View>
+                    )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => { if (!isDark) toggleTheme(); }}
+                    activeOpacity={0.8}
+                    style={styles.themeBtn}
+                >
+                    {isDark ? (
+                        <LinearGradient
+                            colors={BRAND_GRADIENT.colors}
+                            start={BRAND_GRADIENT.start}
+                            end={BRAND_GRADIENT.end}
+                            locations={BRAND_GRADIENT.locations}
+                            style={[styles.themeBtnGradient, { borderRadius: radius.full }]}
+                        >
+                            <Feather name="moon" size={16} color="#FFF" />
+                        </LinearGradient>
+                    ) : (
+                        <View style={styles.themeBtnInactive}>
+                            <Feather name="moon" size={16} color={colors.textSecondary} />
+                        </View>
+                    )}
+                </TouchableOpacity>
+            </View>
+        </View>
     );
 };
 
@@ -120,5 +196,54 @@ const styles = StyleSheet.create({
     },
     rightElement: {
         marginLeft: 10,
-    }
+    },
+    gradientToggleTrack: {
+        width: 44,
+        height: 24,
+    },
+    gradientToggleTrackBg: {
+        width: 44,
+        height: 24,
+        borderRadius: 12,
+        justifyContent: 'center',
+    },
+    gradientToggleThumb: {
+        position: 'absolute',
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: '#FFF',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+        elevation: 3,
+    },
+    themeSwitcherOuter: {
+        borderWidth: 1.5,
+        borderRadius: 26,
+        padding: 2,
+    },
+    themeSwitcher: {
+        flexDirection: 'row',
+        borderRadius: 24,
+        padding: 2,
+        width: 80,
+        height: 34,
+    },
+    themeBtn: {
+        flex: 1,
+    },
+    themeBtnGradient: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 20,
+    },
+    themeBtnInactive: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 20,
+    },
 });

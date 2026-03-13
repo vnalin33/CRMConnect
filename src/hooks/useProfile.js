@@ -1,37 +1,12 @@
 import { useState, useEffect } from 'react';
 import ImagePicker from 'react-native-image-crop-picker';
 import { fetchBankDetailsByIfsc } from '../api/bankApi';
+import { PROFILE_MOCK_DATA } from '../api/mockData';
 
-// Mock API Call - Replace with real implementation later
 const fetchProfileData = async () => {
     return new Promise((resolve) => {
         setTimeout(() => {
-            resolve({
-                name: "User1234",
-                role: "Finance Agent",
-                rating: "4.2",
-                ratingText: "Top Performer",
-                stats: {
-                    leads: { count: '14', label: 'Total Leads' },
-                    deals: { count: '42', label: 'Closed Deals' },
-                    month: { count: '17', label: 'This Month' },
-                },
-                personalInfo: {
-                    name: "User1234",
-                    email: "user1234@gmail.com",
-                    mobile: "9876543210",
-                    location: "Mumbai, India",
-                    profileImage: null,
-                },
-                bankDetails: {
-                    ifsc: "Not Provided",
-                    account: "Not Provided",
-                    branch: "Not Provided"
-                },
-                settings: {
-                    notifications: true,
-                }
-            });
+            resolve(PROFILE_MOCK_DATA);
         }, 1200);
     });
 };
@@ -39,18 +14,15 @@ const fetchProfileData = async () => {
 export const useProfile = () => {
     const [profileData, setProfileData] = useState(null);
     const [loading, setLoading] = useState(true);
-    
-    // Personal Info Editing State
+
     const [isEditingInfo, setIsEditingInfo] = useState(false);
     const [editForm, setEditForm] = useState({});
     const [formErrors, setFormErrors] = useState({});
-    
-    // Bank Details Editing State
+
     const [isEditingBank, setIsEditingBank] = useState(false);
     const [editBankForm, setEditBankForm] = useState({});
     const [bankFormErrors, setBankFormErrors] = useState({});
-    
-    // UI State
+
     const [imageModalVisible, setImageModalVisible] = useState(false);
 
     useEffect(() => {
@@ -60,7 +32,7 @@ export const useProfile = () => {
                 const data = await fetchProfileData();
                 if (isMounted) setProfileData(data);
             } catch (error) {
-                console.error("Failed to load profile", error);
+                // Silently handle or use a professional error reporting service
             } finally {
                 if (isMounted) setLoading(false);
             }
@@ -89,9 +61,7 @@ export const useProfile = () => {
             }));
             setImageModalVisible(false);
         } catch (error) {
-            if (error.code !== 'E_PICKER_CANCELLED') {
-                console.error("ImagePicker Error: ", error);
-            }
+            // Handle picker cancellation or other errors professionally
         }
     };
 
@@ -115,9 +85,7 @@ export const useProfile = () => {
             }));
             setImageModalVisible(false);
         } catch (error) {
-            if (error.code !== 'E_PICKER_CANCELLED') {
-                console.error("Camera Error: ", error);
-            }
+            // Handle camera errors professionally
         }
     };
 
@@ -161,8 +129,8 @@ export const useProfile = () => {
             setFormErrors({});
             setProfileData(prev => ({
                 ...prev,
-                name: editForm.name,
-                personalInfo: { ...editForm }
+                personalInfo: { ...editForm },
+                name: editForm.name
             }));
         } else {
             setEditForm({ ...profileData.personalInfo });
@@ -173,28 +141,49 @@ export const useProfile = () => {
 
     const handleBankEditToggle = () => {
         if (isEditingBank) {
-            const errors = {};
-            if (!editBankForm.ifsc || editBankForm.ifsc.length !== 11) {
-                errors.ifsc = "IFSC must be 11 characters";
-            }
-            if (!editBankForm.account || editBankForm.account.trim().length === 0) {
-                errors.account = "Account number is required";
-            } else if (editBankForm.account.length > 18) {
-                errors.account = "Account number must be max 18 digits";
-            }
+            const isIfscEmpty = !editBankForm.ifsc || editBankForm.ifsc.trim() === '';
+            const isAccountEmpty = !editBankForm.account || editBankForm.account.trim() === '';
 
-            if (Object.keys(errors).length > 0) {
-                setBankFormErrors(errors);
-                return;
+            let finalBankDetails = { ...editBankForm };
+
+            if (isIfscEmpty && isAccountEmpty) {
+                finalBankDetails = {
+                    ifsc: "Not Provided",
+                    account: "Not Provided",
+                    branch: "Not Provided"
+                };
+            } else {
+                const errors = {};
+                if (!editBankForm.ifsc || editBankForm.ifsc.length !== 11) {
+                    errors.ifsc = "IFSC must be 11 characters";
+                }
+                if (!editBankForm.account || editBankForm.account.trim().length === 0) {
+                    errors.account = "Account number is required";
+                } else if (editBankForm.account.length > 18) {
+                    errors.account = "Account number must be max 18 digits";
+                }
+
+                if (Object.keys(errors).length > 0) {
+                    setBankFormErrors(errors);
+                    return;
+                }
             }
 
             setBankFormErrors({});
             setProfileData(prev => ({
                 ...prev,
-                bankDetails: { ...editBankForm }
+                bankDetails: finalBankDetails
             }));
         } else {
-            setEditBankForm({ ...profileData.bankDetails });
+            const currentIfsc = profileData.bankDetails.ifsc;
+            const currentAccount = profileData.bankDetails.account;
+            const currentBranch = profileData.bankDetails.branch;
+
+            setEditBankForm({
+                ifsc: (currentIfsc === 'Not Provided') ? '' : currentIfsc,
+                account: (currentAccount === 'Not Provided') ? '' : currentAccount,
+                branch: (currentBranch === 'Not Provided') ? '' : currentBranch
+            });
             setBankFormErrors({});
         }
         setIsEditingBank(!isEditingBank);
@@ -218,7 +207,7 @@ export const useProfile = () => {
             }
         } else {
             setBankFormErrors((prev) => ({ ...prev, ifsc: uText.length > 0 ? 'IFSC must be 11 characters' : null }));
-            if(uText.length < 11) {
+            if (uText.length < 11) {
                 setEditBankForm((prev) => ({ ...prev, branch: '' }));
             }
         }

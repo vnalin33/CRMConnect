@@ -1,11 +1,9 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
     View,
-    TextInput,
     TouchableOpacity,
     FlatList,
     StyleSheet,
-    Platform,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Feather from 'react-native-vector-icons/Feather';
@@ -17,7 +15,6 @@ import GradientScreenHeader from '../components/layout/GradientScreenHeader';
 import AppText from '../components/common/AppText';
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────
-// In production, replace with API data passed via props or context.
 const PAYOUT_DATA = [
     {
         id: '1',
@@ -58,7 +55,7 @@ const PAYOUT_DATA = [
 const formatINR = (n) =>
     '₹' + n.toLocaleString('en-IN');
 
-// ─── Sub-components (defined OUTSIDE PayoutScreen so refs are stable) ────────
+// ─── Sub-components ──────────────────────────────────────────────────────────
 
 const TabPill = React.memo(({ label, active, onPress, style }) => {
     const { colors, radius, spacing } = useTheme();
@@ -200,8 +197,6 @@ const PayoutItem = React.memo(({ item }) => {
     );
 });
 
-// ─── Stable sub-lists and header (no inline component definitions) ───────────
-
 const CYCLE_TABS = [
     { id: 'instant', label: 'Instant' },
     { id: 'cycle', label: 'Cycle' },
@@ -215,7 +210,6 @@ const PayoutScreen = ({ navigation }) => {
     const [statusTab, setStatusTab] = useState('all');
     const [cycleTab, setCycleTab] = useState('instant');
 
-    // ── Derived summary — recomputed from real data whenever PAYOUT_DATA changes
     const summary = useMemo(() => {
         const paid = PAYOUT_DATA.filter(i => i.status === 'paid');
         const pending = PAYOUT_DATA.filter(i => i.status === 'pending');
@@ -229,16 +223,14 @@ const PayoutScreen = ({ navigation }) => {
             pendingAmount: formatINR(pendingSum),
             pendingCount: pending.length,
         };
-    }, []); // recalculate if data ever changes (via API)
+    }, []);
 
-    // ── Dynamic status tabs derived from real counts
     const statusTabs = useMemo(() => [
         { id: 'all', label: 'All' },
         { id: 'paid', label: `Paid (${summary.paidCount})` },
         { id: 'pending', label: `Pending (${summary.pendingCount})` },
     ], [summary.paidCount, summary.pendingCount]);
 
-    // ── Filtered list
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
         return PAYOUT_DATA.filter(item => {
@@ -251,22 +243,17 @@ const PayoutScreen = ({ navigation }) => {
         });
     }, [search, statusTab, cycleTab]);
 
-    // ── Stable callbacks — prevent unnecessary re-renders
     const handleStatusTab = useCallback((id) => setStatusTab(id), []);
     const handleCycleTab = useCallback((id) => setCycleTab(id), []);
     const renderItem = useCallback(({ item }) => <PayoutItem item={item} />, []);
     const keyExtractor = useCallback((item) => item.id, []);
 
-    // ── List header — memoized so it's stable; receives tab state via closure
-    // The search bar is OUTSIDE FlatList (below) to avoid the remount-on-type bug.
     const ListHeader = useMemo(() => (
         <View>
-            {/* Summary gradient card */}
             <View style={{ marginTop: spacing.base }}>
                 <PayoutSummaryCard summary={summary} />
             </View>
 
-            {/* Status tabs */}
             <View style={[styles.tabRow, { marginHorizontal: spacing.base, marginTop: spacing.base, backgroundColor: colors.surfaceElevated, borderRadius: 50, borderColor: colors.border, borderWidth: 1 }]}>
                 {statusTabs.map(tab => (
                     <TabPill
@@ -279,7 +266,6 @@ const PayoutScreen = ({ navigation }) => {
                 ))}
             </View>
 
-            {/* Cycle tabs */}
             <View style={[styles.tabRow, { marginHorizontal: spacing.base, marginTop: spacing.sm, backgroundColor: colors.surfaceElevated, borderRadius: 50, borderColor: colors.border, borderWidth: 1 }]}>
                 {CYCLE_TABS.map(tab => (
                     <TabPill
@@ -317,33 +303,11 @@ const PayoutScreen = ({ navigation }) => {
                 subtitle="Track your earnings & settlements"
                 showBack
                 navigation={navigation}
+                searchable
+                searchValue={search}
+                onSearchChange={setSearch}
+                searchPlaceholder="Search Payouts..."
             />
-
-            {/* Search bar OUTSIDE FlatList — avoids header remount on every keystroke */}
-            <View style={{ marginTop: spacing.base }}>
-                <View style={[
-                    styles.searchBar,
-                    {
-                        backgroundColor: colors.searchBg,
-                        borderColor: colors.searchBorder,
-                        borderRadius: 999,
-                        paddingHorizontal: spacing.base,
-                        marginHorizontal: spacing.base,
-                    },
-                ]}>
-                    <TextInput
-                        value={search}
-                        onChangeText={setSearch}
-                        placeholder="Search Payouts..."
-                        placeholderTextColor={colors.textPlaceholder}
-                        style={[styles.searchInput, { color: colors.textPrimary }]}
-                        returnKeyType="search"
-                        autoCorrect={false}
-                        autoCapitalize="none"
-                    />
-                    <Feather name="search" size={18} color={colors.textSecondary} />
-                </View>
-            </View>
 
             <FlatList
                 data={filtered}
@@ -361,18 +325,6 @@ const PayoutScreen = ({ navigation }) => {
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-    searchBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1.5,
-        height: 48,
-    },
-    searchInput: {
-        flex: 1,
-        fontSize: 14,
-        paddingVertical: 0,
-        includeFontPadding: false,
-    },
     summaryCard: {
         shadowColor: '#816FF5',
         shadowOffset: { width: 0, height: 6 },

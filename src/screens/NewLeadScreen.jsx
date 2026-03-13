@@ -2,131 +2,34 @@ import React from 'react';
 import {
     View,
     StyleSheet,
-    TouchableOpacity,
-    Image,
     Alert,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from '../theme';
-import { BRAND_GRADIENT } from '../theme/colors';
 import ScreenWrapper from '../components/layout/ScreenWrapper';
 import GradientScreenHeader from '../components/layout/GradientScreenHeader';
 import AppText from '../components/common/AppText';
 import AppInput from '../components/common/AppInput';
 import AppButton from '../components/common/AppButton';
 import GradientText from '../components/common/GradientText';
+import DropdownSelect from '../components/common/DropdownSelect';
 import { useNewLead } from '../hooks/useNewLead';
-const DropdownSelect = ({ label, placeholder, value, options, isOpen, onToggle, onSelect, error }) => {
-    const { colors, spacing, radius } = useTheme();
-
-    return (
-        <View style={{ marginBottom: spacing.base }}>
-            {label ? (
-                <AppText variant="label" color="secondary" style={{ marginBottom: spacing.xs }}>
-                    {label}
-                </AppText>
-            ) : null}
-
-            <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={onToggle}
-                style={[
-                    styles.dropdownTrigger,
-                    {
-                        backgroundColor: colors.inputBg,
-                        borderColor: error ? colors.error : isOpen ? colors.primary : colors.border,
-                        borderRadius: radius.xl,
-                        paddingHorizontal: spacing.base,
-                    }
-                ]}
-            >
-                <AppText
-                    variant="bodySm"
-                    style={{
-                        flex: 1,
-                        color: value ? colors.textPrimary : colors.textPlaceholder,
-                        fontSize: 14,
-                    }}
-                >
-                    {value || placeholder}
-                </AppText>
-                <Feather
-                    name={isOpen ? 'chevron-up' : 'chevron-down'}
-                    size={18}
-                    color={colors.textSecondary}
-                />
-            </TouchableOpacity>
-
-            {isOpen && (
-                <View style={[
-                    styles.dropdownList,
-                    {
-                        backgroundColor: colors.surface,
-                        borderColor: colors.border,
-                        borderRadius: radius.md,
-                    }
-                ]}>
-                    {/* Header Option */}
-                    <LinearGradient
-                        colors={BRAND_GRADIENT.colors}
-                        start={BRAND_GRADIENT.start}
-                        end={BRAND_GRADIENT.end}
-                        locations={BRAND_GRADIENT.locations}
-                        style={[styles.dropdownHeaderItem, { borderTopLeftRadius: radius.md, borderTopRightRadius: radius.md }]}
-                    >
-                        <AppText variant="bodySm" style={{ color: '#FFF', fontWeight: '600', fontSize: 13 }}>
-                            {placeholder}
-                        </AppText>
-                    </LinearGradient>
-
-                    {options.map((item, index) => (
-                        <TouchableOpacity
-                            key={item}
-                            activeOpacity={0.7}
-                            onPress={() => onSelect(item)}
-                            style={[
-                                styles.dropdownItem,
-                                {
-                                    borderBottomWidth: index < options.length - 1 ? 1 : 0,
-                                    borderBottomColor: colors.divider,
-                                    borderBottomLeftRadius: index === options.length - 1 ? radius.md : 0,
-                                    borderBottomRightRadius: index === options.length - 1 ? radius.md : 0,
-                                }
-                            ]}
-                        >
-                            <AppText variant="bodySm" style={{ color: colors.textPrimary, fontSize: 13 }}>
-                                {item}
-                            </AppText>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-            )}
-
-            {error ? (
-                <AppText variant="caption" color="error" style={{ marginTop: spacing.xs, marginLeft: spacing.xs }}>
-                    ⚠ {error}
-                </AppText>
-            ) : null}
-        </View>
-    );
-};
 
 const NewLeadScreen = ({ navigation }) => {
-    const { colors, spacing, radius, isDark } = useTheme();
+    const { colors, spacing, radius } = useTheme();
 
     const {
-        firstName, lastName, email, mobile,
-        loanType, loanAmount, annualIncome, employmentType, notes,
-        setFirstName, setLastName, setEmail, setMobile,
-        setLoanAmount, setAnnualIncome, setNotes,
-        showLoanDropdown, setShowLoanDropdown,
-        showEmploymentDropdown, setShowEmploymentDropdown,
-        selectLoanType, selectEmploymentType,
-        LOAN_TYPES, EMPLOYMENT_TYPES,
-        errors, setErrors, submitting,
-        handleSubmit, handleSaveDraft,
+        formData,
+        updateField,
+        dropdowns,
+        toggleDropdown,
+        errors,
+        submitting,
+        handleSubmit,
+        handleSaveDraft,
+        LOAN_TYPES,
+        EMPLOYMENT_TYPES,
     } = useNewLead();
 
     const onSubmit = async () => {
@@ -135,6 +38,8 @@ const NewLeadScreen = ({ navigation }) => {
             Alert.alert('Success', 'Lead submitted successfully!', [
                 { text: 'OK', onPress: () => navigation.navigate('Home') }
             ]);
+        } else if (result?.error) {
+            Alert.alert('Error', result.error);
         }
     };
 
@@ -142,6 +47,8 @@ const NewLeadScreen = ({ navigation }) => {
         const result = await handleSaveDraft();
         if (result?.success) {
             Alert.alert('Saved', 'Lead saved as draft.');
+        } else if (result?.error) {
+            Alert.alert('Error', result.error);
         }
     };
 
@@ -155,69 +62,52 @@ const NewLeadScreen = ({ navigation }) => {
                 navigation={navigation}
             />
 
-            {/* ── Form Container ──────────────── */}
             <View style={[styles.formContainer, { paddingHorizontal: spacing.base }]}>
 
-                {/* ── PERSONAL INFO ──────────── */}
                 <GradientText variant="label" style={styles.sectionTitle}>
                     PERSONAL INFO
                 </GradientText>
 
-                {/* First Name / Last Name Row */}
                 <View style={styles.nameRow}>
-                    <View style={{ flex: 1, marginRight: spacing.sm }}>
+                    <View style={[styles.flex1, { marginRight: spacing.sm }]}>
                         <AppInput
                             label="FIRST NAME"
                             placeholder="First Name"
-                            value={firstName}
-                            onChangeText={(t) => {
-                                setFirstName(t.replace(/[^a-zA-Z\s]/g, ''));
-                                setErrors(prev => ({ ...prev, firstName: null }));
-                            }}
+                            value={formData.firstName}
+                            onChangeText={(t) => updateField('firstName', t.replace(/[^a-zA-Z\s]/g, ''))}
                             error={errors.firstName}
                             leftIcon={<Feather name="user" size={16} color={colors.textPlaceholder} />}
                         />
                     </View>
-                    <View style={{ flex: 1 }}>
+                    <View style={styles.flex1}>
                         <AppInput
                             label="LAST NAME"
                             placeholder="Last Name"
-                            value={lastName}
-                            onChangeText={(t) => {
-                                setLastName(t.replace(/[^a-zA-Z\s]/g, ''));
-                                setErrors(prev => ({ ...prev, lastName: null }));
-                            }}
+                            value={formData.lastName}
+                            onChangeText={(t) => updateField('lastName', t.replace(/[^a-zA-Z\s]/g, ''))}
                             error={errors.lastName}
                             leftIcon={<Feather name="user" size={16} color={colors.textPlaceholder} />}
                         />
                     </View>
                 </View>
 
-                {/* Email */}
                 <AppInput
                     label="EMAIL ID"
                     placeholder="email@example.com"
-                    value={email}
+                    value={formData.email}
                     keyboardType="email-address"
-                    onChangeText={(t) => {
-                        setEmail(t);
-                        setErrors(prev => ({ ...prev, email: null }));
-                    }}
+                    onChangeText={(t) => updateField('email', t)}
                     error={errors.email}
                     leftIcon={<Feather name="user" size={16} color={colors.textPlaceholder} />}
                 />
 
-                {/* Mobile Number */}
                 <AppInput
                     label="MOBILE NUMBER"
                     placeholder="+91 00000 00000"
-                    value={mobile}
+                    value={formData.mobile}
                     keyboardType="phone-pad"
                     maxLength={10}
-                    onChangeText={(t) => {
-                        setMobile(t.replace(/[^0-9]/g, ''));
-                        setErrors(prev => ({ ...prev, mobile: null }));
-                    }}
+                    onChangeText={(t) => updateField('mobile', t.replace(/[^0-9]/g, ''))}
                     error={errors.mobile}
                     leftIcon={
                         <View style={styles.flagContainer}>
@@ -227,90 +117,71 @@ const NewLeadScreen = ({ navigation }) => {
                     }
                 />
 
-                {/* ── LOAN DETAILS ─────────── */}
                 <GradientText variant="label" style={styles.sectionTitle}>
                     LOAN DETAILS
                 </GradientText>
 
-                {/* Loan Type Dropdown */}
                 <DropdownSelect
                     label="LOAN TYPE"
                     placeholder="--Select Loan Type--"
-                    value={loanType}
+                    value={formData.loanType}
                     options={LOAN_TYPES}
-                    isOpen={showLoanDropdown}
-                    onToggle={() => {
-                        setShowLoanDropdown(!showLoanDropdown);
-                        setShowEmploymentDropdown(false);
+                    isOpen={dropdowns.loan}
+                    onToggle={() => toggleDropdown('loan')}
+                    onSelect={(val) => {
+                        updateField('loanType', val);
+                        toggleDropdown(null);
                     }}
-                    onSelect={selectLoanType}
                     error={errors.loanType}
                 />
 
-                {/* Required Loan Amount */}
                 <AppInput
                     label="REQUIRED LOAN AMOUNT"
                     placeholder="Enter Loan Amount"
-                    value={loanAmount}
+                    value={formData.loanAmount}
                     keyboardType="numeric"
-                    onChangeText={(t) => {
-                        setLoanAmount(t.replace(/[^0-9,]/g, ''));
-                        setErrors(prev => ({ ...prev, loanAmount: null }));
-                    }}
+                    onChangeText={(t) => updateField('loanAmount', t.replace(/[^0-9,]/g, ''))}
                     error={errors.loanAmount}
                     leftIcon={<MaterialCommunityIcons name="cash-multiple" size={18} color={colors.textPlaceholder} />}
                 />
 
-                {/* Annual Income */}
                 <AppInput
                     label="ANNUAL INCOME"
                     placeholder="e.g. ₹6,00,000 per year"
-                    value={annualIncome}
+                    value={formData.annualIncome}
                     keyboardType="numeric"
-                    onChangeText={(t) => {
-                        setAnnualIncome(t.replace(/[^0-9,]/g, ''));
-                        setErrors(prev => ({ ...prev, annualIncome: null }));
-                    }}
+                    onChangeText={(t) => updateField('annualIncome', t.replace(/[^0-9,]/g, ''))}
                     error={errors.annualIncome}
                     leftIcon={<MaterialCommunityIcons name="cash-fast" size={18} color={colors.textPlaceholder} />}
                 />
+
                 <DropdownSelect
                     label="EMPLOYMENT TYPE"
                     placeholder="--Select Employment Type--"
-                    value={employmentType}
+                    value={formData.employmentType}
                     options={EMPLOYMENT_TYPES}
-                    isOpen={showEmploymentDropdown}
-                    onToggle={() => {
-                        setShowEmploymentDropdown(!showEmploymentDropdown);
-                        setShowLoanDropdown(false);
+                    isOpen={dropdowns.employment}
+                    onToggle={() => toggleDropdown('employment')}
+                    onSelect={(val) => {
+                        updateField('employmentType', val);
+                        toggleDropdown(null);
                     }}
-                    onSelect={selectEmploymentType}
                     error={errors.employmentType}
                 />
 
-                {/* Notes */}
                 <AppInput
                     label="NOTES (OPTIONAL)"
                     placeholder="Any additional information about this lead...."
-                    value={notes}
-                    onChangeText={(t) => {
-                        const words = t.trim().split(/\s+/).filter(word => word.length > 0);
-                        if (words.length <= 200) {
-                            setNotes(t);
-                            setErrors(prev => ({ ...prev, notes: null }));
-                        } else {
-                            setErrors(prev => ({ ...prev, notes: 'Notes exceed 200 words' }));
-                        }
-                    }}
+                    value={formData.notes}
+                    onChangeText={(t) => updateField('notes', t)}
                     error={errors.notes}
                     multiline
-                    inputStyle={{ minHeight: 80, textAlignVertical: 'top', paddingTop: 12 }}
+                    inputStyle={styles.notesInput}
                 />
-                <AppText variant="caption" color="secondary" style={{ textAlign: 'right', marginTop: -8, marginBottom: spacing.md }}>
+                <AppText variant="caption" color="secondary" style={[styles.notesLimit, { marginBottom: spacing.md }]}>
                     * Max 200 Words
                 </AppText>
 
-                {/* ── Action Buttons ─────────── */}
                 <AppButton
                     title="Submit Contact"
                     variant="gradient"
@@ -348,29 +219,21 @@ const styles = StyleSheet.create({
     nameRow: {
         flexDirection: 'row',
     },
+    flex1: {
+        flex: 1,
+    },
     flagContainer: {
         flexDirection: 'row',
         alignItems: 'center',
     },
-    dropdownTrigger: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1.5,
-        minHeight: 52,
-        paddingVertical: 12,
+    notesInput: {
+        minHeight: 80,
+        textAlignVertical: 'top',
+        paddingTop: 12,
     },
-    dropdownList: {
-        borderWidth: 1,
-        marginTop: 4,
-        overflow: 'hidden',
-    },
-    dropdownHeaderItem: {
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-    },
-    dropdownItem: {
-        paddingVertical: 12,
-        paddingHorizontal: 16,
+    notesLimit: {
+        textAlign: 'right',
+        marginTop: -8,
     },
 });
 

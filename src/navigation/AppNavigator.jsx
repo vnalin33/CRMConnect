@@ -5,7 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import LoginScreen from '../auth/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
-import ContactsScreen from '../screens/ContactsScreen';
+import StatusScreen from '../screens/StatusScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import NewLeadScreen from '../screens/NewLeadScreen';
 import PayoutScreen from '../screens/PayoutScreen';
@@ -25,7 +25,7 @@ function MainTabs() {
             }}
         >
             <Tab.Screen name="Home" component={HomeScreen} />
-            <Tab.Screen name="Status" component={ContactsScreen} />
+            <Tab.Screen name="Status" component={StatusScreen} />
             <Tab.Screen name="NewLead" component={NewLeadScreen} />
             <Tab.Screen name="Payout" component={PayoutScreen} />
             <Tab.Screen name="Profile" component={ProfileScreen} />
