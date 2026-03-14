@@ -4,6 +4,7 @@ import {
     StyleSheet,
     TouchableOpacity,
     Alert,
+    ScrollView,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -54,8 +55,7 @@ const NewLeadScreen = ({ navigation }) => {
     };
 
     return (
-        <ScreenWrapper scrollable withPadding={false} edges={['bottom', 'left', 'right']} style={styles.root}>
-
+        <ScreenWrapper withPadding={false} edges={['bottom', 'left', 'right']}>
             <GradientScreenHeader
                 title="Add Contact"
                 subtitle="New Lead Entry"
@@ -63,8 +63,12 @@ const NewLeadScreen = ({ navigation }) => {
                 navigation={navigation}
             />
 
-            <View style={[styles.formContainer, { paddingHorizontal: spacing.base }]}>
-                <GradientText variant="label" style={styles.sectionTitle}>
+            <ScrollView 
+                contentContainerStyle={[styles.formContainer, { paddingHorizontal: spacing.base }]}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+            >
+                <GradientText variant="h3" style={styles.sectionTitle}>
                     PERSONAL INFO
                 </GradientText>
 
@@ -98,7 +102,7 @@ const NewLeadScreen = ({ navigation }) => {
                     keyboardType="email-address"
                     onChangeText={(t) => updateField('email', t)}
                     error={errors.email}
-                    leftIcon={<Feather name="user" size={16} color={colors.textPlaceholder} />}
+                    leftIcon={<Feather name="mail" size={16} color={colors.textPlaceholder} />}
                 />
 
                 <AppInput
@@ -117,7 +121,7 @@ const NewLeadScreen = ({ navigation }) => {
                     }
                 />
 
-                <GradientText variant="label" style={styles.sectionTitle}>
+                <GradientText variant="h3" style={styles.sectionTitle}>
                     LOAN DETAILS
                 </GradientText>
 
@@ -201,20 +205,20 @@ const NewLeadScreen = ({ navigation }) => {
                     style={styles.draftBtn}
                 />
 
-            </View>
+            </ScrollView>
         </ScreenWrapper>
     );
 };
 
 const styles = StyleSheet.create({
     formContainer: {
-        paddingTop: 15,
+        paddingTop: 20,
     },
     sectionTitle: {
-        fontWeight: '800',
-        letterSpacing: 0.5,
-        marginBottom: 14,
-        fontSize: 13,
+        fontWeight: '900',
+        letterSpacing: 1,
+        marginBottom: 16,
+        marginTop: 8,
     },
     nameRow: {
         flexDirection: 'row',
@@ -223,7 +227,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
-    root: { backgroundColor: '#F9FAFB' },
     flexItem: { flex: 1 },
     flexItemWithMargin: { flex: 1, marginRight: 8 },
     flagIcon: { marginRight: 2 },
