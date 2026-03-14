@@ -41,6 +41,45 @@ const login = async (identifier, password) => {
   };
 };
 
+const crypto = require('crypto');
+const emailService = require('./emailService');
+
+const forgotPassword = async (email) => {
+  const user = await userModel.findUserByEmailOrMobile(email);
+
+  if (!user) {
+    const error = new Error('User not found with this email');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Generate 32-byte secure hex token for email link
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiry = new Date(Date.now() + 3600000); // 1 hour from now
+
+  await userModel.updateResetToken(user.email, token, expiry);
+  await emailService.sendResetEmail(user.email, token);
+
+  return { message: 'Reset token sent to email' };
+};
+
+const resetPassword = async (token, newPassword) => {
+  const user = await userModel.findUserByResetToken(token);
+
+  if (!user) {
+    const error = new Error('Invalid or expired reset token');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  await userModel.updatePassword(user.id, hashedPassword);
+
+  return { message: 'Password reset successful' };
+};
+
 module.exports = {
   login,
+  forgotPassword,
+  resetPassword,
 };
