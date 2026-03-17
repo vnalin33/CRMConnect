@@ -4,6 +4,7 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import GradientScreenHeader from '../components/layout/GradientScreenHeader';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
@@ -28,14 +29,38 @@ const DASHBOARD_DATA = {
 };
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
-const HomeScreen = () => {
-  const { colors } = useTheme();
+const HomeScreen = ({ navigation }) => {
+  const { colors, spacing } = useTheme();
+  const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
 
+  // Total header height = status bar inset + DashHeader vertical padding + Logo height
+  // DashboardHeader uses spacing.md (12) vertical padding and size 36 logo.
+  const headerHeight = insets.top + (spacing.md * 2) + 36;
+
   const handleMenuAction = (actionId) => {
-    // TODO: Navigate to individual screens when they're built
-    // e.g. if (actionId === 'customers') navigation.navigate('Customers');
+    if (actionId === 'checklist') {
+      navigation.navigate('CheckList');
+      return;
+    }
+    if (actionId === 'customers') {
+      navigation.navigate('Customers');
+      return;
+    }
+    if (actionId === 'drafts') {
+      navigation.navigate('Drafts');
+      return;
+    }
+    if (actionId === 'invoice') {
+      navigation.navigate('RaiseInvoice');
+      return;
+    }
+    if (actionId === 'concerns') {
+      navigation.navigate('Concerns');
+      return;
+    }
+    // TODO: Navigate to other screens when they're built
   };
 
   return (
@@ -46,7 +71,7 @@ const HomeScreen = () => {
         visible={menuVisible}
         onClose={() => setMenuVisible(false)}
         onAction={handleMenuAction}
-        topOffset={75}
+        topOffset={headerHeight}
       />
 
       <ScrollView showsVerticalScrollIndicator={false}>

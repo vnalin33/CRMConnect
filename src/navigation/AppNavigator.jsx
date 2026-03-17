@@ -9,6 +9,11 @@ import StatusScreen from '../screens/StatusScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import NewLeadScreen from '../screens/NewLeadScreen';
 import PayoutScreen from '../screens/PayoutScreen';
+import CheckListScreen from '../screens/CheckListScreen';
+import CustomersScreen from '../screens/CustomersScreen';
+import DraftsScreen from '../screens/DraftsScreen';
+import RaiseInvoiceScreen from '../screens/RaiseInvoiceScreen';
+import ConcernsScreen from '../screens/ConcernsScreen';
 
 import CustomTabBar from './CustomTabBar';
 
@@ -21,9 +26,9 @@ function MainTabs() {
     return (
         <Tab.Navigator
             tabBar={CustomTabBarWrapper}
-            screenOptions={{ 
+            screenOptions={{
                 headerShown: false,
-                tabBarHideOnKeyboard: true 
+                tabBarHideOnKeyboard: true
             }}
         >
             <Tab.Screen name="Home" component={HomeScreen} />
@@ -31,6 +36,11 @@ function MainTabs() {
             <Tab.Screen name="NewLead" component={NewLeadScreen} />
             <Tab.Screen name="Payout" component={PayoutScreen} />
             <Tab.Screen name="Profile" component={ProfileScreen} />
+            <Tab.Screen name="CheckList" component={CheckListScreen} />
+            <Tab.Screen name="Customers" component={CustomersScreen} />
+            <Tab.Screen name="Drafts" component={DraftsScreen} />
+            <Tab.Screen name="RaiseInvoice" component={RaiseInvoiceScreen} />
+            <Tab.Screen name="Concerns" component={ConcernsScreen} />
         </Tab.Navigator>
     );
 }

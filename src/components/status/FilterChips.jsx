@@ -6,7 +6,7 @@ import AppText from '../common/AppText';
 const FilterChips = ({
     activeFilter,
     onFilterChange,
-    filters = ['All', 'New Lead', 'Assigned', 'Following', 'Approved', 'Rejected', 'Documentation Collection', 'Documentation Rejected', 'File Login', 'File Login Rejected', 'Sanction', 'Sanction Rejected', 'Disbursement', 'No Response / No Exist']
+    filters = ['All', 'New Lead', 'Assigned', 'Following', 'Approved', 'Rejected', 'Documentation Collection', 'Documentation Rejected', 'File Login', 'File Login Rejected', 'Sanction', 'Sanction Rejected', 'Disbursement','Completed', 'No Response / No Exist']
 }) => {
     const { colors, spacing, radius } = useTheme();
 

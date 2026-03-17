@@ -17,6 +17,7 @@ const StatusCard = ({ lead }) => {
         if (s.includes('disbursement')) return { bg: colors.cyanBg, text: colors.cyan, icon: 'refresh-ccw' };
         if (s.includes('following')) return { bg: colors.infoBg, text: colors.info, icon: 'clock' };
         if (s.includes('rejected')) return { bg: colors.errorBg, text: colors.errorText, icon: 'x-circle' };
+        if (s.includes('completed')) return { bg: colors.successBg, text: colors.successText, icon: 'check-circle' };
         return { bg: colors.pillBg, text: colors.textSecondary, icon: 'help-circle' };
     };
 

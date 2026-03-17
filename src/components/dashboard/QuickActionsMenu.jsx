@@ -222,9 +222,20 @@ const QuickActionsMenu = ({ visible, onClose, onAction, topOffset = 70 }) => {
             onRequestClose={onClose}
             statusBarTranslucent
         >
-            {/* Dim backdrop */}
+            {/* Transparent top area — allows tapping the header/menu bar again to close */}
             <TouchableWithoutFeedback onPress={onClose}>
-                <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]} />
+                <View style={{ height: topOffset, width: '100%', backgroundColor: 'transparent' }} />
+            </TouchableWithoutFeedback>
+
+            {/* Dim backdrop — shifted down so header remains visible */}
+            <TouchableWithoutFeedback onPress={onClose}>
+                <Animated.View style={[
+                    styles.backdrop,
+                    {
+                        opacity: fadeAnim,
+                        top: topOffset, // Keep header visible
+                    }
+                ]} />
             </TouchableWithoutFeedback>
 
             {/* Menu panel */}
@@ -277,7 +288,10 @@ const QuickActionsMenu = ({ visible, onClose, onAction, topOffset = 70 }) => {
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
     backdrop: {
-        ...StyleSheet.absoluteFillObject,
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
         backgroundColor: 'rgba(0,0,0,0.4)',
     },
     panel: {

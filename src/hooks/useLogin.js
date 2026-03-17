@@ -7,7 +7,7 @@
 import { useState, useCallback } from 'react';
 import { ENV } from '../config/env';
 
-const loginAPI = async ({ identifier, password }) => {
+const realLoginAPI = async ({ identifier, password }) => {
   try {
     const response = await fetch(`${ENV.API_URL}/auth/login`, {
       method: 'POST',
@@ -29,6 +29,22 @@ const loginAPI = async ({ identifier, password }) => {
   }
 };
 
+const mockLoginAPI = async ({ identifier, password }) => {
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+
+  // In mock mode, we accept ANY credentials that passed the local validation
+  return {
+    user: {
+      id: 'mock-user-123',
+      identifier: identifier,
+      name: 'Mock User',
+      role: 'Finance Agent',
+    },
+    token: 'mock-jwt-token',
+  };
+};
+
 const useLogin = ({ onSuccess, onError } = {}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -38,7 +54,7 @@ const useLogin = ({ onSuccess, onError } = {}) => {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await loginAPI(credentials);
+      const result = await (ENV.USE_MOCK ? mockLoginAPI(credentials) : realLoginAPI(credentials));
       setData(result);
       onSuccess?.(result);
       return result;

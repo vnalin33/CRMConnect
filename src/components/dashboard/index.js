@@ -5,5 +5,4 @@ export { default as SnapshotCard } from './SnapshotCard';
 export { default as SnapshotRow } from './SnapshotRow';
 export { default as PayoutCard } from './PayoutCard';
 export { default as PerformanceChart } from './PerformanceChart';
-export { default as BottomTabBar } from './BottomTabBar';
 export { default as QuickActionsMenu } from './QuickActionsMenu';

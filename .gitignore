@@ -118,3 +118,7 @@ backend/.env
 backend/test_db.js
 backend/add_user.js
 backend/init_db.js
+
+# Agentic
+.gemini/
+.antigravityignore
