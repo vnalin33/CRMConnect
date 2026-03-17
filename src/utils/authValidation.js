@@ -15,19 +15,6 @@ export const loginSchema = z.object({
         .min(6, 'Password must be at least 6 characters'),
 });
 
-export const forgotPasswordSchema = z.object({
-    identifier: z
-        .string()
-        .min(1, 'Email or mobile is required')
-        .refine(val => {
-            const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
-            const isMobile = /^[6-9]\d{9}$/.test(val.replace(/\D/g, ''));
-            return isEmail || isMobile;
-        }, 'Enter a valid email or 10-digit mobile number'),
-});
-
-
-
 export const validateLoginForm = (data) => {
     const result = loginSchema.safeParse(data);
     if (result.success) {
