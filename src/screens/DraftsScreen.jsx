@@ -3,6 +3,7 @@ import { StyleSheet, View, FlatList, Alert } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
+import { scale } from '../theme/metrics';
 import AppText from '../components/common/AppText';
 import GradientScreenHeader from '../components/layout/GradientScreenHeader';
 import ScreenWrapper from '../components/layout/ScreenWrapper';
@@ -137,14 +138,14 @@ const DraftsScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
     listContent: {
-        paddingTop: 12,
+        paddingTop: scale(12),
     },
     emptyContainer: {
         alignItems: 'center',
-        marginTop: 60,
+        marginTop: scale(60),
     },
     emptyText: {
-        marginTop: 12,
+        marginTop: scale(12),
     },
 });
 

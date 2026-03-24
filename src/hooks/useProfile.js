@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import ImagePicker from 'react-native-image-crop-picker';
+import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import { fetchBankDetailsByIfsc } from '../api/bankApi';
 import { PROFILE_MOCK_DATA } from '../api/mockData';
 
@@ -43,23 +43,26 @@ export const useProfile = () => {
 
     const handlePickImage = async () => {
         try {
-            const image = await ImagePicker.openPicker({
-                width: 400,
-                height: 400,
-                cropping: true,
-                cropperCircleOverlay: true,
+            const result = await launchImageLibrary({
                 mediaType: 'photo',
-                compressImageQuality: 0.8,
+                quality: 0.8,
+                maxWidth: 400,
+                maxHeight: 400,
             });
 
-            setProfileData(prev => ({
-                ...prev,
-                personalInfo: {
-                    ...prev.personalInfo,
-                    profileImage: image.path
-                }
-            }));
-            setImageModalVisible(false);
+            if (result.didCancel || result.errorCode) return;
+
+            const uri = result.assets?.[0]?.uri;
+            if (uri) {
+                setProfileData(prev => ({
+                    ...prev,
+                    personalInfo: {
+                        ...prev.personalInfo,
+                        profileImage: uri
+                    }
+                }));
+                setImageModalVisible(false);
+            }
         } catch (error) {
             // Handle picker cancellation
         }
@@ -67,23 +70,26 @@ export const useProfile = () => {
 
     const handleTakePhoto = async () => {
         try {
-            const image = await ImagePicker.openCamera({
-                width: 400,
-                height: 400,
-                cropping: true,
-                cropperCircleOverlay: true,
+            const result = await launchCamera({
                 mediaType: 'photo',
-                compressImageQuality: 0.8,
+                quality: 0.8,
+                maxWidth: 400,
+                maxHeight: 400,
             });
 
-            setProfileData(prev => ({
-                ...prev,
-                personalInfo: {
-                    ...prev.personalInfo,
-                    profileImage: image.path
-                }
-            }));
-            setImageModalVisible(false);
+            if (result.didCancel || result.errorCode) return;
+
+            const uri = result.assets?.[0]?.uri;
+            if (uri) {
+                setProfileData(prev => ({
+                    ...prev,
+                    personalInfo: {
+                        ...prev.personalInfo,
+                        profileImage: uri
+                    }
+                }));
+                setImageModalVisible(false);
+            }
         } catch (error) {
             // Handle camera errors
         }

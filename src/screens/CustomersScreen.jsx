@@ -3,6 +3,7 @@ import { StyleSheet, View, FlatList } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
+import { scale } from '../theme/metrics';
 import AppText from '../components/common/AppText';
 import GradientScreenHeader from '../components/layout/GradientScreenHeader';
 import ScreenWrapper from '../components/layout/ScreenWrapper';
@@ -148,14 +149,14 @@ const CustomersScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
     listContent: {
-        paddingTop: 4,
+        paddingTop: scale(4),
     },
     emptyContainer: {
         alignItems: 'center',
-        marginTop: 60,
+        marginTop: scale(60),
     },
     emptyText: {
-        marginTop: 12,
+        marginTop: scale(12),
     },
 });
 

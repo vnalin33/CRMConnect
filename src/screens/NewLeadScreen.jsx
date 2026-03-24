@@ -11,6 +11,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { useTheme } from '../theme';
 import ScreenWrapper from '../components/layout/ScreenWrapper';
 import GradientScreenHeader from '../components/layout/GradientScreenHeader';
+import { scale } from '../theme/metrics';
 import AppText from '../components/common/AppText';
 import AppInput from '../components/common/AppInput';
 import AppButton from '../components/common/AppButton';
@@ -212,13 +213,13 @@ const NewLeadScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
     formContainer: {
-        paddingTop: 20,
+        paddingTop: scale(20),
     },
     sectionTitle: {
         fontWeight: '900',
         letterSpacing: 1,
-        marginBottom: 16,
-        marginTop: 8,
+        marginBottom: scale(16),
+        marginTop: scale(8),
     },
     nameRow: {
         flexDirection: 'row',
@@ -228,13 +229,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     flexItem: { flex: 1 },
-    flexItemWithMargin: { flex: 1, marginRight: 8 },
-    flagIcon: { marginRight: 2 },
-    chevronIcon: { marginLeft: 2 },
-    notesInput: { minHeight: 80, textAlignVertical: 'top', paddingTop: 12 },
-    notesHelpText: { textAlign: 'right', marginTop: -8, marginBottom: 16 },
-    submitBtn: { marginBottom: 16 },
-    draftBtn: { marginBottom: 40 },
+    flexItemWithMargin: { flex: 1, marginRight: scale(8) },
+    flagIcon: { marginRight: scale(2) },
+    chevronIcon: { marginLeft: scale(2) },
+    notesInput: { minHeight: scale(80), textAlignVertical: 'top', paddingTop: scale(12) },
+    notesHelpText: { textAlign: 'right', marginTop: scale(-8), marginBottom: scale(16) },
+    submitBtn: { marginBottom: scale(16) },
+    draftBtn: { marginBottom: scale(40) },
 });
 
 export default NewLeadScreen;

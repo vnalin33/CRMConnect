@@ -26,6 +26,7 @@ const PAYOUT_DATA = [
         payoutRaw: 45000,
         status: 'paid',
         date: '12 Jan 2026',
+        expectedPayoutDate: '15 Jan 2026',
     },
     {
         id: '2',
@@ -37,6 +38,7 @@ const PAYOUT_DATA = [
         payoutRaw: 30000,
         status: 'pending',
         date: '14 Feb 2026',
+        expectedPayoutDate: '16 Feb 2026',
     },
     {
         id: '3',
@@ -46,8 +48,9 @@ const PAYOUT_DATA = [
         cycle: 'Instant',
         payoutAmount: '₹25,000',
         payoutRaw: 25000,
-        status: 'paid',
+        status: 'pending',
         date: '20 Jan 2026',
+        expectedPayoutDate: '22 Jan 2026',
     },
     {
         id: '4',
@@ -57,8 +60,9 @@ const PAYOUT_DATA = [
         cycle: 'Cycle',
         payoutAmount: '₹45,000',
         payoutRaw: 45000,
-        status: 'pending',
+        status: 'paid',
         date: '25 Jan 2026',
+        expectedPayoutDate: '28 Jan 2026',
     },
 ];
 
@@ -142,7 +146,7 @@ const PayoutSummaryCard = React.memo(({ summary }) => {
     );
 });
 
-const PayoutItem = React.memo(({ item }) => {
+const PayoutItem = React.memo(({ item, onRaiseInvoice }) => {
     const { colors, radius, spacing } = useTheme();
     const isPaid = item.status === 'paid';
     return (
@@ -196,6 +200,29 @@ const PayoutItem = React.memo(({ item }) => {
                 <Feather name="calendar" size={11} color={colors.textSecondary} />
                 <AppText variant="caption" color="secondary" style={{ marginLeft: 4 }}>{item.date}</AppText>
             </View>
+
+            {!isPaid && onRaiseInvoice && (
+                <View style={{ marginTop: spacing.md }}>
+                    <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() => onRaiseInvoice(item)}
+                        style={styles.raiseInvoiceBox}
+                    >
+                        <LinearGradient
+                            colors={BRAND_GRADIENT.colors}
+                            start={BRAND_GRADIENT.start}
+                            end={BRAND_GRADIENT.end}
+                            locations={BRAND_GRADIENT.locations}
+                            style={[styles.raiseInvoiceButton, { borderRadius: radius.md }]}
+                        >
+                            <Feather name="file-text" size={14} color="#FFF" style={{ marginRight: 6 }} />
+                            <AppText variant="button" style={{ color: '#FFF', fontWeight: '700' }}>
+                                Raise Invoice
+                            </AppText>
+                        </LinearGradient>
+                    </TouchableOpacity>
+                </View>
+            )}
         </View>
     );
 });
@@ -229,7 +256,7 @@ const PayoutScreen = ({ navigation }) => {
 
     const statusTabs = useMemo(() => [
         { id: 'all', label: 'All' },
-        { id: 'paid', label: `Paid (${summary.paidCount})` },
+        { id: 'paid', label: `Paid(${summary.paidCount})` },
         { id: 'pending', label: `Pending (${summary.pendingCount})` },
     ], [summary.paidCount, summary.pendingCount]);
 
@@ -247,7 +274,15 @@ const PayoutScreen = ({ navigation }) => {
 
     const handleStatusTab = useCallback((id) => setStatusTab(id), []);
     const handleCycleTab = useCallback((id) => setCycleTab(id), []);
-    const renderItem = useCallback(({ item }) => <PayoutItem item={item} />, []);
+
+    const handleRaiseInvoice = useCallback((item) => {
+        navigation.navigate('RaiseInvoice', { payoutData: item });
+    }, [navigation]);
+
+    const renderItem = useCallback(({ item }) => (
+        <PayoutItem item={item} onRaiseInvoice={handleRaiseInvoice} />
+    ), [handleRaiseInvoice]);
+
     const keyExtractor = useCallback((item) => item.id, []);
 
     const ListHeader = useMemo(() => (
@@ -396,6 +431,14 @@ const styles = StyleSheet.create({
     alignEnd: { alignItems: 'flex-end' },
     itemDateRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
     emptyState: { alignItems: 'center', marginTop: 60 },
+    raiseInvoiceBox: { overflow: 'hidden' },
+    raiseInvoiceButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 16
+    },
 });
 
 export default PayoutScreen;

@@ -38,6 +38,7 @@ const GradientScreenHeader = ({
     subtitle,
     showBack = false,
     navigation,
+    onBackPress,
     rightElement,
     children,
     gradientStyle,
@@ -153,7 +154,11 @@ const GradientScreenHeader = ({
                             <TouchableOpacity
                                 onPress={() => {
                                     handleCloseSearch();
-                                    navigation?.goBack();
+                                    if (onBackPress) {
+                                        onBackPress();
+                                    } else {
+                                        navigation?.goBack();
+                                    }
                                 }}
                                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                             >

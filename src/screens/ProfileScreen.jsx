@@ -295,7 +295,11 @@ const ProfileScreen = ({ navigation }) => {
                                                 subtitle={item.sub}
                                                 isLast={idx === supportItems.length - 1}
                                                 iconColor={item.title === 'Report an Issue' ? colors.error : undefined}
-                                                onPress={() => { }}
+                                                onPress={() => {
+                                                    if (item.title === 'Help & Support' || item.title === 'Privacy Policy' || item.title === 'Report an Issue') {
+                                                        navigation.navigate('Support');
+                                                    }
+                                                }}
                                             />
                                         ))}
                                     </AppCard>

@@ -48,8 +48,11 @@ const ConcernsScreen = ({ navigation }) => {
     }, []);
 
     const renderItem = useCallback(({ item }) => (
-        <ConcernCard concern={item} onPress={() => {}} />
-    ), []);
+        <ConcernCard 
+            concern={item} 
+            onPress={() => navigation.navigate('ConcernDetails', { concern: item })} 
+        />
+    ), [navigation]);
 
     const keyExtractor = useCallback((item) => item.id, []);
 

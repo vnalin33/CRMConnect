@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   View,
-  StyleSheet,
   ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +11,7 @@ import WalletCard from '../components/dashboard/WalletCard';
 import SearchBar from '../components/dashboard/SearchBar';
 import SnapshotRow from '../components/dashboard/SnapshotRow';
 import QuickActionsMenu from '../components/dashboard/QuickActionsMenu';
+import PayoutCard from '../components/dashboard/PayoutCard';
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 // Replace with API data in the future.
@@ -26,6 +26,18 @@ const DASHBOARD_DATA = {
     { id: '3', icon: 'clock', iconBgColor: '#F59E0B', count: '11', label: 'Pending Approval' },
     { id: '4', icon: 'users', iconBgColor: '#2DBFE6', count: '26', label: 'Active Clients' },
   ],
+  payouts: {
+    instant: {
+      amount: '₹24,500',
+      date: 'Feb 28, 2026',
+      status: 'Scheduled',
+    },
+    cycle: {
+      amount: '₹32,800',
+      date: 'Mar 15, 2026',
+      status: 'Pending',
+    },
+  },
 };
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -34,6 +46,7 @@ const HomeScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
+  const [payoutTab, setPayoutTab] = useState('instant');
 
   // Total header height = status bar inset + DashHeader vertical padding + Logo height
   // DashboardHeader uses spacing.md (12) vertical padding and size 36 logo.
@@ -80,24 +93,37 @@ const HomeScreen = ({ navigation }) => {
         <GradientScreenHeader gradientStyle={screenSt.headerGradient}>
           <DashboardHeader
             onMenu={() => setMenuVisible(true)}
-            onNotification={() => {/* TODO */}}
+            onNotification={() => {/* TODO */ }}
           />
         </GradientScreenHeader>
 
         {/* ── Wallet card overlapping the gradient bottom ── */}
-        <View style={screenSt.walletWrapper}>
+        <View style={[screenSt.walletWrapper, { paddingHorizontal: spacing.base }]}>
           <WalletCard
             balance={DASHBOARD_DATA.wallet.balance}
             accountNumber={DASHBOARD_DATA.wallet.accountNumber}
+            onWithdraw={() => navigation.navigate('Wallet')}
+            onViewWallet={() => navigation.navigate('Wallet')}
           />
         </View>
 
-        <View style={screenSt.section}>
+        <View style={{ marginTop: spacing.base, paddingHorizontal: spacing.base }}>
           <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
         </View>
 
-        <View style={screenSt.section}>
+        <View style={{ marginTop: spacing.base, paddingHorizontal: spacing.base }}>
           <SnapshotRow data={DASHBOARD_DATA.snapshots} />
+        </View>
+
+        <View style={{ marginBottom: spacing.xl }}>
+          <PayoutCard
+            activeTab={payoutTab}
+            onTabChange={setPayoutTab}
+            payableAmount={DASHBOARD_DATA.payouts[payoutTab].amount}
+            expectedDate={DASHBOARD_DATA.payouts[payoutTab].date}
+            status={DASHBOARD_DATA.payouts[payoutTab].status}
+            onViewHistory={() => navigation.navigate('Payout')}
+          />
         </View>
 
       </ScrollView>
@@ -105,15 +131,14 @@ const HomeScreen = ({ navigation }) => {
   );
 };
 
-const screenSt = StyleSheet.create({
+const screenSt = {
   root: { flex: 1 },
   headerGradient: {
     paddingBottom: 90,
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
   },
-  walletWrapper: { marginTop: -70, paddingHorizontal: 16 },
-  section: { marginTop: 16, paddingHorizontal: 16 },
-});
+  walletWrapper: { marginTop: -70 },
+};
 
 export default HomeScreen;

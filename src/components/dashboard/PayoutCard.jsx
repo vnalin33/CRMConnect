@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import Feather from 'react-native-vector-icons/Feather';
-import { useTheme } from '../../theme';
+import { useTheme, BRAND_GRADIENT } from '../../theme';
 import AppText from '../common/AppText';
+import GradientText from '../common/GradientText';
 
 const PayoutCard = ({
     payableAmount = '₹24,500',
@@ -14,22 +16,50 @@ const PayoutCard = ({
 }) => {
     const { colors, spacing, radius } = useTheme();
 
+    const getStatusStyles = () => {
+        const lowerStatus = status.toLowerCase();
+        if (lowerStatus === 'scheduled') {
+            return { bg: colors.scheduledBg, text: colors.scheduledText };
+        }
+        if (lowerStatus === 'pending') {
+            return { bg: colors.warningBg, text: colors.warningText };
+        }
+        return { bg: colors.surfaceElevated, text: colors.textSecondary };
+    };
+
+    const statusStyles = getStatusStyles();
+
     const Pill = ({ label, id, active }) => (
         <TouchableOpacity
             onPress={() => onTabChange?.(id)}
             style={[
                 styles.pill,
                 {
-                    backgroundColor: active ? colors.pillActiveBg : colors.pillBg,
+                    backgroundColor: !active ? colors.pillBg : undefined,
                     borderRadius: radius.full,
-                    paddingHorizontal: spacing.md,
-                    paddingVertical: spacing.xs,
+                    overflow: 'hidden',
                 },
             ]}
         >
-            <AppText variant="caption" style={{ color: active ? colors.pillActiveText : colors.pillText, fontWeight: '600' }}>
-                {label}
-            </AppText>
+            {active ? (
+                <LinearGradient
+                    colors={BRAND_GRADIENT.colors}
+                    start={BRAND_GRADIENT.start}
+                    end={BRAND_GRADIENT.end}
+                    locations={BRAND_GRADIENT.locations}
+                    style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.xs }}
+                >
+                    <AppText variant="caption" style={{ color: '#FFFFFF', fontWeight: '600' }}>
+                        {label}
+                    </AppText>
+                </LinearGradient>
+            ) : (
+                <View style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.xs }}>
+                    <AppText variant="caption" style={{ color: colors.textSecondary, fontWeight: '600' }}>
+                        {label}
+                    </AppText>
+                </View>
+            )}
         </TouchableOpacity>
     );
 
@@ -49,13 +79,14 @@ const PayoutCard = ({
         >
             {/* Header row */}
             <View style={styles.headerRow}>
-                <AppText variant="h3" color="brand" style={{ fontWeight: '700' }}>Payout</AppText>
-                <View style={styles.pillRow}>
+                <GradientText variant="h3" style={{ fontWeight: '700' }}>Payout</GradientText>
+                <View style={[styles.pillRow, { backgroundColor: colors.pillBg, borderRadius: radius.full, padding: 2 }]}>
                     <Pill id="instant" label="Instant" active={activeTab === 'instant'} />
-                    <View style={{ width: spacing.xs }} />
                     <Pill id="cycle" label="Cycle" active={activeTab === 'cycle'} />
                 </View>
             </View>
+
+            <View style={[styles.divider, { backgroundColor: colors.border, marginTop: spacing.md }]} />
 
             {/* Details */}
             <View style={[styles.detailRow, { marginTop: spacing.lg }]}>
@@ -68,15 +99,17 @@ const PayoutCard = ({
             </View>
             <View style={[styles.detailRow, { marginTop: spacing.sm }]}>
                 <AppText variant="body" color="secondary">Status</AppText>
-                <View style={[styles.statusBadge, { backgroundColor: colors.scheduledBg, borderRadius: radius.full }]}>
-                    <AppText variant="caption" style={{ color: colors.scheduledText, fontWeight: '600' }}>{status}</AppText>
+                <View style={[styles.statusBadge, { backgroundColor: statusStyles.bg, borderRadius: radius.full }]}>
+                    <AppText variant="caption" style={{ color: statusStyles.text, fontWeight: '600' }}>{status}</AppText>
                 </View>
             </View>
 
 
+            <View style={[styles.divider, { backgroundColor: colors.border, marginTop: spacing.lg }]} />
+
             <TouchableOpacity
                 onPress={onViewHistory}
-                style={[styles.linkRow, { marginTop: spacing.lg }]}
+                style={[styles.linkRow, { marginTop: spacing.md }]}
                 accessibilityRole="button"
                 accessibilityLabel="View Payout History"
             >
@@ -93,7 +126,8 @@ const styles = StyleSheet.create({
     card: { borderWidth: 1 },
     headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     pillRow: { flexDirection: 'row', alignItems: 'center' },
-    pill: {},
+    pill: { justifyContent: 'center', alignItems: 'center' },
+    divider: { height: 1, width: '100%' },
     detailRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     statusBadge: { paddingHorizontal: 12, paddingVertical: 3 },
     linkRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-end' },
