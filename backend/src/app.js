@@ -4,7 +4,8 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const errorHandler = require('./middleware/errorHandler');
 const authRoutes = require('./routes/authRoutes');
-
+const connectorRoutes = require('./routes/connectorRoutes');
+const leadRoutes = require('./routes/leadRoutes');
 const app = express();
 
 // Security Middlewares
@@ -21,6 +22,12 @@ if (process.env.NODE_ENV === 'development') {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/connector', connectorRoutes);
+app.use('/api/leads', leadRoutes);
+
+// Static files
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Health Check
 app.get('/health', (req, res) => {

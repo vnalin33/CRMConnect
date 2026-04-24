@@ -5,3 +5,4 @@ export { default as AppInput } from './AppInput';
 export { default as AppLogo } from './AppLogo';
 export { default as GradientText } from './GradientText';
 export { default as DropdownSelect } from './DropdownSelect';
+export { default as RoleSelector } from './RoleSelector';

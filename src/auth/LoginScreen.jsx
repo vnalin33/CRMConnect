@@ -223,6 +223,16 @@ const LoginScreen = ({ navigation }) => {
               leftIcon={<LockIcon color={colors.iconColor || colors.textDisabled} />}
             />
 
+            <TouchableOpacity
+              style={styles.forgotBtn}
+              onPress={() => navigation.navigate('ForgotPassword')}
+              activeOpacity={0.7}
+            >
+              <AppText variant="bodySm" style={{ color: colors.primary || '#6366F1', fontWeight: '600' }}>
+                Forgot Password?
+              </AppText>
+            </TouchableOpacity>
+
 
             {apiError ? (
               <View
@@ -232,7 +242,7 @@ const LoginScreen = ({ navigation }) => {
                     backgroundColor: colors.errorBg,
                     borderRadius: radius.md,
                     padding: spacing.md,
-                    marginBottom: spacing.base,
+                    marginBottom: spacing.base, 
                     borderLeftWidth: 3,
                     borderLeftColor: colors.error,
                   },
@@ -261,7 +271,17 @@ const LoginScreen = ({ navigation }) => {
 
 
           <View style={styles.footer}>
-            <AppText variant="caption" color="disabled" align="center">
+            <AppText variant="bodySm" color="secondary" align="center">
+              Don't have an account?{'  '}
+              <AppText
+                variant="bodySm"
+                style={{ color: colors.primary || '#6366F1', fontWeight: '700' }}
+                onPress={() => navigation.navigate('Signup')}
+              >
+                Sign Up
+              </AppText>
+            </AppText>
+            <AppText variant="caption" color="disabled" align="center" style={{ marginTop: 8 }}>
               © 2026 CRM Connect · All rights reserved
             </AppText>
           </View>

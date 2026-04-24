@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { LOAN_TYPES, EMPLOYMENT_TYPES } from '../api/mockData';
+import { createLeadApi } from '../api/leadApi';
 
 export const useNewLead = () => {
     // Form State
@@ -106,16 +107,33 @@ export const useNewLead = () => {
         setErrors({});
     };
 
+    /**
+     * Map frontend camelCase form data to backend lowercase model fields
+     */
+    const getMappedData = (status) => ({
+        firstname: formData.firstName.trim(),
+        lastname: formData.lastName.trim(),
+        email: formData.email.trim(),
+        mobilenumber: formData.mobile.trim(),
+        loantype: formData.loanType,
+        loanamount: formData.loanAmount.replace(/[^0-9]/g, ''),
+        annualincome: formData.annualIncome.replace(/[^0-9]/g, ''),
+        employmenttype: formData.employmentType,
+        notes: formData.notes.trim(),
+        status
+    });
+
     const handleSubmit = async () => {
         if (!validate()) return { success: false };
 
         setSubmitting(true);
         try {
-            await new Promise(r => setTimeout(r, 1500));
+            const payload = getMappedData(1); // 1 = Active/New Lead
+            await createLeadApi(payload);
             resetForm();
             return { success: true };
         } catch (error) {
-            return { success: false, error: 'Failed to submit lead' };
+            return { success: false, error: error.message || 'Failed to submit lead' };
         } finally {
             setSubmitting(false);
         }
@@ -124,10 +142,12 @@ export const useNewLead = () => {
     const handleSaveDraft = async () => {
         setSubmitting(true);
         try {
-            await new Promise(r => setTimeout(r, 800));
+            const payload = getMappedData(0); // 0 = Draft
+            await createLeadApi(payload);
+            resetForm();
             return { success: true };
         } catch (error) {
-            return { success: false, error: 'Failed to save draft' };
+            return { success: false, error: error.message || 'Failed to save draft' };
         } finally {
             setSubmitting(false);
         }
