@@ -13,14 +13,19 @@ export const ThemeProvider = ({ children }) => {
     const [themeMode, setThemeModeState] = useState('system');
     const [isReady, setIsReady] = useState(false);
     useEffect(() => {
+        console.log('ThemeProvider initializing...');
         AsyncStorage.getItem(THEME_STORAGE_KEY)
             .then(saved => {
+                console.log('Theme saved state:', saved);
                 if (saved === 'light' || saved === 'dark' || saved === 'system') {
                     setThemeModeState(saved);
                 }
             })
-            .catch(() => { })
-            .finally(() => setIsReady(true));
+            .catch((err) => { console.error('Theme storage error:', err); })
+            .finally(() => {
+                console.log('ThemeProvider is ready');
+                setIsReady(true);
+            });
     }, []);
     const setThemeMode = useCallback(mode => {
         setThemeModeState(mode);
@@ -46,7 +51,7 @@ export const ThemeProvider = ({ children }) => {
         spacing,
         radius,
     };
-    if (!isReady) return null;
+    // if (!isReady) return null;
 
     return (
         <ThemeContext.Provider value={value}>

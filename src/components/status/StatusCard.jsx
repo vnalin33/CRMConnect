@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from '../../theme';
@@ -7,23 +7,35 @@ import AppText from '../common/AppText';
 import AppCard from '../common/AppCard';
 import { BRAND_GRADIENT } from '../../theme/colors';
 
-const StatusCard = ({ lead }) => {
+const StatusCard = ({ lead, onPress, onDelete }) => {
     const { colors, spacing, radius } = useTheme();
 
     const getStatusConfig = (status) => {
         const s = status.toLowerCase();
-        if (s.includes('approved')) return { bg: colors.successBg, text: colors.successText, icon: 'check-circle' };
-        if (s.includes('new')) return { bg: colors.primaryLight, text: colors.primary, icon: 'plus-circle' };
-        if (s.includes('disbursement')) return { bg: colors.cyanBg, text: colors.cyan, icon: 'refresh-ccw' };
-        if (s.includes('following')) return { bg: colors.infoBg, text: colors.info, icon: 'clock' };
-        if (s.includes('rejected')) return { bg: colors.errorBg, text: colors.errorText, icon: 'x-circle' };
-        if (s.includes('completed')) return { bg: colors.successBg, text: colors.successText, icon: 'check-circle' };
+        if (s.includes('unassigned'))   return { bg: colors.primaryLight, text: colors.primary, icon: 'user-plus' };
+        if (s.includes('assigned'))     return { bg: colors.infoBg, text: colors.info, icon: 'user-check' };
+        if (s.includes('approved'))     return { bg: colors.successBg, text: colors.successText, icon: 'check-circle' };
+        if (s.includes('new'))          return { bg: colors.primaryLight, text: colors.primary, icon: 'plus-circle' };
+        if (s.includes('disbursement')) return { bg: colors.cyanBg, text: colors.cyan, icon: 'dollar-sign' };
+        if (s.includes('sanction'))     return { bg: colors.successBg, text: colors.successText, icon: 'award' };
+        if (s.includes('file login'))   return { bg: colors.infoBg, text: colors.info, icon: 'log-in' };
+        if (s.includes('doc'))          return { bg: colors.primaryLight, text: colors.primary, icon: 'folder' };
+        if (s.includes('following'))    return { bg: colors.infoBg, text: colors.info, icon: 'clock' };
+        if (s.includes('cibil'))        return { bg: colors.infoBg, text: colors.info, icon: 'shield' };
+        if (s.includes('no response'))  return { bg: colors.errorBg, text: colors.errorText, icon: 'phone-off' };
+        if (s.includes('not exist') || s.includes('out of service')) return { bg: colors.errorBg, text: colors.errorText, icon: 'slash' };
+        if (s.includes('rejected') || s.includes('reject')) return { bg: colors.errorBg, text: colors.errorText, icon: 'x-circle' };
+        if (s.includes('completed'))    return { bg: colors.successBg, text: colors.successText, icon: 'check-circle' };
         return { bg: colors.pillBg, text: colors.textSecondary, icon: 'help-circle' };
     };
 
     const config = getStatusConfig(lead.status);
 
     return (
+        <TouchableOpacity 
+            onPress={() => onPress?.(lead.id)} 
+            activeOpacity={0.85}
+        >
         <AppCard style={styles.card} variant="elevated">
             <View style={styles.mainContainer}>
                 {/* Header Section */}
@@ -36,6 +48,16 @@ const StatusCard = ({ lead }) => {
                         <AppText variant="amountSm" color="primary">₹ {lead.amount}</AppText>
                         <AppText variant="label" color="secondary" align="right">Loan Amount</AppText>
                     </View>
+                    {(lead.statusCode === 1 || lead.statusCode === 10) && (
+                    <TouchableOpacity
+                        onPress={() => onDelete?.(lead)}
+                        style={[styles.deleteBtn, { backgroundColor: colors.errorBg }]}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        activeOpacity={0.7}
+                    >
+                        <Feather name="trash-2" size={16} color={colors.error} />
+                    </TouchableOpacity>
+                    )}
                 </View>
 
                 {/* Status & Date Section */}
@@ -74,6 +96,7 @@ const StatusCard = ({ lead }) => {
                 </View>
             </View>
         </AppCard>
+        </TouchableOpacity>
     );
 };
 
@@ -82,6 +105,14 @@ const styles = StyleSheet.create({
         marginBottom: 16,
         marginHorizontal: 16,
         padding: 0, // Override AppCard default padding for more control
+    },
+    deleteBtn: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginLeft: 10,
     },
     mainContainer: {
         padding: 16,

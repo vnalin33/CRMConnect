@@ -1,10 +1,11 @@
 /**
  * useLogin.js
  * CRM Connect — Login Hook
- * Integrated with Real Node.js / PostgreSQL Backend
+ * Integrated with Real Node.js / PostgreSQL Backend (connector table)
  */
 
 import { useState, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ENV } from '../config/env';
 
 const realLoginAPI = async ({ identifier, password }) => {
@@ -55,6 +56,15 @@ const useLogin = ({ onSuccess, onError } = {}) => {
     setError(null);
     try {
       const result = await (ENV.USE_MOCK ? mockLoginAPI(credentials) : realLoginAPI(credentials));
+
+      // Store JWT token and user data in AsyncStorage
+      if (result?.token) {
+        await AsyncStorage.setItem('auth_token', result.token);
+      }
+      if (result?.user) {
+        await AsyncStorage.setItem('user_data', JSON.stringify(result.user));
+      }
+
       setData(result);
       onSuccess?.(result);
       return result;
@@ -74,7 +84,12 @@ const useLogin = ({ onSuccess, onError } = {}) => {
     setIsLoading(false);
   }, []);
 
-  return { login, isLoading, error, data, reset };
+  const logout = useCallback(async () => {
+    await AsyncStorage.multiRemove(['auth_token', 'user_data']);
+    setData(null);
+  }, []);
+
+  return { login, logout, isLoading, error, data, reset };
 };
 
 export default useLogin;

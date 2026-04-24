@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from '../../theme';
@@ -157,6 +157,73 @@ export const GradientThemeSwitcher = ({ isDark, toggleTheme, colors, spacing, ra
                     )}
                 </TouchableOpacity>
             </View>
+        </View>
+    );
+};
+
+// ─── Skeleton / Shimmer ──────────────────────────────────────────────────────
+
+const SkeletonBox = ({ width, height, borderRadius = 8, style }) => {
+    const { colors } = useTheme();
+    const shimmer = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        const anim = Animated.loop(
+            Animated.sequence([
+                Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
+                Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
+            ])
+        );
+        anim.start();
+        return () => anim.stop();
+    }, [shimmer]);
+
+    const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.4, 0.85] });
+
+    return (
+        <Animated.View
+            style={[
+                { width, height, borderRadius, backgroundColor: colors.border, opacity },
+                style,
+            ]}
+        />
+    );
+};
+
+export const ProfileSkeleton = () => {
+    const { colors, spacing, radius } = useTheme();
+    return (
+        <View style={{ flex: 1, paddingHorizontal: spacing.base }}>
+            {/* Header */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing.md, marginBottom: spacing.md }}>
+                <SkeletonBox width={64} height={64} borderRadius={16} />
+                <View style={{ marginLeft: 14 }}>
+                    <SkeletonBox width={130} height={16} style={{ marginBottom: 8 }} />
+                    <SkeletonBox width={90} height={12} />
+                </View>
+            </View>
+            {/* Stats card */}
+            <SkeletonBox width='100%' height={72} borderRadius={radius.xl} style={{ marginBottom: spacing.md }} />
+            {/* Cards */}
+            {[1, 2, 3].map(i => (
+                <View key={i} style={{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.base, marginBottom: 14, borderWidth: 1, borderColor: colors.border }}>
+                    <SkeletonBox width={100} height={12} style={{ marginBottom: 16 }} />
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
+                        <SkeletonBox width={34} height={34} borderRadius={17} style={{ marginRight: 14 }} />
+                        <View>
+                            <SkeletonBox width={60} height={10} style={{ marginBottom: 6 }} />
+                            <SkeletonBox width={120} height={13} />
+                        </View>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <SkeletonBox width={34} height={34} borderRadius={17} style={{ marginRight: 14 }} />
+                        <View>
+                            <SkeletonBox width={60} height={10} style={{ marginBottom: 6 }} />
+                            <SkeletonBox width={150} height={13} />
+                        </View>
+                    </View>
+                </View>
+            ))}
         </View>
     );
 };
