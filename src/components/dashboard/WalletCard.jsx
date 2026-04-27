@@ -2,7 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Feather from 'react-native-vector-icons/Feather';
-import { useTheme, WALLET_GRADIENT_LIGHT, WALLET_GRADIENT_DARK } from '../../theme';
+import { useTheme, WALLET_GRADIENT_LIGHT, WALLET_GRADIENT_DARK, BRAND_GRADIENT } from '../../theme';
 import AppText from '../common/AppText';
 
 const WalletCard = ({
@@ -10,63 +10,88 @@ const WalletCard = ({
     accountNumber = 'XXXX XXXX XXXX 1234',
     onWithdraw,
     onViewWallet,
+    secondaryLabel = 'View Wallet',
 }) => {
     const { colors, spacing, radius, isDark } = useTheme();
-    const gradientColors = isDark ? WALLET_GRADIENT_DARK : WALLET_GRADIENT_LIGHT;
+    const gradientColors = isDark ? BRAND_GRADIENT.colors : WALLET_GRADIENT_LIGHT;
+    const gradientCoords = isDark ? {
+        start: BRAND_GRADIENT.start,
+        end: BRAND_GRADIENT.end,
+        locations: BRAND_GRADIENT.locations
+    } : {
+        start: { x: 0, y: 0 },
+        end: { x: 1, y: 1 }
+    };
 
     return (
-        <LinearGradient
-            colors={gradientColors}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.card, { borderRadius: radius.xl, padding: spacing.lg, marginHorizontal: spacing.base }]}
-        >
-            {/* Top row */}
-            <View style={styles.topRow}>
-                <AppText variant="label" style={styles.label}>AVAILABLE BALANCE</AppText>
-                <TouchableOpacity
-                    onPress={onViewWallet}
-                    style={[styles.walletBadge, { borderRadius: radius.sm }]}
-                    accessibilityRole="button"
-                    accessibilityLabel="Wallet Account"
-                >
-                    <Feather name="credit-card" size={12} color="#FFFFFF" />
-                    <AppText variant="caption" style={styles.walletBadgeText}>Wallet A/C</AppText>
-                </TouchableOpacity>
-            </View>
+        <View style={[{ backgroundColor: isDark ? colors.surfaceElevated : colors.cardBg, borderRadius: radius.xl, marginHorizontal: spacing.base }, styles.card]}>
+            <LinearGradient
+                colors={gradientColors}
+                start={gradientCoords.start}
+                end={gradientCoords.end}
+                locations={gradientCoords.locations}
+                style={{ padding: spacing.lg }}
+            >
+                {/* Top row */}
+                <View style={styles.topRow}>
+                    <AppText variant="label" style={styles.label}>AVAILABLE BALANCE</AppText>
+                    <TouchableOpacity
+                        onPress={onViewWallet}
+                        style={[styles.walletBadge, { borderRadius: radius.sm }]}
+                        accessibilityRole="button"
+                        accessibilityLabel="Wallet Account"
+                    >
+                        <Feather name="credit-card" size={12} color="#FFFFFF" />
+                        <AppText variant="caption" style={styles.walletBadgeText}>Wallet A/C</AppText>
+                    </TouchableOpacity>
+                </View>
+                <AppText variant="amount" style={styles.amount}>
+                    ₹{balance}
+                </AppText>
 
-            {/* Amount */}
-            <AppText variant="amount" style={styles.amount}>
-                ₹{balance}
-            </AppText>
+                {/* Account number */}
+                <AppText variant="caption" style={styles.accountNum}>
+                    A/C NO : {accountNumber}
+                </AppText>
 
-            {/* Account number */}
-            <AppText variant="caption" style={styles.accountNum}>
-                A/C NO : {accountNumber}
-            </AppText>
+                {/* Action buttons */}
+                <View style={[styles.btnRow, { marginTop: spacing.lg }]}>
+                    <TouchableOpacity
+                        onPress={onWithdraw}
+                        accessibilityRole="button"
+                        accessibilityLabel="Withdraw"
+                        style={styles.withdrawBtnWrapper}
+                    >
+                        <LinearGradient
+                            colors={gradientColors}
+                            start={gradientCoords.start}
+                            end={gradientCoords.end}
+                            locations={gradientCoords.locations}
+                            style={[styles.actionBtn, { borderRadius: radius.full, borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)' }]}
+                        >
+                            <Feather name="arrow-down" size={14} color="#FFFFFF" />
+                            <AppText variant="bodySm" style={styles.withdrawText}>Withdraw</AppText>
+                        </LinearGradient>
+                    </TouchableOpacity>
 
-            {/* Action buttons */}
-            <View style={[styles.btnRow, { marginTop: spacing.lg }]}>
-                <TouchableOpacity
-                    onPress={onWithdraw}
-                    style={[styles.actionBtn, styles.withdrawBtn, { borderRadius: radius.full }]}
-                    accessibilityRole="button"
-                    accessibilityLabel="Withdraw"
-                >
-                    <Feather name="arrow-down" size={14} color="#FFFFFF" />
-                    <AppText variant="bodySm" style={styles.withdrawText}>Withdraw</AppText>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    onPress={onViewWallet}
-                    style={[styles.actionBtn, styles.viewBtn, { borderRadius: radius.full }]}
-                    accessibilityRole="button"
-                    accessibilityLabel="View Wallet"
-                >
-                    <AppText variant="bodySm" style={styles.viewText}>View Wallet</AppText>
-                </TouchableOpacity>
-            </View>
-        </LinearGradient>
+                    <TouchableOpacity
+                        onPress={onViewWallet}
+                        accessibilityRole="button"
+                        accessibilityLabel={secondaryLabel}
+                    >
+                        <LinearGradient
+                            colors={gradientColors}
+                            start={gradientCoords.start}
+                            end={gradientCoords.end}
+                            locations={gradientCoords.locations}
+                            style={[styles.actionBtn, { borderRadius: radius.full, borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)' }]}
+                        >
+                            <AppText variant="bodySm" style={styles.viewText}>{secondaryLabel}</AppText>
+                        </LinearGradient>
+                    </TouchableOpacity>
+                </View>
+            </LinearGradient>
+        </View>
     );
 };
 
@@ -84,9 +109,8 @@ const styles = StyleSheet.create({
     accountNum: { color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 2 },
     btnRow: { flexDirection: 'row', alignItems: 'center' },
     actionBtn: { paddingHorizontal: 20, paddingVertical: 10, flexDirection: 'row', alignItems: 'center' },
-    withdrawBtn: { backgroundColor: 'rgba(0,200,150,0.85)', marginRight: 12 },
+    withdrawBtnWrapper: { marginRight: 12 },
     withdrawText: { color: '#FFFFFF', fontWeight: '600', marginLeft: 4 },
-    viewBtn: { borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.5)' },
     viewText: { color: '#FFFFFF', fontWeight: '600' },
 });
 

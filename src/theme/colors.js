@@ -1,11 +1,4 @@
-/**
- * colors.js
- * CRM Connect — Color System
- * Semantic tokens for light & dark themes.
- * Never use raw hex in components — always reference these tokens via useTheme().
- */
 
-// ── Brand Gradients ─────────────────────────────
 export const BRAND_GRADIENT = {
     colors: ['#816FF5', '#6395EC', '#2DBFE6'],
     locations: [0, 0.5, 1],
@@ -119,12 +112,20 @@ export const lightColors = {
 
     // StatusBar
     statusBarStyle: 'dark-content',
+
+    // Profile
+    profileStatsBg: ['#E8F0FE', '#DDE8FA'],
+    profileStatsBorder: '#C7D8F2',
+    profileCardBorder: '#DAE5F0',
+    profileIconBg: '#F0F4FA',
+    signOutBg: '#FCE8E8',
+    signOutText: '#E53935',
 };
 
-// ── DARK THEME ──────────────────────────────────
+// DARK THEME
 export const darkColors = {
     // Backgrounds
-    background: '#0C0E1A',
+    background: '#0D0F1C',
     surface: '#141928',
     surfaceElevated: '#192036',
     cardBg: '#141928',
@@ -209,4 +210,12 @@ export const darkColors = {
 
     // StatusBar
     statusBarStyle: 'light-content',
+
+    // Profile
+    profileStatsBg: ['#1A213D', '#11152B'],
+    profileStatsBorder: '#2D375E',
+    profileCardBorder: '#202840',
+    profileIconBg: '#1E2640',
+    signOutBg: '#3A1616',
+    signOutText: '#FF4C4C',
 };

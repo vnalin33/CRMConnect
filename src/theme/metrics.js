@@ -1,7 +1,3 @@
-/**
- * metrics.js
- * CRM Connect — Responsive Scale System
- */
 
 import { Dimensions, Platform, PixelRatio } from 'react-native';
 

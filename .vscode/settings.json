@@ -1,0 +1,16 @@
+{
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.project.exclusion": [
+        "**/node_modules/**",
+        "node_modules/@react-native/gradle-plugin/**",
+        "node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/**",
+        "node_modules/@react-native/gradle-plugin/settings-plugin/**",
+        "node_modules/@react-native/gradle-plugin/shared/**"
+    ],
+    "java.import.exclusions": [
+        "**/node_modules/**",
+        "**/.metadata/**",
+        "**/archetype-resources/**",
+        "**/META-INF/maven/**"
+    ]
+}

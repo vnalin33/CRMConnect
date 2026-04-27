@@ -28,6 +28,7 @@ const AppInput = forwardRef(({
     maxLength,
     containerStyle,
     inputStyle,
+    style: customStyle, // Extract style to prevent overriding internal styles via {...rest}
     ...rest
 }, ref) => {
 
@@ -139,6 +140,7 @@ const AppInput = forwardRef(({
                             flex: 1,
                         },
                         inputStyle,
+                        customStyle, // Apply customStyle explicitly at the end of the array
                     ]}
                     accessibilityLabel={label}
                     {...rest}

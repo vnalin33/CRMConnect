@@ -23,9 +23,8 @@ const CustomTabBar = ({ state, navigation }) => {
     return (
         <View style={[styles.container, { backgroundColor: colors.surface }]}>
 
-            {state.routes.map((route, index) => {
-
-                const isFocused = state.index === index;
+            {state.routes.filter(r => icons[r.name]).map((route) => {
+                const isFocused = state.index === state.routes.findIndex(r => r.key === route.key);
 
                 const onPress = () => {
                     navigation.navigate(route.name);
@@ -68,23 +67,23 @@ const CustomTabBar = ({ state, navigation }) => {
 
                         {/* ICON */}
                         {isFocused ? (
-                           <MaskedView
-                               style={{ width: 30, height: 30, marginBottom: 2}}
-                               maskElement={
-                                   <Feather
-                                       name={icons[route.name]}
-                                       size={30}
-                                       color="black"
-                                   />
-                               }
-                           >
-                               <LinearGradient
-                                   colors={BRAND_GRADIENT.colors}
-                                   start={BRAND_GRADIENT.start}
-                                   end={BRAND_GRADIENT.end}
-                                   style={{ width: 30, height: 30,marginBottom: 2 }}
-                               />
-                           </MaskedView>
+                            <MaskedView
+                                style={{ width: 30, height: 30, marginBottom: 2 }}
+                                maskElement={
+                                    <Feather
+                                        name={icons[route.name]}
+                                        size={30}
+                                        color="black"
+                                    />
+                                }
+                            >
+                                <LinearGradient
+                                    colors={BRAND_GRADIENT.colors}
+                                    start={BRAND_GRADIENT.start}
+                                    end={BRAND_GRADIENT.end}
+                                    style={{ width: 30, height: 30, marginBottom: 2 }}
+                                />
+                            </MaskedView>
                         ) : (
                             <Feather
                                 name={icons[route.name]}

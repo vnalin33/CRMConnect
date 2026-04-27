@@ -13,8 +13,9 @@ import LinearGradient from 'react-native-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { BRAND_GRADIENT } from '../theme/colors';
 
-import useLogin from './useLogin';
-import { validateLoginForm } from './authValidation';
+import useLogin from '../hooks/useLogin';
+import { validateLoginForm } from '../utils/authValidation';
+import CountryCodePicker, { COUNTRIES } from '../components/common/CountryCodePicker';
 
 const { width: SW } = Dimensions.get('window');
 const IS_TABLET = SW >= 768;
@@ -34,6 +35,7 @@ const LoginScreen = ({ navigation }) => {
   const [inputType, setInputType] = useState('email');
 
   const passwordRef = useRef(null);
+  const [loginCountry, setLoginCountry] = useState(COUNTRIES[0]); // India default
 
   const { login, isLoading, error: apiError } = useLogin({
     onSuccess: () => navigation.replace('MainTabs'),
@@ -47,7 +49,7 @@ const LoginScreen = ({ navigation }) => {
       Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
       Animated.spring(slideAnim, { toValue: 0, tension: 60, friction: 10, useNativeDriver: true }),
     ]).start();
-  }, []);
+  }, [fadeAnim, slideAnim]);
 
   const clearFieldError = field =>
     setFormErrors(prev => ({ ...prev, [field]: null }));
@@ -159,8 +161,6 @@ const LoginScreen = ({ navigation }) => {
 
           </View>
 
-
-          {/* Welcome */}
           <View style={{ marginTop: IS_TABLET ? spacing.xxxl : spacing.xxl }}>
 
             <AppText
@@ -176,15 +176,9 @@ const LoginScreen = ({ navigation }) => {
 
           </View>
 
-
-          {/* FORM */}
           <View style={{ marginTop: IS_TABLET ? spacing.xxxl : spacing.xxl }}>
 
             <View style={styles.identifierContainer}>
-
-              {inputType === "phone" && (
-                <AppText style={styles.prefixText}>+91</AppText>
-              )}
 
               <AppInput
                 label="Email or Mobile"
@@ -199,10 +193,9 @@ const LoginScreen = ({ navigation }) => {
                 error={formErrors.identifier}
                 leftIcon={
                   inputType === 'phone'
-                    ? <PhoneIcon color={colors.iconColor || colors.textDisabled} />
+                    ? <CountryCodePicker selected={loginCountry} onSelect={setLoginCountry} />
                     : <MailIcon color={colors.iconColor || colors.textDisabled} />
                 }
-                style={inputType === 'phone' ? styles.phoneInputPadding : null}
               />
 
             </View>
@@ -227,6 +220,16 @@ const LoginScreen = ({ navigation }) => {
               leftIcon={<LockIcon color={colors.iconColor || colors.textDisabled} />}
             />
 
+            <TouchableOpacity
+              style={styles.forgotBtn}
+              onPress={() => navigation.navigate('ForgotPassword')}
+              activeOpacity={0.7}
+            >
+              <AppText variant="bodySm" style={{ color: colors.primary || '#6366F1', fontWeight: '600' }}>
+                Forgot Password?
+              </AppText>
+            </TouchableOpacity>
+
 
             {apiError ? (
               <View
@@ -236,7 +239,7 @@ const LoginScreen = ({ navigation }) => {
                     backgroundColor: colors.errorBg,
                     borderRadius: radius.md,
                     padding: spacing.md,
-                    marginBottom: spacing.base,
+                    marginBottom: spacing.base, 
                     borderLeftWidth: 3,
                     borderLeftColor: colors.error,
                   },
@@ -247,16 +250,6 @@ const LoginScreen = ({ navigation }) => {
                 </AppText>
               </View>
             ) : null}
-
-
-            <TouchableOpacity
-              onPress={() => navigation?.navigate('ForgotPassword')}
-              style={styles.forgotBtn}
-            >
-              <AppText variant="body" style={{ color: colors.textLink || colors.primary, fontWeight: '600' }}>
-                Forgot Password?
-              </AppText>
-            </TouchableOpacity>
 
 
             <View style={{ marginTop: spacing.xl }}>
@@ -275,7 +268,17 @@ const LoginScreen = ({ navigation }) => {
 
 
           <View style={styles.footer}>
-            <AppText variant="caption" color="disabled" align="center">
+            <AppText variant="bodySm" color="secondary" align="center">
+              Don't have an account?{'  '}
+              <AppText
+                variant="bodySm"
+                style={{ color: colors.primary || '#6366F1', fontWeight: '700' }}
+                onPress={() => navigation.navigate('Signup')}
+              >
+                Sign Up
+              </AppText>
+            </AppText>
+            <AppText variant="caption" color="disabled" align="center" style={{ marginTop: 8 }}>
               © 2026 CRM Connect · All rights reserved
             </AppText>
           </View>
@@ -296,20 +299,7 @@ const styles = StyleSheet.create({
 
   brandSection: { alignItems: 'flex-start' },
 
-  identifierContainer: { position: 'relative' },
-
-  prefixText: {
-    position: 'absolute',
-    left: 45,
-    top: 37,
-    fontSize: 14,
-    color: '#6B7280',
-    zIndex: 10
-  },
-
-  phoneInputPadding: {
-    paddingLeft: 32
-  },
+  identifierContainer: { },
 
   forgotBtn: { alignSelf: 'flex-end', marginTop: 4, marginBottom: 4 },
 

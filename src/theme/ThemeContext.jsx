@@ -10,22 +10,23 @@ const ThemeContext = createContext(undefined);
 
 export const ThemeProvider = ({ children }) => {
     const systemColorScheme = useColorScheme();
-    const [themeMode, setThemeModeState] = useState('light');
+    const [themeMode, setThemeModeState] = useState('system');
     const [isReady, setIsReady] = useState(false);
-
-    // Restore persisted theme on mount
     useEffect(() => {
+        console.log('ThemeProvider initializing...');
         AsyncStorage.getItem(THEME_STORAGE_KEY)
             .then(saved => {
+                console.log('Theme saved state:', saved);
                 if (saved === 'light' || saved === 'dark' || saved === 'system') {
                     setThemeModeState(saved);
                 }
             })
-            .catch(() => { })
-            .finally(() => setIsReady(true));
+            .catch((err) => { console.error('Theme storage error:', err); })
+            .finally(() => {
+                console.log('ThemeProvider is ready');
+                setIsReady(true);
+            });
     }, []);
-
-    // Persist whenever theme changes
     const setThemeMode = useCallback(mode => {
         setThemeModeState(mode);
         AsyncStorage.setItem(THEME_STORAGE_KEY, mode).catch(() => { });
@@ -50,9 +51,7 @@ export const ThemeProvider = ({ children }) => {
         spacing,
         radius,
     };
-
-    // Don't render until theme is restored so we avoid a flash
-    if (!isReady) return null;
+    // if (!isReady) return null;
 
     return (
         <ThemeContext.Provider value={value}>

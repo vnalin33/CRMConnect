@@ -1,16 +1,10 @@
-/**
- * AppLogo.js
- * Uses your actual CRM Connect logo image.
- * Fallback → gradient circle if image fails to load.
- */
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Image, View, Text, StyleSheet } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
-// ── Your actual logo ──────────────────────────
-const LOGO = require('../../assests/images/logo.png');
-// ─────────────────────────────────────────────
+const LOGO = require('../../assets/images/logo.png');
+
 
 const BRAND_GRADIENT = {
     colors: ['#816FF5', '#6395EC', '#2DBFE6'],
@@ -31,7 +25,7 @@ const AppLogo = ({ size = 72, animated = true, style }) => {
                 Animated.timing(pulseAnim, { toValue: 1, duration: 2400, useNativeDriver: true }),
             ])
         ).start();
-    }, [animated]);
+    }, [animated, pulseAnim]);
 
     return (
         <Animated.View
@@ -47,7 +41,7 @@ const AppLogo = ({ size = 72, animated = true, style }) => {
             accessibilityRole="image"
         >
             {!imgError ? (
-                /* ── Actual logo image ── */
+
                 <Image
                     source={LOGO}
                     style={{ width: size, height: size, borderRadius: size / 2 }}
@@ -56,7 +50,6 @@ const AppLogo = ({ size = 72, animated = true, style }) => {
                     accessibilityIgnoresInvertColors
                 />
             ) : (
-                /* ── Fallback: gradient circle ── */
                 <LinearGradient
                     colors={BRAND_GRADIENT.colors}
                     locations={BRAND_GRADIENT.locations}
