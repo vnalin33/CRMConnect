@@ -15,6 +15,40 @@ const getProfile = async (userId) => {
     error.statusCode = 404;
     throw error;
   }
+
+  // Fetch real-time stats using the same logic as the Leads tab
+  const leadTrackModel = require('../models/leadTrackModel');
+  const allLeads = await leadTrackModel.getLeadsByConnector(userId);
+  
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+
+  let totalLeads = 0;
+  let closedDeals = 0;
+  let thisMonth = 0;
+
+  for (const lead of allLeads) {
+    totalLeads++;
+    
+    // Status 18 = Completed (after disbursement)
+    const status = lead.track_status || lead.lead_status || 1;
+    if (status === 18) {
+        closedDeals++;
+    }
+    
+    const leadDate = new Date(lead.createdon);
+    if (leadDate.getMonth() === currentMonth && leadDate.getFullYear() === currentYear) {
+      thisMonth++;
+    }
+  }
+
+  // Attach stats to the user object
+  user.stats = {
+    totalLeads,
+    closedDeals,
+    thisMonth
+  };
+
   return user;
 };
 

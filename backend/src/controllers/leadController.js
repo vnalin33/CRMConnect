@@ -8,6 +8,14 @@ const createLead = async (req, res, next) => {
     
     const newLead = await leadService.createLead(connectorId, leadData);
     
+    // Real-time Push
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('lead_added', { connectorId, leadId: newLead.id });
+      // Notify specifically the connector's room if connected
+      io.to(`user_${connectorId}`).emit('lead_added', { leadId: newLead.id });
+    }
+
     res.status(201).json({
       success: true,
       data: newLead,
@@ -73,6 +81,14 @@ const assignLead = async (req, res, next) => {
     const leadId = parseInt(req.params.id, 10);
     const { notes } = req.body;
     const result = await leadTrackService.assignLead(leadId, req.user.id, notes);
+    
+    // Real-time Push
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('lead_updated', { leadId, action: 'assigned' });
+      io.to(`user_${req.user.id}`).emit('lead_updated', { leadId, action: 'assigned' });
+    }
+
     res.status(200).json({
       success: true,
       data: result,
@@ -98,6 +114,14 @@ const updateLeadStatus = async (req, res, next) => {
     }
 
     const result = await leadTrackService.updateStatus(leadId, parseInt(status, 10), notes, req.user.id);
+    
+    // Real-time Push
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('lead_updated', { leadId, status, connectorId: req.user.id });
+      io.to(`user_${req.user.id}`).emit('lead_updated', { leadId, status });
+    }
+
     res.status(200).json({
       success: true,
       data: result,
@@ -117,6 +141,12 @@ const deleteLead = async (req, res, next) => {
       const error = new Error('Lead not found');
       error.statusCode = 404;
       throw error;
+    }
+
+    // Real-time Push
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('lead_updated', { leadId, action: 'deleted' });
     }
 
     res.status(200).json({

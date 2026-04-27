@@ -5,7 +5,6 @@ import {
     TouchableOpacity,
     StyleSheet,
     ActivityIndicator,
-    Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Feather from 'react-native-vector-icons/Feather';

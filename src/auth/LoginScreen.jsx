@@ -15,6 +15,7 @@ import { BRAND_GRADIENT } from '../theme/colors';
 
 import useLogin from '../hooks/useLogin';
 import { validateLoginForm } from '../utils/authValidation';
+import CountryCodePicker, { COUNTRIES } from '../components/common/CountryCodePicker';
 
 const { width: SW } = Dimensions.get('window');
 const IS_TABLET = SW >= 768;
@@ -34,6 +35,7 @@ const LoginScreen = ({ navigation }) => {
   const [inputType, setInputType] = useState('email');
 
   const passwordRef = useRef(null);
+  const [loginCountry, setLoginCountry] = useState(COUNTRIES[0]); // India default
 
   const { login, isLoading, error: apiError } = useLogin({
     onSuccess: () => navigation.replace('MainTabs'),
@@ -178,10 +180,6 @@ const LoginScreen = ({ navigation }) => {
 
             <View style={styles.identifierContainer}>
 
-              {inputType === "phone" && (
-                <AppText style={styles.prefixText}>+91</AppText>
-              )}
-
               <AppInput
                 label="Email or Mobile"
                 placeholder={inputType === 'phone' ? "9876543210" : "you@example.com"}
@@ -195,10 +193,9 @@ const LoginScreen = ({ navigation }) => {
                 error={formErrors.identifier}
                 leftIcon={
                   inputType === 'phone'
-                    ? <PhoneIcon color={colors.iconColor || colors.textDisabled} />
+                    ? <CountryCodePicker selected={loginCountry} onSelect={setLoginCountry} />
                     : <MailIcon color={colors.iconColor || colors.textDisabled} />
                 }
-                style={inputType === 'phone' ? styles.phoneInputPadding : null}
               />
 
             </View>
@@ -302,20 +299,7 @@ const styles = StyleSheet.create({
 
   brandSection: { alignItems: 'flex-start' },
 
-  identifierContainer: { position: 'relative' },
-
-  prefixText: {
-    position: 'absolute',
-    left: 45,
-    top: 37,
-    fontSize: 14,
-    color: '#6B7280',
-    zIndex: 10
-  },
-
-  phoneInputPadding: {
-    paddingLeft: 32
-  },
+  identifierContainer: { },
 
   forgotBtn: { alignSelf: 'flex-end', marginTop: 4, marginBottom: 4 },
 

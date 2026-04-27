@@ -22,6 +22,7 @@ import { BRAND_GRADIENT } from '../theme/colors';
 import { validateSignupForm, SIGNUP_ROLES } from '../utils/authValidation';
 import useSignup from '../hooks/useSignup';
 import { getPasswordStrength } from '../utils/authValidation';
+import CountryCodePicker, { COUNTRIES } from '../components/common/CountryCodePicker';
 
 const ROLE_OPTIONS = SIGNUP_ROLES.map(r => r.label);
 const roleIdFromLabel = label => SIGNUP_ROLES.find(r => r.label === label)?.id ?? '';
@@ -76,6 +77,7 @@ const SignupScreen = ({ navigation }) => {
     const [roleLabel, setRoleLabel] = useState('');
     const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
     const [formErrors, setFormErrors] = useState({});
+    const [signupCountry, setSignupCountry] = useState(COUNTRIES[0]); // India default
 
     const emailRef    = useRef(null);
     const phoneRef    = useRef(null);
@@ -233,28 +235,29 @@ const SignupScreen = ({ navigation }) => {
                         />
 
                         {/* Phone */}
-                        <View style={styles.phoneContainer}>
-                            <AppText style={styles.prefixText}>+91</AppText>
-                            <AppInput
-                                ref={phoneRef}
-                                label="Mobile Number"
-                                placeholder="9876543210"
-                                value={phone}
-                                onChangeText={val => {
-                                    if (/^[0-9]*$/.test(val) && val.length <= 10) {
-                                        setPhone(val);
-                                        clearFieldError('phone');
-                                    }
-                                }}
-                                keyboardType="phone-pad"
-                                maxLength={10}
-                                returnKeyType="next"
-                                onSubmitEditing={() => passwordRef.current?.focus()}
-                                error={formErrors.phone}
-                                leftIcon={<PhoneIcon color={colors.iconColor || colors.textDisabled} />}
-                                style={styles.phoneInputPadding}
-                            />
-                        </View>
+                        <AppInput
+                            ref={phoneRef}
+                            label="Mobile Number"
+                            placeholder="9876543210"
+                            value={phone}
+                            onChangeText={val => {
+                                if (/^[0-9]*$/.test(val) && val.length <= 10) {
+                                    setPhone(val);
+                                    clearFieldError('phone');
+                                }
+                            }}
+                            keyboardType="phone-pad"
+                            maxLength={10}
+                            returnKeyType="next"
+                            onSubmitEditing={() => passwordRef.current?.focus()}
+                            error={formErrors.phone}
+                            leftIcon={
+                                <CountryCodePicker
+                                    selected={signupCountry}
+                                    onSelect={setSignupCountry}
+                                />
+                            }
+                        />
 
                         {/* Password */}
                         <AppInput
@@ -353,16 +356,6 @@ const styles = StyleSheet.create({
     container:         { flex: 1 },
     inner:             { flex: 1 },
     brandSection:      { alignItems: 'flex-start' },
-    phoneContainer:    { position: 'relative' },
-    prefixText: {
-        position: 'absolute',
-        left: 45,
-        top: 37,
-        fontSize: 14,
-        color: '#6B7280',
-        zIndex: 10,
-    },
-    phoneInputPadding: { paddingLeft: 32 },
     errorBanner:       {},
     footer:            { marginTop: 'auto', paddingTop: 32, paddingBottom: 8 },
 });

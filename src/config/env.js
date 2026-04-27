@@ -2,7 +2,8 @@ import { Platform } from 'react-native';
 
 const getApiBaseUrl = () => {
   if (__DEV__) {
-    return 'http://127.0.0.1:5005/api';
+    // USB: `adb reverse tcp:5005 tcp:5005` maps device localhost → PC port
+    return 'http://localhost:5005/api';
   }
   return 'https://api.crmconnect.app/api';
 };

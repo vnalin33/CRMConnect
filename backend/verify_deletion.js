@@ -1,11 +1,9 @@
-// No fetch needed for direct model testing
 
-const API_URL = 'http://localhost:5005/api'; // Mobile backend port
+
+const API_URL = 'http://localhost:5005/api'; 
 
 async function testDeletion() {
-  // 1. Login to get token (assuming standard credentials for testing if needed, but I'll try to find a lead first)
-  // Since I don't have a token easily handy in this script, I'll assume the developer can run this or 
-  // I'll just check if the model function works directly via node.
+ 
   
   const { Pool } = require('pg');
   const pool = new Pool({ connectionString: 'postgres://postgres:8080@localhost:5432/ncrm' });
