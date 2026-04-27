@@ -8,6 +8,13 @@ import GradientScreenHeader from '../components/layout/GradientScreenHeader';
 import AppText from '../components/common/AppText';
 import WalletCard from '../components/dashboard/WalletCard';
 import AppButton from '../components/common/AppButton';
+import { useProfile } from '../hooks/useProfile';
+
+// Mask account number for privacy
+const maskAccount = (acc) => {
+  if (!acc || acc.length < 4) return acc || '';
+  return `XXXX XXXX ${acc.slice(-4)}`;
+};
 
 // ── Mock Data ──
 const MOCK_MONTHS = ['Feb 2026', 'Jan 2026', 'Dec 2025', 'Nov 2025', 'Oct 2025'];
@@ -23,9 +30,14 @@ const TRANSACTIONS = [
 const WalletScreen = ({ navigation }) => {
     const { colors, spacing, radius } = useTheme();
     const insets = useSafeAreaInsets();
+    const { profileData } = useProfile();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedMonth, setSelectedMonth] = useState('Feb 2026');
     const [showAll, setShowAll] = useState(false);
+
+    const bankAccount = profileData?.bankDetails?.account;
+    const bankBranch = profileData?.bankDetails?.branch;
+    const bankIfsc = profileData?.bankDetails?.ifsc;
 
     const renderMonthSelector = () => (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.monthScroll, { paddingHorizontal: spacing.base }]} style={{ marginVertical: spacing.lg }}>
@@ -164,7 +176,7 @@ const WalletScreen = ({ navigation }) => {
                 <View style={{ marginTop: spacing.md, overflow: 'visible' }}>
                     <WalletCard
                         balance="0.00"
-                        accountNumber="XXXX XXXX XXXX 1234"
+                        accountNumber={bankAccount && bankAccount !== 'Not Provided' ? maskAccount(bankAccount) : 'XXXX XXXX XXXX 1234'}
                         onWithdraw={() => { }}
                         onViewWallet={() => { }}
                         secondaryLabel="Spend Wallet"

@@ -9,10 +9,10 @@ import FilterChips from '../components/status/FilterChips';
 import StatusCard from '../components/status/StatusCard';
 import GradientScreenHeader from '../components/layout/GradientScreenHeader';
 import ScreenWrapper from '../components/layout/ScreenWrapper';
-import { getMyLeadsApi, deleteLeadApi } from '../api/leadApi';
+import { deleteLeadApi } from '../api/leadApi';
 import { useFocusEffect } from '@react-navigation/native';
-import { STATUS_MAP } from '../hooks/useLeadList';
-import { Alert } from 'react-native';
+import { useLeadList, STATUS_MAP } from '../hooks/useLeadList';
+import { useAlert } from '../context/AlertContext';
 
 /**
  * Transforms an API lead row into the shape StatusCard expects.
@@ -42,55 +42,41 @@ const transformLead = (apiLead) => {
 const StatusScreen = ({ navigation }) => {
     const { colors } = useTheme();
     const insets = useSafeAreaInsets();
+    const { showAlert } = useAlert();
 
-    const [leads, setLeads] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { allLeads, loading, refresh } = useLeadList();
+    const leads = useMemo(() => allLeads.map(transformLead), [allLeads]);
+    
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
 
-    const fetchLeads = useCallback(async () => {
-        setLoading(true);
-        try {
-            const result = await getMyLeadsApi();
-            const transformed = (result.data || []).map(transformLead);
-            setLeads(transformed);
-        } catch (err) {
-            console.error('Failed to fetch leads:', err);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
     const handleDeleteLead = useCallback(async (lead) => {
-        Alert.alert(
-            'Delete Lead',
-            `Are you sure you want to delete ${lead.name}? This action cannot be undone.`,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                { 
-                    text: 'Delete', 
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            setLoading(true);
-                            await deleteLeadApi(lead.id);
-                            await fetchLeads(); // Refresh list after deletion
-                        } catch (err) {
-                            Alert.alert('Error', err.message || 'Failed to delete lead');
-                        } finally {
-                            setLoading(false);
-                        }
-                    }
+        showAlert({
+            type: 'warning',
+            title: 'Delete Lead',
+            message: `Are you sure you want to delete ${lead.name}? This action cannot be undone.`,
+            showConfirm: true,
+            buttonText: 'Delete',
+            onConfirm: async () => {
+                try {
+                    await deleteLeadApi(lead.id);
+                    await refresh(); // Refresh list after deletion
+                } catch (err) {
+                    showAlert({
+                        type: 'error',
+                        title: 'Error',
+                        message: err.message || 'Failed to delete lead'
+                    });
                 }
-            ]
-        );
-    }, [fetchLeads]);
+            }
+        });
+    }, [refresh, showAlert]);
 
     // Auto-refresh when screen gains focus (tab switch, returning from detail)
     useFocusEffect(
         useCallback(() => {
-            fetchLeads();
-        }, [fetchLeads])
+            refresh();
+        }, [refresh])
     );
 
     const filteredLeads = useMemo(() => {
@@ -146,7 +132,7 @@ const StatusScreen = ({ navigation }) => {
                 contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 20 }]}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
-                    <RefreshControl refreshing={loading} onRefresh={fetchLeads} colors={[colors.primary]} />
+                    <RefreshControl refreshing={loading} onRefresh={refresh} colors={[colors.primary]} />
                 }
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>

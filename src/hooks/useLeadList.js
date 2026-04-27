@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getMyLeadsApi } from '../api/leadApi';
+import { useSocket } from '../context/SocketContext';
 
 /**
  * STATUS_MAP — mirrors backend leadTrackModel.STATUS_MAP
@@ -38,29 +41,73 @@ const FILTER_TABS = [
   { id: 'rejected',   label: 'Rejected',    statusCodes: [5, 7, 14, 16, 22, 23, 24] },
 ];
 
+const LEADS_CACHE_KEY = '@crm_leads_cache';
+
 export const useLeadList = () => {
-  const [leads, setLeads] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
+  const socket = useSocket();
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [cachedLeads, setCachedLeads] = useState(null);
 
-  const fetchLeads = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await getMyLeadsApi();
-      setLeads(result.data || []);
-    } catch (err) {
-      setError(err.message || 'Failed to load leads');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  // Hydrate from cache immediately on mount
   useEffect(() => {
-    fetchLeads();
-  }, [fetchLeads]);
+      const hydrateCache = async () => {
+          try {
+              const cached = await AsyncStorage.getItem(LEADS_CACHE_KEY);
+              if (cached) {
+                  const parsed = JSON.parse(cached);
+                  setCachedLeads(parsed);
+                  if (!queryClient.getQueryData(['leads'])) {
+                      queryClient.setQueryData(['leads'], parsed);
+                  }
+              }
+          } catch (e) {
+              console.error("Failed to hydrate leads cache", e);
+          }
+      };
+      hydrateCache();
+  }, [queryClient]);
+
+  const {
+    data: queryData,
+    isLoading: queryLoading,
+    error: queryError,
+    refetch,
+  } = useQuery({
+    queryKey: ['leads'],
+    queryFn: async () => {
+      const result = await getMyLeadsApi();
+      const data = result.data || [];
+      AsyncStorage.setItem(LEADS_CACHE_KEY, JSON.stringify(data));
+      return data;
+    },
+    staleTime: 1000 * 60 * 2, // 2 minutes stale time
+  });
+
+  const leads = queryData || cachedLeads || [];
+  const loading = queryLoading && !leads.length && !cachedLeads;
+  const error = queryError ? queryError.message : null;
+
+  // Listen for real-time WebSocket updates
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleLeadUpdated = (data) => {
+      // Instantly invalidate cache when backend pushes update
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      // You can also optimistically update the cache here if the socket payload has full data
+    };
+
+    socket.on('lead_updated', handleLeadUpdated);
+    socket.on('lead_added', handleLeadUpdated);
+
+    return () => {
+      socket.off('lead_updated', handleLeadUpdated);
+      socket.off('lead_added', handleLeadUpdated);
+    };
+  }, [socket, queryClient]);
 
   const filteredLeads = leads.filter((lead) => {
     const statusCode = lead.statusCode || lead.track_status || lead.lead_status || 1;
@@ -107,7 +154,7 @@ export const useLeadList = () => {
     setActiveTab,
     searchQuery,
     setSearchQuery,
-    refresh: fetchLeads,
+    refresh: refetch,
     FILTER_TABS,
     tabCounts,
     STATUS_MAP,

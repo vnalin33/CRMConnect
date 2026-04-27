@@ -1,13 +1,11 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
     View,
     StyleSheet,
     TouchableOpacity,
-    Alert,
     ScrollView,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../theme';
 import ScreenWrapper from '../components/layout/ScreenWrapper';
 import GradientScreenHeader from '../components/layout/GradientScreenHeader';
@@ -18,9 +16,20 @@ import AppButton from '../components/common/AppButton';
 import GradientText from '../components/common/GradientText';
 import DropdownSelect from '../components/common/DropdownSelect';
 import { useNewLead } from '../hooks/useNewLead';
+import { useDrafts } from '../hooks/useDrafts';
+import { useAlert } from '../context/AlertContext';
+import CountryCodePicker, { COUNTRIES } from '../components/common/CountryCodePicker';
 
-const NewLeadScreen = ({ navigation }) => {
+
+const NewLeadScreen = ({ route, navigation }) => {
     const { colors, spacing } = useTheme();
+    const { showAlert } = useAlert();
+    const { deleteDraft } = useDrafts();
+    const draftId = route.params?.draftId || null;
+    const [selectedCountry, setSelectedCountry] = React.useState(COUNTRIES[0]); // India default
+    const prefill = route.params?.prefill?.draft_data || null;
+    // Track which draft has been loaded to prevent re-loading the same one
+    const lastLoadedDraftRef = useRef(null);
 
     const {
         formData,
@@ -31,27 +40,62 @@ const NewLeadScreen = ({ navigation }) => {
         submitting,
         handleSubmit,
         handleSaveDraft,
+        loadPrefill,
         LOAN_TYPES,
         EMPLOYMENT_TYPES,
-    } = useNewLead();
+    } = useNewLead(prefill);
+
+    // Sync form with route params (for resume/edit)
+    // We use draftId as the trigger since object references are unreliable
+    React.useEffect(() => {
+        if (prefill && draftId && lastLoadedDraftRef.current !== draftId) {
+            lastLoadedDraftRef.current = draftId;
+            loadPrefill(prefill);
+        }
+    }, [draftId, prefill, loadPrefill]);
 
     const onSubmit = async () => {
         const result = await handleSubmit();
         if (result?.success) {
-            Alert.alert('Success', 'Lead submitted successfully!', [
-                { text: 'OK', onPress: () => navigation.navigate('Home') }
-            ]);
+            // If it was a draft, delete it from backend AND local cache
+            if (draftId) {
+                try {
+                    await deleteDraft(draftId);
+                } catch(e) {}
+            }
+            // Clear params so this draft doesn't reload later
+            navigation.setParams({ draftId: undefined, prefill: undefined });
+            
+            showAlert({
+                type: 'success',
+                title: 'Success!',
+                message: 'Lead submitted successfully!',
+                onClose: () => navigation.navigate('Home')
+            });
         } else if (result?.error) {
-            Alert.alert('Error', result.error);
+            showAlert({
+                type: 'error',
+                title: 'Submission Failed',
+                message: result.error
+            });
         }
     };
 
     const onDraft = async () => {
-        const result = await handleSaveDraft();
+        const result = await handleSaveDraft(draftId);
         if (result?.success) {
-            Alert.alert('Saved', 'Lead saved as draft.');
+            showAlert({
+                type: 'success',
+                title: 'Saved',
+                message: 'Lead saved as draft.',
+                onClose: () => navigation.navigate('Home')
+            });
         } else if (result?.error) {
-            Alert.alert('Error', result.error);
+            showAlert({
+                type: 'error',
+                title: 'Draft Failed',
+                message: result.error
+            });
         }
     };
 
@@ -108,17 +152,17 @@ const NewLeadScreen = ({ navigation }) => {
 
                 <AppInput
                     label="MOBILE NUMBER"
-                    placeholder="+91 00000 00000"
+                    placeholder="00000 00000"
                     value={formData.mobile}
                     keyboardType="phone-pad"
                     maxLength={10}
                     onChangeText={(t) => updateField('mobile', t.replace(/[^0-9]/g, ''))}
                     error={errors.mobile}
                     leftIcon={
-                        <View style={styles.flagContainer}>
-                            <MaterialCommunityIcons name="flag-in" size={20} color={colors.success} style={styles.flagIcon} />
-                            <Feather name="chevron-down" size={12} color={colors.textSecondary} style={styles.chevronIcon} />
-                        </View>
+                        <CountryCodePicker
+                            selected={selectedCountry}
+                            onSelect={setSelectedCountry}
+                        />
                     }
                 />
 
@@ -147,7 +191,7 @@ const NewLeadScreen = ({ navigation }) => {
                     keyboardType="numeric"
                     onChangeText={(t) => updateField('loanAmount', t.replace(/[^0-9,]/g, ''))}
                     error={errors.loanAmount}
-                    leftIcon={<MaterialCommunityIcons name="cash-multiple" size={18} color={colors.textPlaceholder} />}
+                    leftIcon={<Feather name="dollar-sign" size={16} color={colors.textPlaceholder} />}
                 />
 
                 <AppInput
@@ -157,7 +201,7 @@ const NewLeadScreen = ({ navigation }) => {
                     keyboardType="numeric"
                     onChangeText={(t) => updateField('annualIncome', t.replace(/[^0-9,]/g, ''))}
                     error={errors.annualIncome}
-                    leftIcon={<MaterialCommunityIcons name="cash-fast" size={18} color={colors.textPlaceholder} />}
+                    leftIcon={<Feather name="trending-up" size={16} color={colors.textPlaceholder} />}
                 />
 
                 <DropdownSelect
@@ -224,14 +268,8 @@ const styles = StyleSheet.create({
     nameRow: {
         flexDirection: 'row',
     },
-    flagContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
     flexItem: { flex: 1 },
     flexItemWithMargin: { flex: 1, marginRight: scale(8) },
-    flagIcon: { marginRight: scale(2) },
-    chevronIcon: { marginLeft: scale(2) },
     notesInput: { minHeight: scale(80), textAlignVertical: 'top', paddingTop: scale(12) },
     notesHelpText: { textAlign: 'right', marginTop: scale(-8), marginBottom: scale(16) },
     submitBtn: { marginBottom: scale(16) },

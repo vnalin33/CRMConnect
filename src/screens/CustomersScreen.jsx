@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { StyleSheet, View, FlatList } from 'react-native';
+import { StyleSheet, View, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
@@ -9,92 +9,61 @@ import GradientScreenHeader from '../components/layout/GradientScreenHeader';
 import ScreenWrapper from '../components/layout/ScreenWrapper';
 import FilterChips from '../components/status/FilterChips';
 import CustomerCard from '../components/customers/CustomerCard';
-
-// ─── Static Mock Data (from Figma) ────────────────────────────────────────────
-const CUSTOMERS = [
-    {
-        id: '1',
-        name: 'Manoj Kumar',
-        loanType: 'Home Loan',
-        status: 'Instant',
-        loanAmount: '₹ 12,00,000',
-        disbursedAmount: '₹ 11,80,000.00',
-        disbursementDate: '20 Feb 2026',
-    },
-    {
-        id: '2',
-        name: 'Mani',
-        loanType: 'Personal Loan',
-        status: 'Cycle',
-        loanAmount: '₹ 5,00,000',
-        disbursedAmount: '₹ 4,80,000.00',
-        disbursementDate: '22 Feb 2026',
-    },
-    {
-        id: '3',
-        name: 'Vikram',
-        loanType: 'Business Loan',
-        status: 'Cycle',
-        loanAmount: '₹ 40,00,000',
-        disbursedAmount: '₹ 38,00,000.00',
-        disbursementDate: '10 Feb 2026',
-    },
-    {
-        id: '4',
-        name: 'Rajesh',
-        loanType: 'Loan Against Property',
-        status: 'Instant',
-        loanAmount: '₹ 25,00,000',
-        disbursedAmount: '₹ 24,50,000.00',
-        disbursementDate: '15 Feb 2026',
-    },
-    {
-        id: '5',
-        name: 'Priya Sharma',
-        loanType: 'Home Loan',
-        status: 'Instant',
-        loanAmount: '₹ 35,00,000',
-        disbursedAmount: '₹ 33,75,000.00',
-        disbursementDate: '05 Mar 2026',
-    },
-    {
-        id: '6',
-        name: 'Arjun Nair',
-        loanType: 'Business Loan',
-        status: 'Cycle',
-        loanAmount: '₹ 18,00,000',
-        disbursedAmount: '₹ 17,50,000.00',
-        disbursementDate: '01 Mar 2026',
-    },
-];
+import { useLeadList, STATUS_MAP } from '../hooks/useLeadList';
 
 // Filter chip labels matching Figma
 const LOAN_FILTERS = ['All', 'Home Loan', 'Business Loan', 'Personal Loan', 'Loan Against Property'];
 
-// Normalize loan type to match a filter chip label
 const matchesLoanFilter = (loanType = '', filter = 'All') => {
     if (filter === 'All') return true;
     return loanType.toLowerCase().includes(filter.toLowerCase());
+};
+
+const transformCustomer = (apiLead) => {
+    const statusCode = apiLead.track_status || apiLead.lead_status || apiLead.status || 1;
+    const mapped = STATUS_MAP[statusCode] || { label: 'New Lead' };
+    
+    // Format amounts
+    const rawAmount = apiLead.loanamount ? parseFloat(apiLead.loanamount) : 0;
+    const formattedAmount = `₹ ${rawAmount.toLocaleString('en-IN')}`;
+    
+    const dateStr = apiLead.createdon
+        ? new Date(apiLead.createdon).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+        : 'N/A';
+
+    return {
+        id: String(apiLead.id),
+        name: `${apiLead.firstname || ''} ${apiLead.lastname || ''}`.trim(),
+        loanType: apiLead.loantype || 'N/A',
+        status: mapped.label, // Reusing status label for the badge
+        loanAmount: formattedAmount,
+        disbursedAmount: formattedAmount, // Using same amount as placeholder
+        disbursementDate: dateStr,
+    };
 };
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 const CustomersScreen = ({ navigation }) => {
     const { colors } = useTheme();
     const insets = useSafeAreaInsets();
+    const { allLeads, loading, refresh } = useLeadList();
 
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
 
     const filteredCustomers = useMemo(() => {
         const q = searchQuery.toLowerCase().trim();
-        return CUSTOMERS.filter(c => {
+        // Here we just map all leads. In the future, we could filter for disbursed only.
+        const mapped = allLeads.map(transformCustomer);
+        
+        return mapped.filter(c => {
             const matchesSearch = !q ||
                 c.name.toLowerCase().includes(q) ||
                 c.loanType.toLowerCase().includes(q);
             const matchesFilter = matchesLoanFilter(c.loanType, activeFilter);
             return matchesSearch && matchesFilter;
         });
-    }, [searchQuery, activeFilter]);
+    }, [allLeads, searchQuery, activeFilter]);
 
     const renderItem = ({ item }) => (
         <CustomerCard customer={item} onPress={() => { }} />
@@ -134,12 +103,21 @@ const CustomersScreen = ({ navigation }) => {
                     { paddingBottom: insets.bottom + 20 },
                 ]}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl refreshing={loading} onRefresh={refresh} colors={[colors.primary]} />
+                }
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <Feather name="users" size={48} color={colors.textDisabled} />
-                        <AppText color="secondary" style={styles.emptyText}>
-                            No customers found
-                        </AppText>
+                        {loading ? (
+                            <ActivityIndicator size="large" color={colors.primary} />
+                        ) : (
+                            <>
+                                <Feather name="users" size={48} color={colors.textDisabled} />
+                                <AppText color="secondary" style={styles.emptyText}>
+                                    No customers found
+                                </AppText>
+                            </>
+                        )}
                     </View>
                 }
             />

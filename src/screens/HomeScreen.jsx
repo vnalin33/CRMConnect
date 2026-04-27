@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   View,
   ScrollView,
+  RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
@@ -12,41 +13,54 @@ import SearchBar from '../components/dashboard/SearchBar';
 import SnapshotRow from '../components/dashboard/SnapshotRow';
 import QuickActionsMenu from '../components/dashboard/QuickActionsMenu';
 import PayoutCard from '../components/dashboard/PayoutCard';
+import { useLeadList } from '../hooks/useLeadList';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+import { useProfile } from '../hooks/useProfile';
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-// Replace with API data in the future.
+// Replace with API data in the future for wallet and payouts.
 const DASHBOARD_DATA = {
   wallet: {
     balance: '0.00',
     accountNumber: 'XXXX XXXX XXXX 1234',
   },
-  snapshots: [
-    { id: '1', icon: 'file-text', iconBgColor: '#6855F0', count: '34', label: 'Files in Progress' },
-    { id: '2', icon: 'check-circle', iconBgColor: '#00C896', count: '128', label: 'Disbursed Files' },
-    { id: '3', icon: 'clock', iconBgColor: '#F59E0B', count: '11', label: 'Pending Approval' },
-    { id: '4', icon: 'users', iconBgColor: '#2DBFE6', count: '26', label: 'Active Clients' },
-  ],
   payouts: {
     instant: {
-      amount: '₹24,500',
-      date: 'Feb 28, 2026',
+      amount: '₹0',
+      date: 'N/A',
       status: 'Scheduled',
     },
     cycle: {
-      amount: '₹32,800',
-      date: 'Mar 15, 2026',
+      amount: '₹0',
+      date: 'N/A',
       status: 'Pending',
     },
   },
+};
+
+// Mask account number: show only last 4 digits
+const maskAccount = (acc) => {
+  if (!acc || acc.length < 4) return acc || '';
+  const last4 = acc.slice(-4);
+  return `XXXX XXXX ${last4}`;
 };
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 const HomeScreen = ({ navigation }) => {
   const { colors, spacing } = useTheme();
   const insets = useSafeAreaInsets();
+  const { tabCounts, refresh, loading } = useLeadList();
+  const { profileData } = useProfile();
   const [searchQuery, setSearchQuery] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
   const [payoutTab, setPayoutTab] = useState('instant');
+
+  // Auto-refresh when screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh])
+  );
 
   // Total header height = status bar inset + DashHeader vertical padding + Logo height
   // DashboardHeader uses spacing.md (12) vertical padding and size 36 logo.
@@ -87,7 +101,16 @@ const HomeScreen = ({ navigation }) => {
         topOffset={headerHeight}
       />
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl 
+            refreshing={loading}
+            onRefresh={refresh} 
+            colors={[colors.primary]} 
+          />
+        }
+      >
 
         {/* ── Gradient header with dashboard top bar inside ── */}
         <GradientScreenHeader gradientStyle={screenSt.headerGradient}>
@@ -101,7 +124,7 @@ const HomeScreen = ({ navigation }) => {
         <View style={[screenSt.walletWrapper, { paddingHorizontal: spacing.base }]}>
           <WalletCard
             balance={DASHBOARD_DATA.wallet.balance}
-            accountNumber={DASHBOARD_DATA.wallet.accountNumber}
+            accountNumber={profileData?.bankDetails?.account && profileData.bankDetails.account !== 'Not Provided' ? maskAccount(profileData.bankDetails.account) : 'XXXX XXXX XXXX 1234'}
             onWithdraw={() => navigation.navigate('Wallet')}
             onViewWallet={() => navigation.navigate('Wallet')}
           />
@@ -112,7 +135,12 @@ const HomeScreen = ({ navigation }) => {
         </View>
 
         <View style={{ marginTop: spacing.base, paddingHorizontal: spacing.base }}>
-          <SnapshotRow data={DASHBOARD_DATA.snapshots} />
+          <SnapshotRow data={[
+            { id: '1', icon: 'file-text', iconBgColor: '#6855F0', count: String(tabCounts.progress || 0), label: 'Files in Progress' },
+            { id: '2', icon: 'check-circle', iconBgColor: '#00C896', count: String(tabCounts.completed || 0), label: 'Disbursed Files' },
+            { id: '3', icon: 'clock', iconBgColor: '#F59E0B', count: String(tabCounts.new || 0), label: 'New Leads' },
+            { id: '4', icon: 'users', iconBgColor: '#2DBFE6', count: String(tabCounts.all || 0), label: 'Total Clients' },
+          ]} />
         </View>
 
         <View style={{ marginBottom: spacing.xl }}>

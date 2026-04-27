@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { StyleSheet, View, FlatList, Alert } from 'react-native';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { StyleSheet, View, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
@@ -8,69 +8,65 @@ import AppText from '../components/common/AppText';
 import GradientScreenHeader from '../components/layout/GradientScreenHeader';
 import ScreenWrapper from '../components/layout/ScreenWrapper';
 import DraftCard from '../components/drafts/DraftCard';
+import { useDrafts } from '../hooks/useDrafts';
+import { useAlert } from '../context/AlertContext';
 
-// ─── Static Mock Data (from Figma) ────────────────────────────────────────────
-const INITIAL_DRAFTS = [
-    {
-        id: '1',
-        name: 'Praveen Kumar',
-        loanType: 'Home Loan',
-        amount: '₹ 15,00,000',
-        savedAt: '27 Feb 2026, 2:30 PM',
-    },
-    {
-        id: '2',
-        name: 'Mohan',
-        loanType: 'Personal Loan',
-        amount: '₹ 42,00,000',
-        savedAt: '24 Feb 2026, 6:30 AM',
-    },
-    {
-        id: '3',
-        name: 'Maaran',
-        loanType: 'Business Loan',
-        amount: '₹ 32,00,000',
-        savedAt: '23 Feb 2026, 12:00 PM',
-    },
-    {
-        id: '4',
-        name: 'Suhash',
-        loanType: 'Home Loan',
-        amount: '₹ 5,00,000',
-        savedAt: '20 Feb 2026, 9:30 AM',
-    },
-    {
-        id: '5',
-        name: 'Monish',
-        loanType: 'Loan Against Property',
-        amount: '₹ 19,50,000',
-        savedAt: '12 Feb 2026, 10:00 AM',
-    },
-];
+const transformDraft = (dbDraft) => {
+    const data = dbDraft.draft_data || {};
+    const name = `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Untitled Draft';
+    
+    const rawAmount = data.loanAmount ? parseFloat(data.loanAmount.replace(/[^0-9]/g, '')) : 0;
+    const formattedAmount = rawAmount > 0 ? `₹ ${rawAmount.toLocaleString('en-IN')}` : 'Amount not set';
+    
+    const dateStr = dbDraft.updated_at
+        ? new Date(dbDraft.updated_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : 'Unknown Date';
+
+    return {
+        id: String(dbDraft.id),
+        name,
+        loanType: data.loanType || 'Type not set',
+        amount: formattedAmount,
+        savedAt: dateStr,
+        draft_data: data,
+    };
+};
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 const DraftsScreen = ({ navigation }) => {
     const { colors } = useTheme();
     const insets = useSafeAreaInsets();
+    const { showAlert } = useAlert();
+    
+    const { drafts, loading, fetchDrafts, deleteDraft } = useDrafts();
 
-    const [drafts, setDrafts] = useState(INITIAL_DRAFTS);
     const [searchQuery, setSearchQuery] = useState('');
+
+    useEffect(() => {
+        fetchDrafts();
+    }, [fetchDrafts]);
 
     // ── Delete: confirm then remove from list ──────────────────────────────
     const handleDelete = useCallback((id, name) => {
-        Alert.alert(
-            'Delete Draft',
-            `Are you sure you want to delete the draft for "${name}"?`,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: () => setDrafts(prev => prev.filter(d => d.id !== id)),
-                },
-            ],
-        );
-    }, []);
+        showAlert({
+            type: 'warning',
+            title: 'Delete Draft',
+            message: `Are you sure you want to delete the draft for "${name}"?`,
+            showConfirm: true,
+            buttonText: 'Delete',
+            onConfirm: async () => {
+                try {
+                    await deleteDraft(id);
+                } catch (err) {
+                    showAlert({
+                        type: 'error',
+                        title: 'Error',
+                        message: 'Failed to delete draft'
+                    });
+                }
+            },
+        });
+    }, [deleteDraft, showAlert]);
 
     // ── Resume: navigate to lead creation / editing flow ──────────────────
     const handleResume = useCallback((draft) => {
@@ -80,8 +76,9 @@ const DraftsScreen = ({ navigation }) => {
 
     const filteredDrafts = useMemo(() => {
         const q = searchQuery.toLowerCase().trim();
-        if (!q) return drafts;
-        return drafts.filter(d =>
+        const mapped = drafts.map(transformDraft);
+        if (!q) return mapped;
+        return mapped.filter(d =>
             d.name.toLowerCase().includes(q) ||
             d.loanType.toLowerCase().includes(q),
         );
@@ -123,12 +120,19 @@ const DraftsScreen = ({ navigation }) => {
                     { paddingBottom: insets.bottom + 20 },
                 ]}
                 showsVerticalScrollIndicator={false}
+                refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchDrafts} colors={[colors.primary]} />}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <Feather name="file-text" size={48} color={colors.textDisabled} />
-                        <AppText color="secondary" style={styles.emptyText}>
-                            No drafts found
-                        </AppText>
+                        {loading ? (
+                            <ActivityIndicator size="large" color={colors.primary} />
+                        ) : (
+                            <>
+                                <Feather name="file-text" size={48} color={colors.textDisabled} />
+                                <AppText color="secondary" style={styles.emptyText}>
+                                    No drafts found
+                                </AppText>
+                            </>
+                        )}
                     </View>
                 }
             />

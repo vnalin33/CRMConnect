@@ -6,6 +6,7 @@ const errorHandler = require('./middleware/errorHandler');
 const authRoutes = require('./routes/authRoutes');
 const connectorRoutes = require('./routes/connectorRoutes');
 const leadRoutes = require('./routes/leadRoutes');
+const draftRoutes = require('./routes/draftRoutes');
 const app = express();
 
 // Security Middlewares
@@ -24,6 +25,8 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/api/auth', authRoutes);
 app.use('/api/connector', connectorRoutes);
 app.use('/api/leads', leadRoutes);
+app.use('/api/drafts', draftRoutes);
+app.get('/api/test', (req, res) => res.status(200).json({ success: true }));
 
 // Static files
 const path = require('path');

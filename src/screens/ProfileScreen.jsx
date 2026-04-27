@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     StyleSheet,
@@ -17,6 +17,7 @@ import AppCard from '../components/common/AppCard';
 import GradientText from '../components/common/GradientText';
 import AppInput from '../components/common/AppInput';
 import { useProfile } from '../hooks/useProfile';
+import { useFocusEffect } from '@react-navigation/native';
 import { HeaderRow, InfoRow, ActionRow, GradientToggle, GradientThemeSwitcher, ProfileSkeleton } from '../components/profile/ProfileComponents';
 
 const ProfileScreen = ({ navigation }) => {
@@ -41,11 +42,19 @@ const ProfileScreen = ({ navigation }) => {
         handleEditToggle,
         handleBankEditToggle,
         handleIfscChange,
+        refreshProfile,
         setEditForm,
         setEditBankForm,
         setFormErrors,
         setBankFormErrors
     } = useProfile();
+
+    // Auto-refresh stats when focused
+    useFocusEffect(
+        useCallback(() => {
+            refreshProfile();
+        }, [refreshProfile])
+    );
 
     // First-ever visit with no cache: show shimmer skeleton inside the screen chrome
     if (loading) {
@@ -124,7 +133,7 @@ const ProfileScreen = ({ navigation }) => {
                         <View style={styles.profileNameContainer}>
                             <GradientText variant="h2" style={styles.profileNameText}>{profileData.name}</GradientText>
                             <View style={[styles.badge, { backgroundColor: colors.successBg, borderRadius: radius.full }]}>
-                                <AppText variant="caption" style={styles.badgeText}>
+                                <AppText variant="caption" style={[styles.badgeText, { color: colors.successText }]}>
                                     {profileData.role}
                                 </AppText>
                             </View>

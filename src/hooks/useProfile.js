@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ENV } from '../config/env';
 import { fetchBankDetailsByIfsc } from '../api/bankApi';
 import { fetchProfile, updatePersonalInfoApi, updateBankDetailsApi, uploadProfilePictureApi } from '../api/profileApi';
+import { useSocket } from '../context/SocketContext';
 
 const PROFILE_CACHE_KEY = '@crm_profile_cache';
 
@@ -13,9 +15,9 @@ const mapDataToProfile = (data) => ({
     rating: '4.2',
     ratingText: 'Top Performer',
     stats: {
-        leads: { count: '—', label: 'Total Leads' },
-        deals: { count: '—', label: 'Closed Deals' },
-        month: { count: '—', label: 'This Month' },
+        leads: { count: data.stats?.totalLeads ?? '0', label: 'Total Leads' },
+        deals: { count: data.stats?.closedDeals ?? '0', label: 'Closed Deals' },
+        month: { count: data.stats?.thisMonth ?? '0', label: 'This Month' },
     },
     personalInfo: {
         name: data.name || '',
@@ -35,9 +37,19 @@ const mapDataToProfile = (data) => ({
 });
 
 export const useProfile = () => {
-    // isFirstLoad = true only when there is absolutely no cached data
-    const [profileData, setProfileData] = useState(null);
-    const [isFirstLoad, setIsFirstLoad] = useState(true);
+    const queryClient = useQueryClient();
+    const socket = useSocket();
+
+    // Alias setProfileData to update React Query cache for instant Optimistic UI
+    const setProfileData = useCallback((updater) => {
+        queryClient.setQueryData(['profile'], (oldData) => {
+            if (typeof updater === 'function') {
+                return updater(oldData);
+            }
+            return updater;
+        });
+    }, [queryClient]);
+
     const [saving, setSaving] = useState(false);
 
     const [isEditingInfo, setIsEditingInfo] = useState(false);
@@ -50,50 +62,67 @@ export const useProfile = () => {
 
     const [imageModalVisible, setImageModalVisible] = useState(false);
 
-    // Keep loading as an alias for isFirstLoad for backward compatibility
-    const loading = isFirstLoad;
+    const [cachedProfile, setCachedProfile] = useState(null);
 
-    const refreshProfile = useCallback(async (isMounted = { current: true }) => {
-        try {
-            const data = await fetchProfile();
-            if (!isMounted.current) return;
-            const mapped = mapDataToProfile(data);
-            setProfileData(mapped);
-            // Save to cache so next open is instant
-            await AsyncStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(mapped));
-        } catch (error) {
-            console.warn('Profile fetch error:', error.message);
-        }
-    }, []);
-
+    // Hydrate from cache immediately on mount for offline-first experience
     useEffect(() => {
-        const isMounted = { current: true };
-
-        const loadData = async () => {
+        const hydrateCache = async () => {
             try {
                 const cached = await AsyncStorage.getItem(PROFILE_CACHE_KEY);
-                if (cached && isMounted.current) {
+                if (cached) {
                     const parsed = JSON.parse(cached);
-                    // Robust check: ensure cache matches new schema before using
-                    if (parsed && parsed.personalInfo && parsed.bankDetails) {
-                        setProfileData(parsed);
-                        setIsFirstLoad(false); // Show real UI instantly from cache
+                    setCachedProfile(parsed);
+                    // Pre-fill query client if empty so it doesn't stay in 'loading' state
+                    if (!queryClient.getQueryData(['profile'])) {
+                        queryClient.setQueryData(['profile'], parsed);
                     }
                 }
-            } catch (_) {
-                // Cache read failed or was invalid, will just show skeleton until fresh data loads
+            } catch (e) {
+                console.error("Failed to hydrate profile cache", e);
             }
+        };
+        hydrateCache();
+    }, [queryClient]);
 
-            // Step 2: Always fetch fresh data from API (silently in background)
-            await refreshProfile(isMounted);
+    const {
+        data: queryData,
+        isLoading: queryLoading,
+        isFetching,
+        refetch: refreshProfile,
+    } = useQuery({
+        queryKey: ['profile'],
+        queryFn: async () => {
+            const data = await fetchProfile();
+            const mapped = mapDataToProfile(data);
+            AsyncStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(mapped));
+            return mapped;
+        },
+        staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes to prevent redundant network calls
+    });
 
-            // After fresh data is loaded, we are definitely no longer on first load
-            if (isMounted.current) setIsFirstLoad(false);
+    // Use queryData if available, fallback to cachedProfile
+    const profileData = queryData || cachedProfile;
+    // Only show loading skeleton if we have NO data at all
+    const loading = queryLoading && !profileData;
+
+    // Listen for real-time profile/stats updates via WebSocket
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleProfileUpdated = () => {
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
         };
 
-        loadData();
-        return () => { isMounted.current = false; };
-    }, [refreshProfile]);
+        socket.on('profile_updated', handleProfileUpdated);
+        socket.on('stats_updated', handleProfileUpdated);
+        socket.on('lead_added', handleProfileUpdated); // Updates total leads count instantly
+
+        return () => {
+            socket.off('profile_updated', handleProfileUpdated);
+            socket.off('stats_updated', handleProfileUpdated);
+            socket.off('lead_added', handleProfileUpdated);
+        };
+    }, [socket, queryClient]);
 
     const handlePickImage = async () => {
         try {
@@ -358,6 +387,7 @@ export const useProfile = () => {
         handleEditToggle,
         handleBankEditToggle,
         handleIfscChange,
+        refreshProfile,
         setEditForm,
         setEditBankForm,
         setFormErrors,

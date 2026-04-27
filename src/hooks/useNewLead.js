@@ -1,19 +1,20 @@
 import { useState } from 'react';
 import { LOAN_TYPES, EMPLOYMENT_TYPES } from '../api/mockData';
 import { createLeadApi } from '../api/leadApi';
+import { saveDraftApi } from '../api/draftApi';
 
-export const useNewLead = () => {
+export const useNewLead = (initialData = null) => {
     // Form State
     const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        email: '',
-        mobile: '',
-        loanType: '',
-        loanAmount: '',
-        annualIncome: '',
-        employmentType: '',
-        notes: '',
+        firstName: initialData?.firstName || '',
+        lastName: initialData?.lastName || '',
+        email: initialData?.email || '',
+        mobile: initialData?.mobile || '',
+        loanType: initialData?.loanType || '',
+        loanAmount: initialData?.loanAmount || '',
+        annualIncome: initialData?.annualIncome || '',
+        employmentType: initialData?.employmentType || '',
+        notes: initialData?.notes || '',
     });
 
     // UI States
@@ -107,6 +108,22 @@ export const useNewLead = () => {
         setErrors({});
     };
 
+    const loadPrefill = (data) => {
+        if (!data) return;
+        setFormData({
+            firstName: data.firstName || '',
+            lastName: data.lastName || '',
+            email: data.email || '',
+            mobile: data.mobile || '',
+            loanType: data.loanType || '',
+            loanAmount: data.loanAmount || '',
+            annualIncome: data.annualIncome || '',
+            employmentType: data.employmentType || '',
+            notes: data.notes || '',
+        });
+        setErrors({});
+    };
+
     /**
      * Map frontend camelCase form data to backend lowercase model fields
      */
@@ -139,11 +156,14 @@ export const useNewLead = () => {
         }
     };
 
-    const handleSaveDraft = async () => {
+    const handleSaveDraft = async (draftId = null) => {
         setSubmitting(true);
         try {
-            const payload = getMappedData(0); // 0 = Draft
-            await createLeadApi(payload);
+            const payload = { ...formData };
+            if (draftId) {
+                payload.draftId = draftId;
+            }
+            await saveDraftApi(payload);
             resetForm();
             return { success: true };
         } catch (error) {
@@ -162,6 +182,7 @@ export const useNewLead = () => {
         submitting,
         handleSubmit,
         handleSaveDraft,
+        loadPrefill,
         resetForm,
         LOAN_TYPES,
         EMPLOYMENT_TYPES,
