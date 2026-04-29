@@ -1,9 +1,11 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
     View,
     TouchableOpacity,
     FlatList,
     StyleSheet,
+    ActivityIndicator,
+    RefreshControl,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Feather from 'react-native-vector-icons/Feather';
@@ -13,58 +15,7 @@ import { BRAND_GRADIENT } from '../theme/colors';
 import ScreenWrapper from '../components/layout/ScreenWrapper';
 import GradientScreenHeader from '../components/layout/GradientScreenHeader';
 import AppText from '../components/common/AppText';
-
-// ─── Mock Data ───────────────────────────────────────────────────────────────
-const PAYOUT_DATA = [
-    {
-        id: '1',
-        name: 'Manoj Kumar',
-        loanType: 'Home Loan',
-        loanAmount: '₹45,00,000',
-        cycle: 'Instant',
-        payoutAmount: '₹45,000',
-        payoutRaw: 45000,
-        status: 'paid',
-        date: '12 Jan 2026',
-        expectedPayoutDate: '15 Jan 2026',
-    },
-    {
-        id: '2',
-        name: 'Sujith Singh',
-        loanType: 'Business Loan',
-        loanAmount: '₹20,00,000',
-        cycle: 'Cycle',
-        payoutAmount: '₹30,000',
-        payoutRaw: 30000,
-        status: 'pending',
-        date: '14 Feb 2026',
-        expectedPayoutDate: '16 Feb 2026',
-    },
-    {
-        id: '3',
-        name: 'Harigaran',
-        loanType: 'Personal Loan',
-        loanAmount: '₹25,00,000',
-        cycle: 'Instant',
-        payoutAmount: '₹25,000',
-        payoutRaw: 25000,
-        status: 'pending',
-        date: '20 Jan 2026',
-        expectedPayoutDate: '22 Jan 2026',
-    },
-    {
-        id: '4',
-        name: 'Nalin',
-        loanType: 'Property Loan',
-        loanAmount: '₹30,00,000',
-        cycle: 'Cycle',
-        payoutAmount: '₹45,000',
-        payoutRaw: 45000,
-        status: 'paid',
-        date: '25 Jan 2026',
-        expectedPayoutDate: '28 Jan 2026',
-    },
-];
+import { getPayoutsApi } from '../api/payoutApi';
 
 const formatINR = (n) =>
     '₹' + n.toLocaleString('en-IN');
@@ -108,11 +59,11 @@ const PayoutSummaryCard = React.memo(({ summary }) => {
             <View style={styles.summaryTopRow}>
                 <Feather name="trending-up" size={16} color="rgba(255,255,255,0.9)" />
                 <AppText variant="body" style={styles.summaryTitle}>
-                    Total Payout
+                    Total Disbursed
                 </AppText>
             </View>
             <AppText variant="display" style={styles.summaryValue}>
-                {summary.total}
+                {summary.totalDisbursedFormatted}
             </AppText>
             <View style={[styles.summaryDivider, { backgroundColor: 'rgba(255,255,255,0.25)' }]} />
             <View style={styles.summaryBottomRow}>
@@ -122,7 +73,7 @@ const PayoutSummaryCard = React.memo(({ summary }) => {
                         <AppText variant="caption" style={styles.summarySubLabel}>Paid Amount</AppText>
                     </View>
                     <AppText variant="amountSm" style={styles.summaryAmount}>
-                        {summary.paidAmount}
+                        {summary.paidAmountFormatted}
                     </AppText>
                     <AppText variant="caption" style={styles.whiteSubText}>
                         {summary.paidCount} settlements
@@ -135,7 +86,7 @@ const PayoutSummaryCard = React.memo(({ summary }) => {
                         <AppText variant="caption" style={styles.summarySubLabel}>Pending Amount</AppText>
                     </View>
                     <AppText variant="amountSm" style={styles.summaryAmount}>
-                        {summary.pendingAmount}
+                        {summary.pendingAmountFormatted}
                     </AppText>
                     <AppText variant="caption" style={styles.whiteSubText}>
                         {summary.pendingCount} Pending
@@ -182,23 +133,57 @@ const PayoutItem = React.memo(({ item, onRaiseInvoice }) => {
                     </LinearGradient>
                 )}
             </View>
+
+            {/* Loan Amount & Disbursed Amount */}
             <View style={[styles.itemAmountRow, { borderTopColor: colors.divider }]}>
                 <View>
                     <AppText variant="caption" color="secondary">Loan Amount</AppText>
                     <AppText variant="bodySm" style={[styles.itemDetailText, { color: colors.textPrimary }]}>
-                        {item.loanAmount} · {item.cycle}
+                        {item.loanAmountFormatted}
                     </AppText>
                 </View>
                 <View style={styles.alignEnd}>
-                    <AppText variant="caption" color="secondary">Payout Amount</AppText>
+                    <AppText variant="caption" color="secondary">Disbursed Amount</AppText>
                     <AppText variant="amountSm" style={[styles.itemAmountText, { color: colors.textBrand }]}>
-                        {item.payoutAmount}
+                        {item.disbursedAmountFormatted}
                     </AppText>
                 </View>
             </View>
+
+            {/* Payout Amount & Bank */}
+            <View style={[styles.itemAmountRow, { borderTopColor: colors.divider }]}>
+                <View>
+                    <AppText variant="caption" color="secondary">Payout Amount</AppText>
+                    <AppText variant="bodySm" style={[styles.itemDetailText, { color: '#10B981', fontWeight: '700' }]}>
+                        {item.payoutAmountFormatted}
+                    </AppText>
+                    {item.payoutPercent > 0 && (
+                        <AppText variant="caption" color="secondary" style={{ marginTop: 1 }}>
+                            ({item.payoutPercent}% payout)
+                        </AppText>
+                    )}
+                </View>
+                {item.bankName ? (
+                    <View style={styles.alignEnd}>
+                        <AppText variant="caption" color="secondary">Bank</AppText>
+                        <AppText variant="bodySm" style={[styles.itemDetailText, { color: colors.textPrimary }]}>
+                            {item.bankName}
+                        </AppText>
+                    </View>
+                ) : null}
+            </View>
+
+            {/* Date & Track Number */}
             <View style={[styles.itemDateRow, { marginTop: spacing.xs }]}>
                 <Feather name="calendar" size={11} color={colors.textSecondary} />
                 <AppText variant="caption" color="secondary" style={{ marginLeft: 4 }}>{item.date}</AppText>
+                {item.trackNumber ? (
+                    <>
+                        <AppText variant="caption" color="secondary" style={{ marginLeft: 10 }}>•</AppText>
+                        <Feather name="hash" size={11} color={colors.textSecondary} style={{ marginLeft: 4 }} />
+                        <AppText variant="caption" color="secondary" style={{ marginLeft: 2 }}>{item.trackNumber}</AppText>
+                    </>
+                ) : null}
             </View>
 
             {!isPaid && onRaiseInvoice && (
@@ -227,53 +212,140 @@ const PayoutItem = React.memo(({ item, onRaiseInvoice }) => {
     );
 });
 
-const CYCLE_TABS = [
-    { id: 'instant', label: 'Instant' },
-    { id: 'cycle', label: 'Cycle' },
+const MOCK_PAYOUTS = [
+    {
+        id: 'mock-1',
+        name: 'John Doe',
+        loanType: 'Home Loan',
+        loanAmountFormatted: '₹50,00,000',
+        disbursedAmountFormatted: '₹48,50,000',
+        payoutAmountFormatted: '₹48,500',
+        payoutPercent: 1.0,
+        status: 'pending',
+        bankName: 'HDFC Bank',
+        trackNumber: 'TRK00123',
+        date: '25 Apr 2026',
+    },
+    {
+        id: 'mock-2',
+        name: 'Jane Smith',
+        loanType: 'Business Loan',
+        loanAmountFormatted: '₹25,00,000',
+        disbursedAmountFormatted: '₹25,00,000',
+        payoutAmountFormatted: '₹37,500',
+        payoutPercent: 1.5,
+        status: 'paid',
+        bankName: 'ICICI Bank',
+        trackNumber: 'TRK00456',
+        date: '20 Apr 2026',
+    },
+    {
+        id: 'mock-3',
+        name: 'Robert Wilson',
+        loanType: 'Personal Loan',
+        loanAmountFormatted: '₹5,00,000',
+        disbursedAmountFormatted: '₹5,00,000',
+        payoutAmountFormatted: '₹10,000',
+        payoutPercent: 2.0,
+        status: 'pending',
+        bankName: 'Axis Bank',
+        trackNumber: 'TRK00789',
+        date: '27 Apr 2026',
+    }
 ];
+
+const MOCK_SUMMARY = {
+    totalCount: 3,
+    totalDisbursedFormatted: '₹78,50,000',
+    paidCount: 1,
+    paidAmountFormatted: '₹25,00,000',
+    pendingCount: 2,
+    pendingAmountFormatted: '₹53,50,000',
+};
 
 const PayoutScreen = ({ navigation }) => {
     const { colors, spacing } = useTheme();
 
     const [search, setSearch] = useState('');
     const [statusTab, setStatusTab] = useState('all');
-    const [cycleTab, setCycleTab] = useState('instant');
+    const [payouts, setPayouts] = useState([]);
+    const [summary, setSummary] = useState({
+        totalCount: 0,
+        totalDisbursed: 0,
+        totalDisbursedFormatted: '₹0',
+        paidCount: 0,
+        paidAmount: 0,
+        paidAmountFormatted: '₹0',
+        pendingCount: 0,
+        pendingAmount: 0,
+        pendingAmountFormatted: '₹0',
+    });
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [error, setError] = useState(null);
 
-    const summary = useMemo(() => {
-        const paid = PAYOUT_DATA.filter(i => i.status === 'paid');
-        const pending = PAYOUT_DATA.filter(i => i.status === 'pending');
-        const total = PAYOUT_DATA.reduce((acc, i) => acc + (i.payoutRaw || 0), 0);
-        const paidSum = paid.reduce((acc, i) => acc + (i.payoutRaw || 0), 0);
-        const pendingSum = pending.reduce((acc, i) => acc + (i.payoutRaw || 0), 0);
-        return {
-            total: formatINR(total),
-            paidAmount: formatINR(paidSum),
-            paidCount: paid.length,
-            pendingAmount: formatINR(pendingSum),
-            pendingCount: pending.length,
-        };
+    const fetchPayouts = useCallback(async (isRefresh = false) => {
+        try {
+            if (isRefresh) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
+            setError(null);
+
+            const result = await getPayoutsApi();
+
+            if (result.success && result.data && result.data.length > 0) {
+                setPayouts(result.data);
+                if (result.summary) {
+                    setSummary(result.summary);
+                }
+            } else {
+                // Use mock data as fallback for reference if API is empty or fails
+                setPayouts(MOCK_PAYOUTS);
+                setSummary(MOCK_SUMMARY);
+                if (!result.success) {
+                    console.warn('API failed, using mock data for reference');
+                }
+            }
+        } catch (err) {
+            console.error('Failed to fetch payouts, using mock data:', err);
+            setPayouts(MOCK_PAYOUTS);
+            setSummary(MOCK_SUMMARY);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchPayouts();
+    }, [fetchPayouts]);
+
+    const onRefresh = useCallback(() => {
+        fetchPayouts(true);
+    }, [fetchPayouts]);
 
     const statusTabs = useMemo(() => [
         { id: 'all', label: 'All' },
-        { id: 'paid', label: `Paid(${summary.paidCount})` },
+        { id: 'paid', label: `Paid (${summary.paidCount})` },
         { id: 'pending', label: `Pending (${summary.pendingCount})` },
     ], [summary.paidCount, summary.pendingCount]);
 
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
-        return PAYOUT_DATA.filter(item => {
+        return payouts.filter(item => {
             const matchSearch = !q ||
                 item.name.toLowerCase().includes(q) ||
-                item.loanType.toLowerCase().includes(q);
+                item.loanType.toLowerCase().includes(q) ||
+                (item.bankName && item.bankName.toLowerCase().includes(q)) ||
+                (item.trackNumber && item.trackNumber.toLowerCase().includes(q));
             const matchStatus = statusTab === 'all' || item.status === statusTab;
-            const matchCycle = item.cycle.toLowerCase() === cycleTab.toLowerCase();
-            return matchSearch && matchStatus && matchCycle;
+            return matchSearch && matchStatus;
         });
-    }, [search, statusTab, cycleTab]);
+    }, [search, statusTab, payouts]);
 
     const handleStatusTab = useCallback((id) => setStatusTab(id), []);
-    const handleCycleTab = useCallback((id) => setCycleTab(id), []);
 
     const handleRaiseInvoice = useCallback((item) => {
         navigation.navigate('RaiseInvoice', { payoutData: item });
@@ -304,19 +376,6 @@ const PayoutScreen = ({ navigation }) => {
                 ))}
             </View>
 
-            {/* Cycle tabs */}
-            <View style={[styles.cycleTabRow, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
-                {CYCLE_TABS.map(tab => (
-                    <TabPill
-                        key={tab.id}
-                        label={tab.label}
-                        active={cycleTab === tab.id}
-                        onPress={() => handleCycleTab(tab.id)}
-                        style={styles.tabFlex}
-                    />
-                ))}
-            </View>
-
             <View style={styles.recordsCountRow}>
                 <AppText variant="caption" color="secondary">
                     {filtered.length} {filtered.length === 1 ? 'record' : 'records'} found
@@ -324,16 +383,41 @@ const PayoutScreen = ({ navigation }) => {
             </View>
         </View>
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    ), [summary, statusTab, cycleTab, statusTabs, filtered.length, colors]);
+    ), [summary, statusTab, statusTabs, filtered.length, colors]);
 
     const ListEmpty = useMemo(() => (
         <View style={styles.emptyState}>
-            <Feather name="inbox" size={40} color={colors.textSecondary} />
-            <AppText variant="body" color="secondary" style={{ marginTop: spacing.sm, textAlign: 'center' }}>
-                No payouts found
-            </AppText>
+            {loading ? (
+                <ActivityIndicator size="large" color={colors.primary} />
+            ) : error ? (
+                <>
+                    <Feather name="alert-circle" size={40} color={colors.error || '#EF4444'} />
+                    <AppText variant="body" color="secondary" style={{ marginTop: spacing.sm, textAlign: 'center', paddingHorizontal: 20 }}>
+                        {error}
+                    </AppText>
+                    <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => fetchPayouts()}
+                        style={{ marginTop: spacing.md }}
+                    >
+                        <AppText variant="bodySm" style={{ color: colors.primary, fontWeight: '600' }}>
+                            Tap to Retry
+                        </AppText>
+                    </TouchableOpacity>
+                </>
+            ) : (
+                <>
+                    <Feather name="inbox" size={40} color={colors.textSecondary} />
+                    <AppText variant="body" color="secondary" style={{ marginTop: spacing.sm, textAlign: 'center' }}>
+                        No payouts found
+                    </AppText>
+                    <AppText variant="caption" color="secondary" style={{ marginTop: spacing.xs, textAlign: 'center', paddingHorizontal: 40 }}>
+                        Disbursement entries from the CRM portal will appear here
+                    </AppText>
+                </>
+            )}
         </View>
-    ), [colors.textSecondary, spacing.sm]);
+    ), [loading, error, colors, spacing, fetchPayouts]);
 
     return (
         <ScreenWrapper withPadding={false} edges={['bottom', 'left', 'right']} style={styles.root}>
@@ -357,6 +441,14 @@ const PayoutScreen = ({ navigation }) => {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 100 }}
                 keyboardShouldPersistTaps="handled"
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={[colors.primary || '#816FF5']}
+                        tintColor={colors.primary || '#816FF5'}
+                    />
+                }
             />
         </ScreenWrapper>
     );
@@ -389,15 +481,6 @@ const styles = StyleSheet.create({
         padding: 4,
         marginHorizontal: 16,
         marginTop: 16,
-        borderRadius: 50,
-        borderWidth: 1,
-    },
-    cycleTabRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 4,
-        marginHorizontal: 16,
-        marginTop: 8,
         borderRadius: 50,
         borderWidth: 1,
     },

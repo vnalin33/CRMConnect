@@ -11,6 +11,8 @@ const create = async (leadData) => {
     annualincome,
     employmenttype,
     notes,
+    servicetype,
+    processingtype,
     connectorid,
     organizationid = 1002,   // Must match admin's org (1002)
     locationid = 5005,       // Must be a valid LocationMaster ID (5005 = Erode)
@@ -21,17 +23,17 @@ const create = async (leadData) => {
   const query = `
     INSERT INTO leadpersonaldetails (
       firstname, lastname, email, mobilenumber, loantype, loanamount, 
-      annualincome, employmenttype, notes, connectorid, status,
-      organizationid, locationid, contacttype, createdon
+      annualincome, employmenttype, notes, servicetype, processingtype,
+      connectorid, status, organizationid, locationid, contacttype, createdon
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW())
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())
     RETURNING id, firstname, lastname, email, mobilenumber, status, organizationid, createdon
   `;
 
   const values = [
     firstname, lastname, email, mobilenumber, loantype, loanamount,
-    annualincome, employmenttype, notes, connectorid, status,
-    organizationid, locationid, contacttype
+    annualincome, employmenttype, notes, servicetype, processingtype,
+    connectorid, status, organizationid, locationid, contacttype
   ];
 
   const { rows } = await db.query(query, values);

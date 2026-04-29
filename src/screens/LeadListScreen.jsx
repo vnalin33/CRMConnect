@@ -96,7 +96,7 @@ const LeadCard = React.memo(({ item, onPress }) => {
                 <View style={[styles.statusBadge, { backgroundColor: `${mapped.color}18`, borderColor: `${mapped.color}40`, borderRadius: radius.full }]}>
                     <View style={[styles.statusDot, { backgroundColor: mapped.color }]} />
                     <AppText variant="caption" style={[styles.statusText, { color: mapped.color }]}>
-                        {mapped.label}
+                        {item.processingtype || mapped.label}
                     </AppText>
                 </View>
             </View>

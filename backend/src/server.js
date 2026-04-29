@@ -1,11 +1,14 @@
 const app = require('./app');
 const { PORT } = require('./config/env');
 const { Server } = require('socket.io');
+const { testConnection } = require('./config/db');
 
 const HOST = '0.0.0.0';
 
-const server = app.listen(PORT, HOST, () => {
+const server = app.listen(PORT, HOST, async () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on http://${HOST}:${PORT}`);
+  // Verify DB connectivity at startup
+  await testConnection();
 });
 
 const io = new Server(server, {

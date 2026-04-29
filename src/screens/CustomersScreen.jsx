@@ -27,18 +27,33 @@ const transformCustomer = (apiLead) => {
     const rawAmount = apiLead.loanamount ? parseFloat(apiLead.loanamount) : 0;
     const formattedAmount = `₹ ${rawAmount.toLocaleString('en-IN')}`;
     
+    const disbursedRaw = apiLead.disbursementamount ? parseFloat(apiLead.disbursementamount) : 0;
+    const formattedDisbursed = `₹ ${disbursedRaw.toLocaleString('en-IN')}`;
+    
+    // Compute Payout amount if needed, though mostly disbursed is what we want here
+    const payoutPercent = apiLead.payoutpercent ? parseFloat(apiLead.payoutpercent) : 0;
+    const payoutAmountRaw = Math.round(disbursedRaw * payoutPercent / 100);
+    const formattedPayout = `₹ ${payoutAmountRaw.toLocaleString('en-IN')}`;
+    
     const dateStr = apiLead.createdon
         ? new Date(apiLead.createdon).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+        : 'N/A';
+        
+    const disbursedDateStr = apiLead.track_modified && statusCode >= 17
+        ? new Date(apiLead.track_modified).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
         : 'N/A';
 
     return {
         id: String(apiLead.id),
         name: `${apiLead.firstname || ''} ${apiLead.lastname || ''}`.trim(),
         loanType: apiLead.loantype || 'N/A',
-        status: mapped.label, // Reusing status label for the badge
+        status: apiLead.processingtype || mapped.label, // Use Instant/Cycle for the badge if available
+        serviceType: apiLead.servicetype || 'N/A',
         loanAmount: formattedAmount,
-        disbursedAmount: formattedAmount, // Using same amount as placeholder
-        disbursementDate: dateStr,
+        disbursedAmount: statusCode >= 17 ? formattedDisbursed : 'N/A', 
+        payoutAmount: statusCode >= 17 ? formattedPayout : 'N/A',
+        disbursementDate: statusCode >= 17 ? disbursedDateStr : 'N/A',
+        createdDate: dateStr,
     };
 };
 

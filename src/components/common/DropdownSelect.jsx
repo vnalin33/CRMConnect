@@ -72,7 +72,7 @@ const DropdownSelect = ({ label, placeholder, value, options, isOpen, onToggle, 
                         const isLast = index === options.length - 1;
                         return (
                             <Pressable
-                                key={item}
+                                key={`${item}-${index}`}
                                 onPress={() => onSelect(item)}
                                 style={[
                                     {

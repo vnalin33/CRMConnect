@@ -49,7 +49,9 @@ const getLeadsByConnector = async (connectorId) => {
       lt.notes AS track_notes,
       lt.customername,
       lt.tracknumber,
-      lt.modifyon AS track_modified
+      lt.modifyon AS track_modified,
+      lt.disbursementamount,
+      lt.payoutpercent
     FROM leadpersonaldetails lp
     LEFT JOIN leadtrackdetails lt ON lt.leadid = lp.id
     WHERE lp.connectorid = $1

@@ -14,6 +14,8 @@ export const useNewLead = (initialData = null) => {
         loanAmount: initialData?.loanAmount || '',
         annualIncome: initialData?.annualIncome || '',
         employmentType: initialData?.employmentType || '',
+        serviceType: initialData?.serviceType || '',
+        processingType: initialData?.processingType || '',
         notes: initialData?.notes || '',
     });
 
@@ -21,6 +23,8 @@ export const useNewLead = (initialData = null) => {
     const [dropdowns, setDropdowns] = useState({
         loan: false,
         employment: false,
+        service: false,
+        processing: false,
     });
 
     const [errors, setErrors] = useState({});
@@ -37,12 +41,14 @@ export const useNewLead = (initialData = null) => {
         setDropdowns(prev => ({
             loan: field === 'loan' ? !prev.loan : false,
             employment: field === 'employment' ? !prev.employment : false,
+            service: field === 'service' ? !prev.service : false,
+            processing: field === 'processing' ? !prev.processing : false,
         }));
     };
 
     const validate = () => {
         const newErrors = {};
-        const { firstName, lastName, email, mobile, loanType, loanAmount, annualIncome, employmentType, notes } = formData;
+        const { firstName, lastName, email, mobile, loanType, loanAmount, annualIncome, employmentType, serviceType, processingType, notes } = formData;
 
         if (!firstName.trim()) {
             newErrors.firstName = 'First name is required';
@@ -82,6 +88,9 @@ export const useNewLead = (initialData = null) => {
 
         if (!employmentType) newErrors.employmentType = 'Please select employment type';
 
+        if (!serviceType) newErrors.serviceType = 'Please select a service type';
+        if (!processingType) newErrors.processingType = 'Please select a processing type';
+
         if (notes.trim()) {
             const wordCount = notes.trim().split(/\s+/).filter(word => word.length > 0).length;
             if (wordCount > 200) {
@@ -103,6 +112,8 @@ export const useNewLead = (initialData = null) => {
             loanAmount: '',
             annualIncome: '',
             employmentType: '',
+            serviceType: '',
+            processingType: '',
             notes: '',
         });
         setErrors({});
@@ -119,6 +130,8 @@ export const useNewLead = (initialData = null) => {
             loanAmount: data.loanAmount || '',
             annualIncome: data.annualIncome || '',
             employmentType: data.employmentType || '',
+            serviceType: data.serviceType || '',
+            processingType: data.processingType || '',
             notes: data.notes || '',
         });
         setErrors({});
@@ -136,6 +149,8 @@ export const useNewLead = (initialData = null) => {
         loanamount: formData.loanAmount.replace(/[^0-9]/g, ''),
         annualincome: formData.annualIncome.replace(/[^0-9]/g, ''),
         employmenttype: formData.employmentType,
+        servicetype: formData.serviceType,
+        processingtype: formData.processingType,
         notes: formData.notes.trim(),
         status
     });
@@ -186,5 +201,13 @@ export const useNewLead = (initialData = null) => {
         resetForm,
         LOAN_TYPES,
         EMPLOYMENT_TYPES,
+        SERVICE_TYPES: [
+            'End to End',
+            'Document Collection Only'
+        ],
+        PROCESSING_TYPES: [
+            'Instant',
+            'Cycle'
+        ],
     };
 };

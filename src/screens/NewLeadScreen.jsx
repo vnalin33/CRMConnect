@@ -43,6 +43,8 @@ const NewLeadScreen = ({ route, navigation }) => {
         loadPrefill,
         LOAN_TYPES,
         EMPLOYMENT_TYPES,
+        SERVICE_TYPES,
+        PROCESSING_TYPES,
     } = useNewLead(prefill);
 
     // Sync form with route params (for resume/edit)
@@ -216,6 +218,34 @@ const NewLeadScreen = ({ route, navigation }) => {
                         toggleDropdown(null);
                     }}
                     error={errors.employmentType}
+                />
+
+                <DropdownSelect
+                    label="SERVICE TYPE"
+                    placeholder="--Select Service Type--"
+                    value={formData.serviceType}
+                    options={SERVICE_TYPES}
+                    isOpen={dropdowns.service}
+                    onToggle={() => toggleDropdown('service')}
+                    onSelect={(val) => {
+                        updateField('serviceType', val);
+                        toggleDropdown(null);
+                    }}
+                    error={errors.serviceType}
+                />
+
+                <DropdownSelect
+                    label="PROCESSING TYPE"
+                    placeholder="--Select Processing Type--"
+                    value={formData.processingType}
+                    options={PROCESSING_TYPES}
+                    isOpen={dropdowns.processing}
+                    onToggle={() => toggleDropdown('processing')}
+                    onSelect={(val) => {
+                        updateField('processingType', val);
+                        toggleDropdown(null);
+                    }}
+                    error={errors.processingType}
                 />
 
                 <AppInput

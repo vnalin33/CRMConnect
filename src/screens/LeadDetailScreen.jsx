@@ -245,6 +245,8 @@ const LeadDetailScreen = ({ route, navigation }) => {
                     <InfoRow icon="dollar-sign" label="Loan Amount" value={lead.loanamount ? `₹${lead.loanamount}` : null} />
                     <InfoRow icon="trending-up" label="Annual Income" value={lead.annualincome ? `₹${lead.annualincome}` : null} />
                     <InfoRow icon="clipboard" label="Employment" value={lead.employmenttype} />
+                    <InfoRow icon="layers" label="Service Type" value={lead.servicetype} />
+                    <InfoRow icon="zap" label="Processing Type" value={lead.processingtype} />
                     {lead.tracknumber && <InfoRow icon="hash" label="Track Number" value={lead.tracknumber} />}
                 </View>
 
