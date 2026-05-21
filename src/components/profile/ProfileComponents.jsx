@@ -98,7 +98,7 @@ export const GradientToggle = ({ value, onValueChange }) => {
             style={styles.gradientToggleTrack}
         >
             <LinearGradient
-                colors={value ? BRAND_GRADIENT.colors : ['#CDD5DF', '#CDD5DF']}
+                colors={value ? BRAND_GRADIENT.colors : ['#CDD5DF', '#CDD5DF', '#CDD5DF']}
                 start={BRAND_GRADIENT.start}
                 end={BRAND_GRADIENT.end}
                 locations={BRAND_GRADIENT.locations}

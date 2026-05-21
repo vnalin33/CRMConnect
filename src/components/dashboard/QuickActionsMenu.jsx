@@ -86,13 +86,8 @@ const ActionRow = React.memo(({ item, onPress }) => {
     );
 });
 
-const RmCard = React.memo(({ rm }) => {
+const RmCard = React.memo(() => {
     const { colors, spacing, radius } = useTheme();
-
-    const handleCall = useCallback(() => {
-        const num = rm.phone.replace(/\s+/g, '');
-        Linking.openURL(`tel:${num}`);
-    }, [rm.phone]);
 
     return (
         <View style={[
@@ -106,67 +101,33 @@ const RmCard = React.memo(({ rm }) => {
                 marginBottom: spacing.base,
             },
         ]}>
-            {/* RM header row */}
             <View style={styles.rmHeader}>
                 <AppText variant="bodySm" style={{ color: colors.textSecondary, fontWeight: '600' }}>
                     Your RM
                 </AppText>
-                <LinearGradient
-                    colors={BRAND_GRADIENT.colors}
-                    start={BRAND_GRADIENT.start}
-                    end={BRAND_GRADIENT.end}
-                    locations={BRAND_GRADIENT.locations}
-                    style={[styles.assignedBadge, { borderRadius: radius.full }]}
-                >
-                    <AppText variant="caption" style={{ color: '#fff', fontWeight: '700' }}>
-                        {rm.assignedLabel}
+                <View style={[styles.assignedBadge, { borderRadius: radius.full, backgroundColor: colors.textDisabled + '30' }]}>
+                    <AppText variant="caption" style={{ color: colors.textSecondary, fontWeight: '700' }}>
+                        Coming Soon
                     </AppText>
-                </LinearGradient>
-            </View>
-
-            {/* RM info row */}
-            <View style={[styles.rmInfo, { marginTop: spacing.sm }]}>
-                {/* Avatar */}
-                <LinearGradient
-                    colors={BRAND_GRADIENT.colors}
-                    start={BRAND_GRADIENT.start}
-                    end={BRAND_GRADIENT.end}
-                    locations={BRAND_GRADIENT.locations}
-                    style={[styles.rmAvatar, { borderRadius: radius.full }]}
-                >
-                    <Feather name="user" size={22} color="#fff" />
-                </LinearGradient>
-
-                <View style={{ flex: 1, marginLeft: spacing.sm }}>
-                    <AppText variant="h3" style={{ color: colors.textPrimary, fontWeight: '700' }}>
-                        {rm.name}
-                    </AppText>
-                    <View style={styles.rmContact}>
-                        <Feather name="phone" size={11} color={colors.textSecondary} />
-                        <AppText variant="caption" color="secondary" style={{ marginLeft: 4 }}>{rm.phone}</AppText>
-                    </View>
-                    <View style={styles.rmContact}>
-                        <Feather name="mail" size={11} color={colors.textSecondary} />
-                        <AppText variant="caption" color="secondary" style={{ marginLeft: 4 }}>{rm.email}</AppText>
-                    </View>
                 </View>
             </View>
 
-            {/* Call button */}
-            <TouchableOpacity onPress={handleCall} activeOpacity={0.8} style={{ marginTop: spacing.sm }}>
-                <LinearGradient
-                    colors={BRAND_GRADIENT.colors}
-                    start={BRAND_GRADIENT.start}
-                    end={BRAND_GRADIENT.end}
-                    locations={BRAND_GRADIENT.locations}
-                    style={[styles.callBtn, { borderRadius: radius.full }]}
-                >
-                    <Feather name="phone" size={14} color="#fff" />
-                    <AppText variant="bodySm" style={{ color: '#fff', fontWeight: '700', marginLeft: 6 }}>
-                        Call {rm.name.split(' ')[0]} {rm.name.split(' ')[1]}
-                    </AppText>
-                </LinearGradient>
-            </TouchableOpacity>
+            <View style={{ alignItems: 'center', paddingVertical: spacing.md }}>
+                <View style={{
+                    width: 48, height: 48, borderRadius: 24,
+                    backgroundColor: `${colors.primary}15`,
+                    alignItems: 'center', justifyContent: 'center',
+                    marginBottom: spacing.sm,
+                }}>
+                    <Feather name="tool" size={22} color={colors.textSecondary} />
+                </View>
+                <AppText variant="bodySm" style={{ color: colors.textSecondary, textAlign: 'center', fontWeight: '600' }}>
+                    Under Development
+                </AppText>
+                <AppText variant="caption" style={{ color: colors.textDisabled, textAlign: 'center', marginTop: 2 }}>
+                    RM assignment will be available soon
+                </AppText>
+            </View>
         </View>
     );
 });
@@ -279,7 +240,7 @@ const QuickActionsMenu = ({ visible, onClose, onAction, topOffset = 70 }) => {
                 <View style={[styles.divider, { backgroundColor: colors.divider, marginVertical: spacing.xs }]} />
 
                 {/* RM Card */}
-                <RmCard rm={RM_DATA} />
+                <RmCard />
             </Animated.View>
         </Modal>
     );

@@ -7,6 +7,7 @@ const DRAFTS_CACHE_KEY = '@crm_drafts_cache';
 export const useDrafts = () => {
     const [drafts, setDrafts] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [initialLoad, setInitialLoad] = useState(true);
 
     // Hydrate from cache immediately on mount
@@ -39,6 +40,12 @@ export const useDrafts = () => {
         }
     }, []);
 
+    const handleRefresh = useCallback(async () => {
+        setIsRefreshing(true);
+        await fetchDrafts();
+        setIsRefreshing(false);
+    }, [fetchDrafts]);
+
     const saveDraft = async (draftData) => {
         try {
             const saved = await saveDraftApi(draftData);
@@ -53,21 +60,31 @@ export const useDrafts = () => {
     const deleteDraft = async (id) => {
         try {
             await deleteDraftApi(id);
-            setDrafts(prev => {
-                const updated = prev.filter(d => d.id !== id);
-                AsyncStorage.setItem(DRAFTS_CACHE_KEY, JSON.stringify(updated));
-                return updated;
-            });
         } catch (err) {
-            console.error('Failed to delete draft', err);
-            throw err;
+            // If the draft is already deleted (404) or another API error occurs,
+            // we still want to remove it from the local cache if it's a 404.
+            if (err.statusCode !== 404) {
+                console.error('Failed to delete draft', err);
+                throw err;
+            } else {
+                console.warn('Draft not found on server, clearing from local cache.');
+            }
         }
+
+        // Proceed to remove from local state
+        setDrafts(prev => {
+            const updated = prev.filter(d => d.id !== id);
+            AsyncStorage.setItem(DRAFTS_CACHE_KEY, JSON.stringify(updated));
+            return updated;
+        });
     };
 
     return {
         drafts,
         loading: loading && initialLoad && drafts.length === 0,
+        isRefreshing,
         fetchDrafts,
+        refresh: handleRefresh,
         saveDraft,
         deleteDraft,
     };

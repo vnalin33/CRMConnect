@@ -13,30 +13,14 @@ import SearchBar from '../components/dashboard/SearchBar';
 import SnapshotRow from '../components/dashboard/SnapshotRow';
 import QuickActionsMenu from '../components/dashboard/QuickActionsMenu';
 import PayoutCard from '../components/dashboard/PayoutCard';
+import PerformanceOverview from '../components/dashboard/PerformanceOverview';
 import { useLeadList } from '../hooks/useLeadList';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import { useProfile } from '../hooks/useProfile';
+import useWalletData from '../hooks/useWalletData';
 
-// Replace with API data in the future for wallet and payouts.
-const DASHBOARD_DATA = {
-  wallet: {
-    balance: '0.00',
-    accountNumber: 'XXXX XXXX XXXX 1234',
-  },
-  payouts: {
-    instant: {
-      amount: '₹0',
-      date: 'N/A',
-      status: 'Scheduled',
-    },
-    cycle: {
-      amount: '₹0',
-      date: 'N/A',
-      status: 'Pending',
-    },
-  },
-};
+// Replaced hardcoded DASHBOARD_DATA with dynamic data below
 
 // Mask account number: show only last 4 digits
 const maskAccount = (acc) => {
@@ -49,13 +33,46 @@ const maskAccount = (acc) => {
 const HomeScreen = ({ navigation }) => {
   const { colors, spacing } = useTheme();
   const insets = useSafeAreaInsets();
-  const { tabCounts, refresh, loading } = useLeadList();
+  const { allLeads, tabCounts, refresh, isRefreshing, loading } = useLeadList();
   const { profileData } = useProfile();
   const [searchQuery, setSearchQuery] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
   const [payoutTab, setPayoutTab] = useState('instant');
+  const { formattedBalance: walletBalance, payouts } = useWalletData();
+  
+  const disbursedFilesCount = allLeads.filter(lead => {
+    const status = lead.track_status || lead.status || 1;
+    return status >= 17;
+  }).length;
 
-  // Auto-refresh when screen gains focus
+  const dynamicPayoutsData = {
+    instant: { amount: '₹0', date: 'N/A', status: 'Pending' },
+    cycle: { amount: '₹0', date: 'N/A', status: 'Pending' },
+  };
+
+  if (payouts && payouts.length > 0) {
+    const instantPayouts = payouts.filter(p => p.processingType?.toLowerCase() === 'instant');
+    const cyclePayouts = payouts.filter(p => p.processingType?.toLowerCase() === 'cycle');
+
+    if (instantPayouts.length > 0) {
+      const latest = instantPayouts[0];
+      dynamicPayoutsData.instant = {
+        amount: latest.payoutAmountFormatted || '₹0',
+        date: latest.date || 'N/A',
+        status: latest.status === 'paid' ? 'Paid' : 'Pending',
+      };
+    }
+    if (cyclePayouts.length > 0) {
+      const latest = cyclePayouts[0];
+      dynamicPayoutsData.cycle = {
+        amount: latest.payoutAmountFormatted || '₹0',
+        date: latest.date || 'N/A',
+        status: latest.status === 'paid' ? 'Paid' : 'Pending',
+      };
+    }
+  }
+
+  // Auto-refresh leads when screen gains focus
   useFocusEffect(
     useCallback(() => {
       refresh();
@@ -105,7 +122,7 @@ const HomeScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl 
-            refreshing={loading}
+            refreshing={isRefreshing}
             onRefresh={refresh} 
             colors={[colors.primary]} 
           />
@@ -116,17 +133,18 @@ const HomeScreen = ({ navigation }) => {
         <GradientScreenHeader gradientStyle={screenSt.headerGradient}>
           <DashboardHeader
             onMenu={() => setMenuVisible(true)}
-            onNotification={() => {/* TODO */ }}
+            onNotification={() => navigation.navigate('Notifications')}
           />
         </GradientScreenHeader>
 
         {/* ── Wallet card overlapping the gradient bottom ── */}
         <View style={[screenSt.walletWrapper, { paddingHorizontal: spacing.base }]}>
           <WalletCard
-            balance={DASHBOARD_DATA.wallet.balance}
+            balance={walletBalance}
             accountNumber={profileData?.bankDetails?.account && profileData.bankDetails.account !== 'Not Provided' ? maskAccount(profileData.bankDetails.account) : 'XXXX XXXX XXXX 1234'}
             onWithdraw={() => navigation.navigate('Wallet')}
             onViewWallet={() => navigation.navigate('Wallet')}
+            secondaryLabel="View Wallet"
           />
         </View>
 
@@ -137,9 +155,8 @@ const HomeScreen = ({ navigation }) => {
         <View style={{ marginTop: spacing.base, paddingHorizontal: spacing.base }}>
           <SnapshotRow data={[
             { id: '1', icon: 'file-text', iconBgColor: '#6855F0', count: String(tabCounts.progress || 0), label: 'Files in Progress' },
-            { id: '2', icon: 'check-circle', iconBgColor: '#00C896', count: String(tabCounts.completed || 0), label: 'Disbursed Files' },
-            { id: '3', icon: 'clock', iconBgColor: '#F59E0B', count: String(tabCounts.new || 0), label: 'New Leads' },
-            { id: '4', icon: 'users', iconBgColor: '#2DBFE6', count: String(tabCounts.all || 0), label: 'Total Clients' },
+            { id: '2', icon: 'check-circle', iconBgColor: '#00C896', count: String(disbursedFilesCount), label: 'Disbursed Files' },
+            { id: '3', icon: 'users', iconBgColor: '#2DBFE6', count: String(tabCounts.all || 0), label: 'Active Customers' },
           ]} />
         </View>
 
@@ -147,11 +164,15 @@ const HomeScreen = ({ navigation }) => {
           <PayoutCard
             activeTab={payoutTab}
             onTabChange={setPayoutTab}
-            payableAmount={DASHBOARD_DATA.payouts[payoutTab].amount}
-            expectedDate={DASHBOARD_DATA.payouts[payoutTab].date}
-            status={DASHBOARD_DATA.payouts[payoutTab].status}
+            payableAmount={dynamicPayoutsData[payoutTab].amount}
+            expectedDate={dynamicPayoutsData[payoutTab].date}
+            status={dynamicPayoutsData[payoutTab].status}
             onViewHistory={() => navigation.navigate('Payout')}
           />
+        </View>
+
+        <View style={{ marginBottom: spacing.xxxl }}>
+            <PerformanceOverview />
         </View>
 
       </ScrollView>
@@ -170,3 +191,5 @@ const screenSt = {
 };
 
 export default HomeScreen;
+
+

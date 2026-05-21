@@ -9,6 +9,7 @@ import {
 import Feather from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { useTheme } from '../theme';
 import AppText from '../components/common/AppText';
@@ -35,6 +36,7 @@ const UserIcon  = ({ color }) => <Feather name="user"       size={18} color={col
 const MailIcon  = ({ color }) => <Feather name="mail"       size={18} color={color} />;
 const PhoneIcon = ({ color }) => <Feather name="phone"      size={18} color={color} />;
 const LockIcon  = ({ color }) => <Feather name="lock"       size={18} color={color} />;
+const CalendarIcon = ({ color }) => <Feather name="calendar" size={18} color={color} />;
 const ArrowIcon = ()          => <Feather name="arrow-right" size={18} color="#FFFFFF" />;
 
 // ── Password Strength Bar ────────────────────────────────────────
@@ -73,14 +75,18 @@ const SignupScreen = ({ navigation }) => {
     const [name, setName]         = useState('');
     const [email, setEmail]       = useState('');
     const [phone, setPhone]       = useState('');
+    const [dob, setDob]           = useState('');
     const [password, setPassword] = useState('');
     const [roleLabel, setRoleLabel] = useState('');
+    const [customRole, setCustomRole] = useState('');
     const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
     const [formErrors, setFormErrors] = useState({});
     const [signupCountry, setSignupCountry] = useState(COUNTRIES[0]); // India default
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
     const emailRef    = useRef(null);
     const phoneRef    = useRef(null);
+    const dobRef      = useRef(null);
     const passwordRef = useRef(null);
 
     const { signup, isLoading, error: apiError } = useSignup({
@@ -107,20 +113,28 @@ const SignupScreen = ({ navigation }) => {
             name: name.trim(),
             email: email.trim(),
             phone: phone.trim(),
+            dob: dob.trim(),
             password,
             role,
         });
+
+        // Extra validation: if role is 'others', customRole is required
+        if (role === 'others' && !customRole.trim()) {
+            errors.customRole = 'Please specify your profession';
+        }
+
         setFormErrors(errors);
-        if (!isValid) return;
+        if (!isValid || errors.customRole) return;
 
         signup({
             name:  name.trim(),
             email: email.trim(),
             phone: phone.trim(),
+            dob: dob.trim(),
             password,
-            role,
+            role: role === 'others' ? customRole.trim() : roleLabel.trim(),
         });
-    }, [name, email, phone, password, roleLabel, signup]);
+    }, [name, email, phone, password, roleLabel, customRole, dob, signup]);
 
     const maxWidth = IS_TABLET ? 480 : SW;
 
@@ -249,7 +263,7 @@ const SignupScreen = ({ navigation }) => {
                             keyboardType="phone-pad"
                             maxLength={10}
                             returnKeyType="next"
-                            onSubmitEditing={() => passwordRef.current?.focus()}
+                            onSubmitEditing={() => setShowDatePicker(true)}
                             error={formErrors.phone}
                             leftIcon={
                                 <CountryCodePicker
@@ -258,6 +272,37 @@ const SignupScreen = ({ navigation }) => {
                                 />
                             }
                         />
+
+                        {/* DOB */}
+                        <TouchableOpacity onPress={() => setShowDatePicker(true)} activeOpacity={0.8}>
+                            <View pointerEvents="none">
+                                <AppInput
+                                    label="Date of Birth"
+                                    placeholder="YYYY-MM-DD"
+                                    value={dob}
+                                    error={formErrors.dob}
+                                    leftIcon={<CalendarIcon color={colors.iconColor || colors.textDisabled} />}
+                                    editable={false}
+                                />
+                            </View>
+                        </TouchableOpacity>
+
+                        {showDatePicker && (
+                            <DateTimePicker
+                                value={dob ? new Date(dob) : new Date(2000, 0, 1)}
+                                mode="date"
+                                display="default"
+                                maximumDate={new Date()}
+                                onChange={(event, selectedDate) => {
+                                    setShowDatePicker(false);
+                                    if (selectedDate) {
+                                        const formattedDate = selectedDate.toISOString().split('T')[0];
+                                        setDob(formattedDate);
+                                        clearFieldError('dob');
+                                    }
+                                }}
+                            />
+                        )}
 
                         {/* Password */}
                         <AppInput
@@ -278,8 +323,8 @@ const SignupScreen = ({ navigation }) => {
 
                         {/* Role Dropdown */}
                         <DropdownSelect
-                            label="Select Role"
-                            placeholder="Choose your role"
+                            label="Select Profession *"
+                            placeholder="Choose your profession"
                             value={roleLabel}
                             options={ROLE_OPTIONS}
                             isOpen={roleDropdownOpen}
@@ -288,9 +333,23 @@ const SignupScreen = ({ navigation }) => {
                                 setRoleLabel(label);
                                 setRoleDropdownOpen(false);
                                 clearFieldError('role');
+                                if (label !== 'Others') setCustomRole('');
                             }}
                             error={formErrors.role}
                         />
+
+                        {/* Custom Role Input — shown only when 'Others' is selected */}
+                        {roleLabel === 'Others' && (
+                            <AppInput
+                                label="Specify Your Profession *"
+                                placeholder="Enter your profession"
+                                value={customRole}
+                                onChangeText={val => { setCustomRole(val); clearFieldError('customRole'); }}
+                                autoCapitalize="words"
+                                error={formErrors.customRole}
+                                leftIcon={<UserIcon color={colors.iconColor || colors.textDisabled} />}
+                            />
+                        )}
 
                         {/* API Error Banner */}
                         {apiError ? (

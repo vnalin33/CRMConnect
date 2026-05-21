@@ -1,4 +1,5 @@
 const authService = require('../services/authService');
+const { createNotification } = require('../models/notificationModel');
 
 const login = async (req, res, next) => {
   try {
@@ -100,21 +101,32 @@ const deepLinkRedirect = (req, res) => {
 
 const register = async (req, res, next) => {
   try {
-    const { name, email, phone, password } = req.body;
+    const { name, email, phone, password, dob, role } = req.body;
 
-    if (!name || !email || !phone || !password) {
+    if (!name || !email || !phone || !password || !dob) {
       const error = new Error('All fields are required');
       error.statusCode = 400;
       throw error;
     }
 
-    const data = await authService.register({ name, email, phone, password });
+    const data = await authService.register({ name, email, phone, password, dob, role });
 
     res.status(201).json({
       success: true,
       message: 'Registration successful',
       data,
     });
+
+    // Fire-and-forget welcome notification
+    if (data?.user?.id) {
+      createNotification(
+        data.user.id,
+        'Welcome to CRM Connect!',
+        'Your account has been created successfully. Complete your profile to start adding leads.',
+        'SYSTEM',
+        {}
+      ).catch(() => {});
+    }
   } catch (error) {
     next(error);
   }

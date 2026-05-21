@@ -5,6 +5,7 @@ import {
     TouchableOpacity,
     Image,
     Modal,
+    Linking,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
@@ -33,6 +34,9 @@ const ProfileScreen = ({ navigation }) => {
         isEditingBank,
         editBankForm,
         bankFormErrors,
+        isEditingTax,
+        editTaxForm,
+        taxFormErrors,
         imageModalVisible,
         setImageModalVisible,
         handlePickImage,
@@ -41,12 +45,15 @@ const ProfileScreen = ({ navigation }) => {
         toggleNotifications,
         handleEditToggle,
         handleBankEditToggle,
+        handleTaxEditToggle,
         handleIfscChange,
         refreshProfile,
         setEditForm,
         setEditBankForm,
+        setEditTaxForm,
         setFormErrors,
-        setBankFormErrors
+        setBankFormErrors,
+        setTaxFormErrors
     } = useProfile();
 
     // Auto-refresh stats when focused
@@ -59,7 +66,7 @@ const ProfileScreen = ({ navigation }) => {
     // First-ever visit with no cache: show shimmer skeleton inside the screen chrome
     if (loading) {
         return (
-            <ScreenWrapper withPadding={false} edges={['bottom', 'left', 'right']} style={styles.root}>
+            <ScreenWrapper withPadding={false} edges={['left', 'right']} style={styles.root}>
                 <GradientScreenHeader
                     title="My Profile"
                     showBack
@@ -82,7 +89,7 @@ const ProfileScreen = ({ navigation }) => {
         <ScreenWrapper
             scrollable
             withPadding={false}
-            edges={['bottom', 'left', 'right']}
+            edges={['left', 'right']}
             style={styles.root}
         >
             <GradientScreenHeader
@@ -98,11 +105,7 @@ const ProfileScreen = ({ navigation }) => {
             <View style={[styles.headerSection, { paddingHorizontal: spacing.base, marginTop: spacing.md }]}>
                 {!searchQuery && (
                     <View style={styles.profileHeader}>
-                        <TouchableOpacity
-                            activeOpacity={0.8}
-                            onPress={() => setImageModalVisible(true)}
-                            style={styles.avatarOuter}
-                        >
+                        <View style={styles.avatarOuter}>
                             <LinearGradient
                                 colors={BRAND_GRADIENT.colors}
                                 start={BRAND_GRADIENT.start}
@@ -110,25 +113,11 @@ const ProfileScreen = ({ navigation }) => {
                                 locations={BRAND_GRADIENT.locations}
                                 style={styles.avatarSquare}
                             >
-                                {profileData.personalInfo.profileImage ? (
-                                    <Image
-                                        source={{ uri: profileData.personalInfo.profileImage }}
-                                        style={styles.avatarImage}
-                                    />
-                                ) : (
-                                    <Feather name="user" size={32} color={colors.textInverse} />
-                                )}
+                                <AppText variant="h2" style={{ color: colors.textInverse, fontWeight: 'bold' }}>
+                                    {profileData.name ? profileData.name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase() : 'U'}
+                                </AppText>
                             </LinearGradient>
-                            <LinearGradient
-                                colors={BRAND_GRADIENT.colors}
-                                start={BRAND_GRADIENT.start}
-                                end={BRAND_GRADIENT.end}
-                                locations={BRAND_GRADIENT.locations}
-                                style={[styles.cameraBadge, { borderColor: colors.surface }]}
-                            >
-                                <Feather name="camera" size={10} color={colors.textInverse} />
-                            </LinearGradient>
-                        </TouchableOpacity>
+                        </View>
 
                         <View style={styles.profileNameContainer}>
                             <GradientText variant="h2" style={styles.profileNameText}>{profileData.name}</GradientText>
@@ -175,7 +164,7 @@ const ProfileScreen = ({ navigation }) => {
             </View>
 
 
-            <View style={{ paddingHorizontal: spacing.base, paddingBottom: spacing.xxxl }}>
+            <View style={{ paddingHorizontal: spacing.base, paddingBottom: spacing.base }}>
                 {(() => {
                     const q = (searchQuery || '').toLowerCase().trim();
                     const matches = (val) => !q || (val != null && String(val).toLowerCase().includes(q));
@@ -185,14 +174,24 @@ const ProfileScreen = ({ navigation }) => {
                         profileData.personalInfo.email,
                         profileData.personalInfo.mobile,
                         profileData.personalInfo.location,
+                        profileData.personalInfo.address,
+                        profileData.personalInfo.profession,
                         'Personal Info'
                     ].some(matches);
 
                     const bankMatches = [
                         profileData.bankDetails.ifsc,
+                        profileData.bankDetails.bankName,
                         profileData.bankDetails.account,
                         profileData.bankDetails.branch,
+                        profileData.bankDetails.accountHolderName,
                         'Bank Details'
+                    ].some(matches);
+
+                    const taxMatches = [
+                        profileData.taxDetails?.pan,
+                        profileData.taxDetails?.gst,
+                        'Tax Details'
                     ].some(matches);
 
                     const accountItems = [
@@ -208,7 +207,7 @@ const ProfileScreen = ({ navigation }) => {
                         { icon: 'alert-circle', title: 'Report an Issue', sub: 'Bug reports & feedback' }
                     ].filter(i => matches(i.title) || matches(i.sub) || matches('Support'));
 
-                    const hasResults = personalMatches || bankMatches || accountItems.length > 0 || supportItems.length > 0;
+                    const hasResults = personalMatches || bankMatches || taxMatches || accountItems.length > 0 || supportItems.length > 0;
 
                     if (!hasResults && q) {
                         return (
@@ -237,13 +236,15 @@ const ProfileScreen = ({ navigation }) => {
                                             <AppInput label="Email" value={editForm.email} keyboardType="email-address" onChangeText={(text) => { setEditForm(prev => ({ ...prev, email: text })); setFormErrors(prev => ({ ...prev, email: null, general: null })); }} error={formErrors.email} />
                                             <AppInput label="Mobile" value={editForm.mobile} keyboardType="numeric" maxLength={10} onChangeText={(text) => { setEditForm(prev => ({ ...prev, mobile: text.replace(/[^0-9]/g, '') })); setFormErrors(prev => ({ ...prev, mobile: null })); }} error={formErrors.mobile} />
                                             <AppInput label="Location" value={editForm.location} onChangeText={(text) => { setEditForm(prev => ({ ...prev, location: text.replace(/[0-9]/g, '') })); }} />
+                                            <AppInput label="Address" value={editForm.address} multiline onChangeText={(text) => { setEditForm(prev => ({ ...prev, address: text })); }} />
                                         </View>
                                     ) : (
                                         <>
                                             {matches(profileData.personalInfo.name) && <InfoRow icon="user" label="Name" value={profileData.personalInfo.name} />}
                                             {matches(profileData.personalInfo.email) && <InfoRow icon="mail" label="Email" value={profileData.personalInfo.email} />}
                                             {matches(profileData.personalInfo.mobile) && <InfoRow icon="phone" label="Mobile" value={profileData.personalInfo.mobile} />}
-                                            {matches(profileData.personalInfo.location) && <InfoRow icon="map-pin" label="Location" value={profileData.personalInfo.location} isLast />}
+                                            {matches(profileData.personalInfo.location) && <InfoRow icon="map-pin" label="Location" value={profileData.personalInfo.location} />}
+                                            {matches(profileData.personalInfo.address) && <InfoRow icon="home" label="Address" value={profileData.personalInfo.address} isLast />}
                                         </>
                                     )}
                                 </AppCard>
@@ -259,15 +260,69 @@ const ProfileScreen = ({ navigation }) => {
                                                     <AppText variant="bodySm" style={{ color: colors.error }}>⚠ {bankFormErrors.general}</AppText>
                                                 </View>
                                             )}
-                                            <AppInput label="IFSC Code" value={editBankForm.ifsc} maxLength={11} autoCapitalize="characters" onChangeText={handleIfscChange} error={bankFormErrors.ifsc} />
-                                            <AppInput label="Account Number" value={editBankForm.account} keyboardType="numeric" maxLength={18} onChangeText={(text) => { setEditBankForm(prev => ({ ...prev, account: text.replace(/[^0-9]/g, '') })); setBankFormErrors(prev => ({ ...prev, account: null })); }} error={bankFormErrors.account} />
-                                            <AppInput label="Branch" value={editBankForm.branch} editable={false} />
+                                            <AppInput label="IFSC Code" value={editBankForm.ifsc} maxLength={11} autoCapitalize="characters" onChangeText={handleIfscChange} error={bankFormErrors.ifsc} placeholder="Enter 11-digit IFSC" />
+                                            <AppInput label="Account Holder Name" value={editBankForm.accountHolderName} onChangeText={(text) => { setEditBankForm(prev => ({ ...prev, accountHolderName: text })); setBankFormErrors(prev => ({ ...prev, accountHolderName: null })); }} error={bankFormErrors.accountHolderName} placeholder="As per bank records" />
+                                            <AppInput label="Account Number" value={editBankForm.account} keyboardType="numeric" maxLength={18} onChangeText={(text) => { setEditBankForm(prev => ({ ...prev, account: text.replace(/[^0-9]/g, '') })); setBankFormErrors(prev => ({ ...prev, account: null })); }} error={bankFormErrors.account} placeholder="Enter account number" />
+                                            <AppInput label="Bank Name" value={editBankForm.bankName} onChangeText={(text) => setEditBankForm(prev => ({ ...prev, bankName: text }))} placeholder="Auto-fetched via IFSC or type manually" />
+                                            <AppInput label="Branch" value={editBankForm.branch} editable={false} placeholder="Auto-fetched via IFSC" />
                                         </View>
                                     ) : (
                                         <>
-                                            {matches(profileData.bankDetails.ifsc) && <InfoRow icon="briefcase" label="IFSC" value={profileData.bankDetails.ifsc} />}
+                                            {matches(profileData.bankDetails.ifsc) && <InfoRow icon="file-text" label="IFSC" value={profileData.bankDetails.ifsc} />}
+                                            {matches(profileData.bankDetails.accountHolderName) && <InfoRow icon="user" label="Account Holder Name" value={profileData.bankDetails.accountHolderName} />}
                                             {matches(profileData.bankDetails.account) && <InfoRow icon="credit-card" label="Account Number" value={profileData.bankDetails.account} />}
+                                            {matches(profileData.bankDetails.bankName) && <InfoRow icon="briefcase" label="Bank Name" value={profileData.bankDetails.bankName} />}
                                             {matches(profileData.bankDetails.branch) && <InfoRow icon="git-branch" label="Branch" value={profileData.bankDetails.branch} isLast />}
+                                        </>
+                                    )}
+                                </AppCard>
+                            )}
+
+                            {taxMatches && profileData.taxDetails && (
+                                <AppCard style={[styles.cardWrapper, { borderColor: colors.profileCardBorder }]} variant="elevated">
+                                    <HeaderRow title="TAX DETAILS" showEdit isEditing={isEditingTax} onPressEdit={handleTaxEditToggle} />
+                                    {isEditingTax ? (
+                                        <View style={[styles.formPadding, { paddingHorizontal: spacing.base, paddingBottom: spacing.base }]}>
+                                            {taxFormErrors.general && (
+                                                <View style={{ backgroundColor: colors.errorBg || 'rgba(239, 68, 68, 0.1)', borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.base, borderLeftWidth: 3, borderLeftColor: colors.error }}>
+                                                    <AppText variant="bodySm" style={{ color: colors.error }}>⚠ {taxFormErrors.general}</AppText>
+                                                </View>
+                                            )}
+                                            <AppInput 
+                                                label="PAN Number" 
+                                                value={editTaxForm.pan} 
+                                                maxLength={10} 
+                                                autoCapitalize="characters" 
+                                                placeholder="e.g. AAFFO7105H"
+                                                onChangeText={(text) => { setEditTaxForm(prev => ({ ...prev, pan: text.toUpperCase() })); setTaxFormErrors(prev => ({ ...prev, pan: null })); }} 
+                                                error={taxFormErrors.pan} 
+                                            />
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: editTaxForm.isGstRegistered ? spacing.base : 0 }}>
+                                                <AppText variant="body" style={{ color: colors.textPrimary, fontWeight: '600' }}>GST Registered</AppText>
+                                                <GradientToggle 
+                                                    value={editTaxForm.isGstRegistered} 
+                                                    onValueChange={(val) => setEditTaxForm(prev => ({ ...prev, isGstRegistered: val }))} 
+                                                />
+                                            </View>
+                                            {editTaxForm.isGstRegistered && (
+                                                <View style={{ marginTop: spacing.base }}>
+                                                    <AppInput 
+                                                        label="GST Number" 
+                                                        value={editTaxForm.gst} 
+                                                        maxLength={15} 
+                                                        autoCapitalize="characters" 
+                                                        placeholder="e.g. 33AAFFO7105H1ZI"
+                                                        onChangeText={(text) => { setEditTaxForm(prev => ({ ...prev, gst: text.toUpperCase() })); setTaxFormErrors(prev => ({ ...prev, gst: null })); }} 
+                                                        error={taxFormErrors.gst} 
+                                                    />
+                                                </View>
+                                            )}
+                                        </View>
+                                    ) : (
+                                        <>
+                                            {matches(profileData.taxDetails.pan) && <InfoRow icon="file-text" label="PAN" value={profileData.taxDetails.pan} />}
+                                            <InfoRow icon="check-circle" label="GST Registered" value={profileData.taxDetails.isGstRegistered === true ? "Yes" : profileData.taxDetails.isGstRegistered === false ? "No" : "Not Provided"} isLast={!profileData.taxDetails.isGstRegistered} />
+                                            {profileData.taxDetails.isGstRegistered && matches(profileData.taxDetails.gst) && <InfoRow icon="hash" label="GST Number" value={profileData.taxDetails.gst} isLast />}
                                         </>
                                     )}
                                 </AppCard>
@@ -295,17 +350,30 @@ const ProfileScreen = ({ navigation }) => {
                             {supportItems.length > 0 && (
                                 <AppCard style={[styles.cardWrapper, { borderColor: colors.profileCardBorder }]} variant="elevated">
                                     <HeaderRow title="SUPPORT" />
-                                    {supportItems.map((item, idx) => (
-                                        <ActionRow
-                                            key={item.title}
-                                            icon={item.icon}
-                                            title={item.title}
-                                            subtitle={item.sub}
-                                            isLast={idx === supportItems.length - 1}
-                                            iconColor={item.title === 'Report an Issue' ? colors.error : undefined}
-                                            onPress={() => { }}
-                                        />
-                                    ))}
+                                    {supportItems.map((item, idx) => {
+                                        const isLast = idx === supportItems.length - 1;
+                                        let handlePress = () => {};
+
+                                        if (item.title === 'Help & Support') {
+                                            handlePress = () => navigation.navigate('Support');
+                                        } else if (item.title === 'Privacy Policy') {
+                                            handlePress = () => Linking.openURL('mailto:oneassistconsultant@gmail.com?subject=Privacy Policy Inquiry');
+                                        } else if (item.title === 'Report an Issue') {
+                                            handlePress = () => Linking.openURL('mailto:oneassistconsultant@gmail.com?subject=Bug Report - CRM Connect');
+                                        }
+
+                                        return (
+                                            <ActionRow
+                                                key={item.title}
+                                                icon={item.icon}
+                                                title={item.title}
+                                                subtitle={item.sub}
+                                                isLast={isLast}
+                                                iconColor={item.title === 'Report an Issue' ? colors.error : undefined}
+                                                onPress={handlePress}
+                                            />
+                                        );
+                                    })}
                                 </AppCard>
                             )}
                         </>
@@ -313,7 +381,17 @@ const ProfileScreen = ({ navigation }) => {
                 })()}
 
                 {!searchQuery && (
-                    <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.replace('Login')}>
+                    <TouchableOpacity 
+                        activeOpacity={0.85} 
+                        onPress={async () => {
+                            try {
+                                await AsyncStorage.multiRemove(['auth_token', 'user_data', 'auth_login_time', '@crm_profile_cache']);
+                                navigation.replace('Login');
+                            } catch (e) {
+                                navigation.replace('Login');
+                            }
+                        }}
+                    >
                         <View style={[styles.signOutBtn, { backgroundColor: colors.signOutBg, borderRadius: radius.lg }]}>
                             <Feather name="log-out" size={18} color={colors.signOutText} style={styles.logoutIcon} />
                             <AppText variant="body" style={[styles.logoutText, { color: colors.signOutText }]}>Sign Out</AppText>
@@ -322,41 +400,7 @@ const ProfileScreen = ({ navigation }) => {
                 )}
             </View>
 
-            <Modal animationType="fade" transparent={true} visible={imageModalVisible} onRequestClose={() => setImageModalVisible(false)}>
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
-                        <View style={styles.modalHeader}>
-                            <AppText variant="h3" style={[styles.modalTitle, { color: colors.textPrimary }]}>Profile Picture</AppText>
-                            <TouchableOpacity onPress={() => setImageModalVisible(false)} hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}>
-                                <Feather name="x" size={24} color={colors.textSecondary} />
-                            </TouchableOpacity>
-                        </View>
-                        <View style={[styles.previewContainer, { backgroundColor: colors.surfaceElevated, borderRadius: radius.lg }]}>
-                            {profileData.personalInfo.profileImage ? (
-                                <Image source={{ uri: profileData.personalInfo.profileImage }} style={styles.previewImage} resizeMode="cover" />
-                            ) : (
-                                <View style={[styles.placeholderPreview, { backgroundColor: colors.primary }]}>
-                                    <Feather name="user" size={64} color={colors.textInverse} />
-                                </View>
-                            )}
-                        </View>
-                        <TouchableOpacity style={[styles.modalActionBtn, { borderBottomWidth: 1, borderBottomColor: colors.divider }]} onPress={handleTakePhoto}>
-                            <Feather name="camera" size={20} color={colors.textBrand} style={styles.actionIcon} />
-                            <AppText variant="body" style={[styles.actionText, { color: colors.textPrimary }]}>Take Photo</AppText>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={[styles.modalActionBtn, { borderBottomWidth: 1, borderBottomColor: colors.divider }]} onPress={handlePickImage}>
-                            <Feather name="image" size={20} color={colors.textBrand} style={styles.actionIcon} />
-                            <AppText variant="body" style={[styles.actionText, { color: colors.textPrimary }]}>Choose from Gallery</AppText>
-                        </TouchableOpacity>
-                        {profileData.personalInfo.profileImage && (
-                            <TouchableOpacity style={styles.modalActionBtn} onPress={handleRemoveImage}>
-                                <Feather name="trash-2" size={20} color={colors.error} style={styles.actionIcon} />
-                                <AppText variant="body" style={{ color: colors.error, fontWeight: '500' }}>Remove Photo</AppText>
-                            </TouchableOpacity>
-                        )}
-                    </View>
-                </View>
-            </Modal>
+
         </ScreenWrapper>
     );
 };
@@ -535,3 +579,5 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileScreen;
+
+

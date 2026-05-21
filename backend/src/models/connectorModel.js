@@ -32,32 +32,43 @@ const findByMobileExcludingUser = async (mobile, userId) => {
 
 const findById = async (id) => {
   const query = `
-    SELECT id, name, emailid, mobilenumber, location, ifsc, accountnumber, branch, isactive, profile_picture
+    SELECT id, name, emailid, mobilenumber, location, address, profession, ifsc, accountnumber, branch, bank_name, account_holder_name, isactive, profile_picture, dob, pan_number, is_gst_registered, gst_number
     FROM connector WHERE id = $1
   `;
   const { rows } = await db.query(query, [id]);
   return rows[0];
 };
 
-const updatePersonalInfo = async (id, { name, emailid, mobilenumber, location }) => {
+const updatePersonalInfo = async (id, { name, emailid, mobilenumber, location, address, profession }) => {
   const query = `
     UPDATE connector
-    SET name = $1, emailid = $2, mobilenumber = $3, location = $4, "updatedDate" = NOW()
-    WHERE id = $5
-    RETURNING id, name, emailid, mobilenumber, location
+    SET name = $1, emailid = $2, mobilenumber = $3, location = $4, address = $5, profession = $6, "updatedDate" = NOW()
+    WHERE id = $7
+    RETURNING id, name, emailid, mobilenumber, location, address, profession
   `;
-  const { rows } = await db.query(query, [name, emailid, mobilenumber, location, id]);
+  const { rows } = await db.query(query, [name, emailid, mobilenumber, location, address, profession, id]);
   return rows[0];
 };
 
-const updateBankDetails = async (id, { ifsc, accountnumber, branch }) => {
+const updateBankDetails = async (id, { ifsc, accountnumber, branch, bank_name, account_holder_name }) => {
   const query = `
     UPDATE connector
-    SET ifsc = $1, accountnumber = $2, branch = $3, "updatedDate" = NOW()
-    WHERE id = $4
-    RETURNING id, ifsc, accountnumber, branch
+    SET ifsc = $1, accountnumber = $2, branch = $3, bank_name = $4, account_holder_name = $5, "updatedDate" = NOW()
+    WHERE id = $6
+    RETURNING id, ifsc, accountnumber, branch, bank_name, account_holder_name
   `;
-  const { rows } = await db.query(query, [ifsc, accountnumber, branch, id]);
+  const { rows } = await db.query(query, [ifsc, accountnumber, branch, bank_name, account_holder_name, id]);
+  return rows[0];
+};
+
+const updateTaxDetails = async (id, { pan_number, is_gst_registered, gst_number }) => {
+  const query = `
+    UPDATE connector
+    SET pan_number = $1, is_gst_registered = $2, gst_number = $3, "updatedDate" = NOW()
+    WHERE id = $4
+    RETURNING id, pan_number, is_gst_registered, gst_number
+  `;
+  const { rows } = await db.query(query, [pan_number, is_gst_registered, gst_number, id]);
   return rows[0];
 };
 
@@ -83,13 +94,13 @@ const updateProfilePicture = async (id, profilePictureUrl) => {
   return rows[0];
 };
 
-const create = async ({ name, emailid, mobilenumber, password, isactive = true }) => {
+const create = async ({ name, emailid, mobilenumber, password, dob, profession, isactive = true }) => {
   const query = `
-    INSERT INTO connector (name, emailid, mobilenumber, password, isactive, "createdDate", "updatedDate")
-    VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-    RETURNING id, name, emailid, mobilenumber, isactive
+    INSERT INTO connector (name, emailid, mobilenumber, password, dob, profession, isactive, "createdDate", "updatedDate")
+    VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+    RETURNING id, name, emailid, mobilenumber, dob, profession, isactive
   `;
-  const { rows } = await db.query(query, [name, emailid, mobilenumber, password, isactive]);
+  const { rows } = await db.query(query, [name, emailid, mobilenumber, password, dob, profession || null, isactive]);
   return rows[0];
 };
 
@@ -102,6 +113,7 @@ module.exports = {
   findById,
   updatePersonalInfo,
   updateBankDetails,
+  updateTaxDetails,
   updatePassword,
   saveResetToken,
   findUserByResetToken,

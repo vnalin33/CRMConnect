@@ -1,51 +1,65 @@
 import React from 'react';
-import { View, FlatList } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import MaskedView from '@react-native-masked-view/masked-view';
+import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from '../../theme';
+import { BRAND_GRADIENT } from '../../theme/colors';
 import AppText from '../common/AppText';
 import SnapshotCard from './SnapshotCard';
 
-const SNAPSHOT_DATA = [
-    { id: '1', icon: 'file-text', iconBgColor: '#6855F0', count: '34', label: 'Files in Progress' },
-    { id: '2', icon: 'check-circle', iconBgColor: '#00C896', count: '128', label: 'Disbursed Files' },
-    { id: '3', icon: 'clock', iconBgColor: '#F59E0B', count: '11', label: 'Pending Approval' },
-    { id: '4', icon: 'users', iconBgColor: '#2DBFE6', count: '26', label: 'Active Clients' },
-];
-
-const SnapshotSeparator = () => {
+const SnapshotRow = ({ data }) => {
     const { spacing } = useTheme();
-    return <View style={{ width: spacing.sm }} />;
-};
 
-const SnapshotRow = ({ data = SNAPSHOT_DATA }) => {
-    const { spacing } = useTheme();
+    // Show only first 3 items in a single row
+    const items = (data || []).slice(0, 3);
+
+    const titleStyle = {
+        fontSize: 13,
+        fontWeight: '800',
+        letterSpacing: 0.8,
+        textTransform: 'uppercase',
+    };
 
     return (
-        <View style={{ marginTop: spacing.lg }}>
-            <AppText
-                variant="label"
-                color="secondary"
-                style={{ marginHorizontal: spacing.base, marginBottom: spacing.md }}
+        <View>
+            <MaskedView
+                style={{ flexDirection: 'row', marginBottom: spacing.md }}
+                maskElement={
+                    <AppText style={[titleStyle, { backgroundColor: 'transparent' }]}>
+                        OPERATIONAL SNAPSHOT
+                    </AppText>
+                }
             >
-                OPERATIONAL SNAPSHOT
-            </AppText>
-            <FlatList
-                data={data}
-                keyExtractor={item => item.id}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: spacing.base }}
-                ItemSeparatorComponent={SnapshotSeparator}
-                renderItem={({ item }) => (
+                <LinearGradient
+                    colors={BRAND_GRADIENT.colors}
+                    start={BRAND_GRADIENT.start}
+                    end={BRAND_GRADIENT.end}
+                    locations={BRAND_GRADIENT.locations}
+                >
+                    <AppText style={[titleStyle, { opacity: 0 }]}>
+                        OPERATIONAL SNAPSHOT
+                    </AppText>
+                </LinearGradient>
+            </MaskedView>
+            <View style={[styles.row, { gap: spacing.sm }]}>
+                {items.map((item) => (
                     <SnapshotCard
+                        key={item.id}
                         icon={item.icon}
                         iconBgColor={item.iconBgColor}
                         count={item.count}
                         label={item.label}
                     />
-                )}
-            />
+                ))}
+            </View>
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    row: {
+        flexDirection: 'row',
+    },
+});
 
 export default SnapshotRow;

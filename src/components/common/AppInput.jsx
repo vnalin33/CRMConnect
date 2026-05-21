@@ -23,6 +23,7 @@ const AppInput = forwardRef(({
     rightIcon,
     error,
     hint,
+    required = false,
     editable = true,
     multiline = false,
     maxLength,
@@ -81,6 +82,7 @@ const AppInput = forwardRef(({
                     style={{ marginBottom: spacing.xs }}
                 >
                     {label}
+                    {required && <AppText style={{ color: colors.error || '#EF4444' }}> *</AppText>}
                 </AppText>
             ) : null}
 

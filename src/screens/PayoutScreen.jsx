@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
     View,
     TouchableOpacity,
@@ -6,6 +7,8 @@ import {
     StyleSheet,
     ActivityIndicator,
     RefreshControl,
+    Platform,
+    Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Feather from 'react-native-vector-icons/Feather';
@@ -15,10 +18,15 @@ import { BRAND_GRADIENT } from '../theme/colors';
 import ScreenWrapper from '../components/layout/ScreenWrapper';
 import GradientScreenHeader from '../components/layout/GradientScreenHeader';
 import AppText from '../components/common/AppText';
+import AppStatusModal from '../components/common/AppStatusModal';
 import { getPayoutsApi } from '../api/payoutApi';
+import { getInvoiceRequestStatuses, getInvoiceHtmlByTrackId } from '../api/invoiceRequestApi';
+import { generatePDF } from 'react-native-html-to-pdf';
+import { useToast } from '../context/ToastContext';
+import { useProfile } from '../hooks/useProfile';
 
 const formatINR = (n) =>
-    '₹' + n.toLocaleString('en-IN');
+    '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
@@ -97,9 +105,41 @@ const PayoutSummaryCard = React.memo(({ summary }) => {
     );
 });
 
-const PayoutItem = React.memo(({ item, onRaiseInvoice }) => {
+const PayoutItem = React.memo(({ item, onRaiseInvoice, invoiceRequest, onDownload, isGstRegistered }) => {
     const { colors, radius, spacing } = useTheme();
     const isPaid = item.status === 'paid';
+    const reqStatus = invoiceRequest?.status;
+    const hasInvoice = !!reqStatus;
+
+    const payoutAmt = parseFloat(item.payoutAmount) || 0;
+    const tds = Math.round(payoutAmt * 0.02 * 100) / 100;
+    const sgst = isGstRegistered ? 0 : Math.round(payoutAmt * 0.09 * 100) / 100;
+    const cgst = isGstRegistered ? 0 : Math.round(payoutAmt * 0.09 * 100) / 100;
+    const netPayout = Math.round((payoutAmt - tds - sgst - cgst) * 100) / 100;
+    const netPayoutFormatted = formatINR(netPayout);
+
+    // Determine badge to display
+    const getStatusBadge = () => {
+        if (reqStatus === 'paid') {
+            return { colors: ['rgba(59,130,246,0.15)', 'rgba(59,130,246,0.08)'], borderColor: '#3B82F6', icon: 'check-circle-outline', iconColor: '#3B82F6', text: 'Paid' };
+        }
+        if (reqStatus === 'approved') {
+            return { colors: ['rgba(16,185,129,0.15)', 'rgba(16,185,129,0.08)'], borderColor: '#10B981', icon: 'check-circle-outline', iconColor: '#10B981', text: 'Approved' };
+        }
+        if (reqStatus === 'rejected') {
+            return { colors: ['rgba(239,68,68,0.15)', 'rgba(239,68,68,0.08)'], borderColor: '#EF4444', icon: 'close-circle-outline', iconColor: '#EF4444', text: 'Rejected' };
+        }
+        if (reqStatus === 'pending') {
+            return { colors: ['rgba(245,158,11,0.15)', 'rgba(245,158,11,0.08)'], borderColor: '#F59E0B', icon: 'clock-check-outline', iconColor: '#F59E0B', text: 'Pending Approval' };
+        }
+        if (isPaid) {
+            return { colors: ['rgba(0,200,150,0.15)', 'rgba(0,200,150,0.08)'], borderColor: colors.success, icon: 'check-circle-outline', iconColor: colors.success, text: 'Paid' };
+        }
+        return { colors: ['rgba(129,111,245,0.15)', 'rgba(129,111,245,0.08)'], borderColor: colors.primary, icon: 'clock-outline', iconColor: colors.primary, text: 'Pending' };
+    };
+
+    const badge = getStatusBadge();
+
     return (
         <View style={[
             styles.payoutItem,
@@ -115,23 +155,13 @@ const PayoutItem = React.memo(({ item, onRaiseInvoice }) => {
                     <AppText variant="h3" style={{ color: colors.textBrand, fontWeight: '700' }}>{item.name}</AppText>
                     <AppText variant="bodySm" color="secondary" style={{ marginTop: 1 }}>{item.loanType}</AppText>
                 </View>
-                {isPaid ? (
-                    <LinearGradient
-                        colors={['rgba(0,200,150,0.15)', 'rgba(0,200,150,0.08)']}
-                        style={[styles.statusBadge, { borderRadius: radius.full, borderColor: colors.success }]}
-                    >
-                        <MaterialCommunityIcons name="check-circle-outline" size={13} color={colors.success} />
-                        <AppText variant="caption" style={[styles.statusText, { color: colors.success }]}>Paid</AppText>
-                    </LinearGradient>
-                ) : (
-                    <LinearGradient
-                        colors={['rgba(129,111,245,0.15)', 'rgba(129,111,245,0.08)']}
-                        style={[styles.statusBadge, { borderRadius: radius.full, borderColor: colors.primary }]}
-                    >
-                        <MaterialCommunityIcons name="clock-outline" size={13} color={colors.primary} />
-                        <AppText variant="caption" style={[styles.statusText, { color: colors.primary }]}>Pending</AppText>
-                    </LinearGradient>
-                )}
+                <LinearGradient
+                    colors={badge.colors}
+                    style={[styles.statusBadge, { borderRadius: radius.full, borderColor: badge.borderColor }]}
+                >
+                    <MaterialCommunityIcons name={badge.icon} size={13} color={badge.iconColor} />
+                    <AppText variant="caption" style={[styles.statusText, { color: badge.iconColor }]}>{badge.text}</AppText>
+                </LinearGradient>
             </View>
 
             {/* Loan Amount & Disbursed Amount */}
@@ -153,15 +183,10 @@ const PayoutItem = React.memo(({ item, onRaiseInvoice }) => {
             {/* Payout Amount & Bank */}
             <View style={[styles.itemAmountRow, { borderTopColor: colors.divider }]}>
                 <View>
-                    <AppText variant="caption" color="secondary">Payout Amount</AppText>
+                    <AppText variant="caption" color="secondary">Net Payout Amount</AppText>
                     <AppText variant="bodySm" style={[styles.itemDetailText, { color: '#10B981', fontWeight: '700' }]}>
-                        {item.payoutAmountFormatted}
+                        {netPayoutFormatted}
                     </AppText>
-                    {item.payoutPercent > 0 && (
-                        <AppText variant="caption" color="secondary" style={{ marginTop: 1 }}>
-                            ({item.payoutPercent}% payout)
-                        </AppText>
-                    )}
                 </View>
                 {item.bankName ? (
                     <View style={styles.alignEnd}>
@@ -172,6 +197,19 @@ const PayoutItem = React.memo(({ item, onRaiseInvoice }) => {
                     </View>
                 ) : null}
             </View>
+
+            {/* Expected Payout Date - show when admin has set it */}
+            {invoiceRequest?.expected_payout_date && (
+                <View style={[styles.itemAmountRow, { borderTopColor: colors.divider }]}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Feather name="calendar" size={12} color="#10B981" />
+                        <AppText variant="caption" style={{ color: '#10B981', fontWeight: '700', marginLeft: 4 }}>Expected Payout:</AppText>
+                    </View>
+                    <AppText variant="bodySm" style={{ color: '#10B981', fontWeight: '700' }}>
+                        {new Date(invoiceRequest.expected_payout_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </AppText>
+                </View>
+            )}
 
             {/* Date & Track Number */}
             <View style={[styles.itemDateRow, { marginTop: spacing.xs }]}>
@@ -186,7 +224,52 @@ const PayoutItem = React.memo(({ item, onRaiseInvoice }) => {
                 ) : null}
             </View>
 
-            {!isPaid && onRaiseInvoice && (
+            {/* Action Button */}
+            {hasInvoice ? (
+                reqStatus === 'paid' ? (
+                    /* Invoice paid — show Download Invoice button */
+                    <View style={{ marginTop: spacing.md }}>
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={() => onDownload && onDownload()}
+                            style={[
+                                styles.raiseInvoiceButton,
+                                {
+                                    borderRadius: radius.md,
+                                    borderWidth: 1.5,
+                                    borderColor: '#3B82F6',
+                                    backgroundColor: 'rgba(59,130,246,0.08)',
+                                },
+                            ]}>
+                            <Feather name="download" size={14} color="#3B82F6" style={{ marginRight: 6 }} />
+                            <AppText variant="button" style={{ color: '#3B82F6', fontWeight: '700' }}>
+                                Download Invoice
+                            </AppText>
+                        </TouchableOpacity>
+                    </View>
+                ) : (
+                    /* Invoice raised but not yet paid — show status */
+                    <View style={{ marginTop: spacing.md, alignItems: 'flex-start' }}>
+                        <View style={{
+                            paddingHorizontal: 12,
+                            paddingVertical: 6,
+                            borderRadius: radius.full,
+                            backgroundColor: reqStatus === 'approved' ? 'rgba(16,185,129,0.1)' : 
+                                             reqStatus === 'rejected' ? 'rgba(239,68,68,0.1)' : 
+                                             'rgba(245,158,11,0.1)',
+                        }}>
+                            <AppText variant="caption" style={{ 
+                                color: reqStatus === 'approved' ? '#10B981' : 
+                                       reqStatus === 'rejected' ? '#EF4444' : 
+                                       '#F59E0B', 
+                                fontWeight: '700' 
+                            }}>
+                                {reqStatus === 'approved' ? 'Approved' : reqStatus === 'rejected' ? 'Rejected' : 'Pending Approval'}
+                            </AppText>
+                        </View>
+                    </View>
+                )
+            ) : !isPaid && onRaiseInvoice ? (
                 <View style={{ marginTop: spacing.md }}>
                     <TouchableOpacity
                         activeOpacity={0.8}
@@ -207,82 +290,36 @@ const PayoutItem = React.memo(({ item, onRaiseInvoice }) => {
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>
-            )}
+            ) : null}
         </View>
     );
 });
 
-const MOCK_PAYOUTS = [
-    {
-        id: 'mock-1',
-        name: 'John Doe',
-        loanType: 'Home Loan',
-        loanAmountFormatted: '₹50,00,000',
-        disbursedAmountFormatted: '₹48,50,000',
-        payoutAmountFormatted: '₹48,500',
-        payoutPercent: 1.0,
-        status: 'pending',
-        bankName: 'HDFC Bank',
-        trackNumber: 'TRK00123',
-        date: '25 Apr 2026',
-    },
-    {
-        id: 'mock-2',
-        name: 'Jane Smith',
-        loanType: 'Business Loan',
-        loanAmountFormatted: '₹25,00,000',
-        disbursedAmountFormatted: '₹25,00,000',
-        payoutAmountFormatted: '₹37,500',
-        payoutPercent: 1.5,
-        status: 'paid',
-        bankName: 'ICICI Bank',
-        trackNumber: 'TRK00456',
-        date: '20 Apr 2026',
-    },
-    {
-        id: 'mock-3',
-        name: 'Robert Wilson',
-        loanType: 'Personal Loan',
-        loanAmountFormatted: '₹5,00,000',
-        disbursedAmountFormatted: '₹5,00,000',
-        payoutAmountFormatted: '₹10,000',
-        payoutPercent: 2.0,
-        status: 'pending',
-        bankName: 'Axis Bank',
-        trackNumber: 'TRK00789',
-        date: '27 Apr 2026',
-    }
-];
-
-const MOCK_SUMMARY = {
-    totalCount: 3,
-    totalDisbursedFormatted: '₹78,50,000',
-    paidCount: 1,
-    paidAmountFormatted: '₹25,00,000',
-    pendingCount: 2,
-    pendingAmountFormatted: '₹53,50,000',
-};
-
 const PayoutScreen = ({ navigation }) => {
-    const { colors, spacing } = useTheme();
+    const { colors, spacing, radius } = useTheme();
+    const { showToast } = useToast();
+    const { profileData } = useProfile();
 
-    const [search, setSearch] = useState('');
-    const [statusTab, setStatusTab] = useState('all');
     const [payouts, setPayouts] = useState([]);
     const [summary, setSummary] = useState({
-        totalCount: 0,
-        totalDisbursed: 0,
         totalDisbursedFormatted: '₹0',
-        paidCount: 0,
-        paidAmount: 0,
         paidAmountFormatted: '₹0',
-        pendingCount: 0,
-        pendingAmount: 0,
         pendingAmountFormatted: '₹0',
+        paidCount: 0,
+        pendingCount: 0,
     });
+    const [approvalMap, setApprovalMap] = useState({});
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
+    const [downloadModal, setDownloadModal] = useState({ visible: false, fileName: '' });
+
+    const isGstRegistered = profileData?.taxDetails?.isGstRegistered === true &&
+        profileData?.taxDetails?.gst &&
+        profileData?.taxDetails?.gst !== 'Not Provided';
+
+    const [search, setSearch] = useState('');
+    const [statusTab, setStatusTab] = useState('all');
 
     const fetchPayouts = useCallback(async (isRefresh = false) => {
         try {
@@ -295,42 +332,75 @@ const PayoutScreen = ({ navigation }) => {
 
             const result = await getPayoutsApi();
 
-            if (result.success && result.data && result.data.length > 0) {
-                setPayouts(result.data);
+            if (result.success) {
+                setPayouts(result.data || []);
                 if (result.summary) {
                     setSummary(result.summary);
+                } else {
+                    setSummary({
+                        totalCount: 0,
+                        totalDisbursed: 0,
+                        totalDisbursedFormatted: '₹0',
+                        paidCount: 0,
+                        paidAmount: 0,
+                        paidAmountFormatted: '₹0',
+                        pendingCount: 0,
+                        pendingAmount: 0,
+                        pendingAmountFormatted: '₹0',
+                    });
                 }
             } else {
-                // Use mock data as fallback for reference if API is empty or fails
-                setPayouts(MOCK_PAYOUTS);
-                setSummary(MOCK_SUMMARY);
-                if (!result.success) {
-                    console.warn('API failed, using mock data for reference');
-                }
+                setError(result.message || 'Failed to fetch payouts');
             }
         } catch (err) {
-            console.error('Failed to fetch payouts, using mock data:', err);
-            setPayouts(MOCK_PAYOUTS);
-            setSummary(MOCK_SUMMARY);
+            console.log('Failed to fetch payouts:', err.message);
+            setError('An error occurred while fetching payouts. Please try again.');
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
+
+        // Fetch approval statuses from CRM admin backend
+        try {
+            const statusResult = await getInvoiceRequestStatuses();
+            if (statusResult.success && statusResult.data) {
+                const aMap = {};
+                for (const req of statusResult.data) {
+                    // Use track_id for reliable matching
+                    if (req.track_id) {
+                        aMap[req.track_id] = req;
+                    }
+                }
+                setApprovalMap(aMap);
+            }
+        } catch { /* silent */ }
     }, []);
 
-    useEffect(() => {
-        fetchPayouts();
-    }, [fetchPayouts]);
+    useFocusEffect(
+        useCallback(() => {
+            fetchPayouts();
+        }, [fetchPayouts])
+    );
 
     const onRefresh = useCallback(() => {
         fetchPayouts(true);
     }, [fetchPayouts]);
 
-    const statusTabs = useMemo(() => [
-        { id: 'all', label: 'All' },
-        { id: 'paid', label: `Paid (${summary.paidCount})` },
-        { id: 'pending', label: `Pending (${summary.pendingCount})` },
-    ], [summary.paidCount, summary.pendingCount]);
+    const statusTabs = useMemo(() => {
+        let paidC = 0;
+        let pendC = 0;
+        payouts.forEach(item => {
+            const req = approvalMap[parseInt(item.id, 10)];
+            const isPaid = item.status === 'paid' || (req && req.status === 'paid');
+            if (isPaid) paidC++;
+            else pendC++;
+        });
+        return [
+            { id: 'all', label: 'All' },
+            { id: 'paid', label: `Paid (${paidC})` },
+            { id: 'pending', label: `Pending (${pendC})` },
+        ];
+    }, [payouts, approvalMap]);
 
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
@@ -340,10 +410,18 @@ const PayoutScreen = ({ navigation }) => {
                 item.loanType.toLowerCase().includes(q) ||
                 (item.bankName && item.bankName.toLowerCase().includes(q)) ||
                 (item.trackNumber && item.trackNumber.toLowerCase().includes(q));
-            const matchStatus = statusTab === 'all' || item.status === statusTab;
+
+            const req = approvalMap[parseInt(item.id, 10)];
+            const isPaid = item.status === 'paid' || (req && req.status === 'paid');
+
+            let matchStatus = false;
+            if (statusTab === 'all') matchStatus = true;
+            else if (statusTab === 'paid') matchStatus = isPaid;
+            else if (statusTab === 'pending') matchStatus = !isPaid;
+
             return matchSearch && matchStatus;
         });
-    }, [search, statusTab, payouts]);
+    }, [search, statusTab, payouts, approvalMap]);
 
     const handleStatusTab = useCallback((id) => setStatusTab(id), []);
 
@@ -351,16 +429,92 @@ const PayoutScreen = ({ navigation }) => {
         navigation.navigate('RaiseInvoice', { payoutData: item });
     }, [navigation]);
 
-    const renderItem = useCallback(({ item }) => (
-        <PayoutItem item={item} onRaiseInvoice={handleRaiseInvoice} />
-    ), [handleRaiseInvoice]);
+    const handleDownload = useCallback(async (invoiceReq) => {
+        if (!invoiceReq || !invoiceReq.id || !invoiceReq.track_id) return;
+        
+        try {
+            showToast('info', 'Downloading', 'Preparing invoice PDF...');
+            // Fetch final HTML from backend
+            const htmlContent = await getInvoiceHtmlByTrackId(invoiceReq.track_id);
+            
+            if (!htmlContent || htmlContent.length < 50) {
+                throw new Error('Invoice HTML content is empty or invalid. Ensure the invoice has been generated on the admin portal.');
+            }
+
+            // Generate PDF and save to device
+            const pdf = await generatePDF({ 
+                html: htmlContent, 
+                fileName: `Invoice_${invoiceReq.track_id}`,
+                directory: Platform.OS === 'android' ? 'Downloads' : 'Documents',
+            });
+            
+            const filePath = pdf?.filePath || pdf?.uri;
+            if (!filePath) {
+                throw new Error('PDF generation failed — no file path returned.');
+            }
+
+            // Extract just the filename for display
+            const fileName = filePath.split('/').pop();
+            setDownloadModal({ visible: true, fileName });
+        } catch (err) {
+            console.error('PDF error:', err);
+            showToast('error', 'Download Failed', err.message || 'Failed to download invoice');
+        }
+    }, [showToast]);
+
+    const renderItem = useCallback(({ item }) => {
+        const req = approvalMap[parseInt(item.id, 10)];
+        return (
+            <PayoutItem
+                item={item}
+                onRaiseInvoice={handleRaiseInvoice}
+                invoiceRequest={req}
+                onDownload={() => handleDownload(req)}
+                isGstRegistered={isGstRegistered}
+            />
+        );
+    }, [handleRaiseInvoice, handleDownload, approvalMap, isGstRegistered]);
 
     const keyExtractor = useCallback((item) => item.id, []);
+
+    const dynamicSummary = useMemo(() => {
+        let paidA = 0;
+        let pendA = 0;
+        let paidC = 0;
+        let pendC = 0;
+
+        payouts.forEach(item => {
+            const req = approvalMap[parseInt(item.id, 10)];
+            const isPaid = item.status === 'paid' || (req && req.status === 'paid');
+            
+            const payoutAmt = parseFloat(item.payoutAmount) || 0;
+            const tds = Math.round(payoutAmt * 0.02 * 100) / 100;
+            const sgst = isGstRegistered ? 0 : Math.round(payoutAmt * 0.09 * 100) / 100;
+            const cgst = isGstRegistered ? 0 : Math.round(payoutAmt * 0.09 * 100) / 100;
+            const netAmt = Math.round((payoutAmt - tds - sgst - cgst) * 100) / 100;
+
+            if (isPaid) {
+                paidC++;
+                paidA += netAmt;
+            } else {
+                pendC++;
+                pendA += netAmt;
+            }
+        });
+
+        return {
+            ...summary,
+            paidCount: paidC,
+            pendingCount: pendC,
+            paidAmountFormatted: formatINR(paidA),
+            pendingAmountFormatted: formatINR(pendA)
+        };
+    }, [payouts, approvalMap, summary, isGstRegistered]);
 
     const ListHeader = useMemo(() => (
         <View>
             <View style={styles.summaryWrapper}>
-                <PayoutSummaryCard summary={summary} />
+                <PayoutSummaryCard summary={dynamicSummary} />
             </View>
 
             {/* Status tabs */}
@@ -383,7 +537,7 @@ const PayoutScreen = ({ navigation }) => {
             </View>
         </View>
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    ), [summary, statusTab, statusTabs, filtered.length, colors]);
+    ), [dynamicSummary, statusTab, statusTabs, filtered.length, colors]);
 
     const ListEmpty = useMemo(() => (
         <View style={styles.emptyState}>
@@ -420,7 +574,7 @@ const PayoutScreen = ({ navigation }) => {
     ), [loading, error, colors, spacing, fetchPayouts]);
 
     return (
-        <ScreenWrapper withPadding={false} edges={['bottom', 'left', 'right']} style={styles.root}>
+        <ScreenWrapper withPadding={false} edges={['left', 'right']} style={styles.root}>
             <GradientScreenHeader
                 title="Payouts"
                 subtitle="Track your earnings & settlements"
@@ -439,7 +593,7 @@ const PayoutScreen = ({ navigation }) => {
                 ListHeaderComponent={ListHeader}
                 ListEmptyComponent={ListEmpty}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 100 }}
+                contentContainerStyle={{ paddingBottom: 16 }}
                 keyboardShouldPersistTaps="handled"
                 refreshControl={
                     <RefreshControl
@@ -449,6 +603,15 @@ const PayoutScreen = ({ navigation }) => {
                         tintColor={colors.primary || '#816FF5'}
                     />
                 }
+            />
+
+            <AppStatusModal
+                visible={downloadModal.visible}
+                type="success"
+                title="Invoice Downloaded"
+                message={`Saved as:\n${downloadModal.fileName}\n\nYou can find it in your Downloads / Documents folder.`}
+                buttonText="OK"
+                onClose={() => setDownloadModal({ visible: false, fileName: '' })}
             />
         </ScreenWrapper>
     );
@@ -525,3 +688,5 @@ const styles = StyleSheet.create({
 });
 
 export default PayoutScreen;
+
+

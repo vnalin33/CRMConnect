@@ -5,7 +5,7 @@ import { useTheme } from '../../theme';
 
 const ScreenWrapper = ({
     children, scrollable = false, withPadding = true,
-    edges = ['top', 'bottom', 'left', 'right'],
+    edges = ['top', 'left', 'right'],
     style, contentStyle,
 }) => {
     const { colors, spacing, isDark } = useTheme();

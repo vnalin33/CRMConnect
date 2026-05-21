@@ -1,8 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Linking } from 'react-native';
+import { Linking, AppState, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setOnAuthFailure } from '../api/apiClient';
+import { useToast } from '../context/ToastContext';
 
 import LoginScreen from '../auth/LoginScreen';
 import SignupScreen from '../auth/SignupScreen';
@@ -24,6 +27,7 @@ import LeadDetailScreen from '../screens/LeadDetailScreen';
 import ConcernDetailsScreen from '../screens/ConcernDetailsScreen';
 import SupportScreen from '../screens/SupportScreen';
 import WalletScreen from '../screens/WalletScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
 
 import CustomTabBar from './CustomTabBar';
 
@@ -32,10 +36,6 @@ const Tab = createBottomTabNavigator();
 
 const CustomTabBarWrapper = (props) => <CustomTabBar {...props} />;
 
-/**
- * Parses a deep link URL and extracts the token parameter.
- * Supports: crmconnect://reset-password?token=XXXX
- */
 const extractTokenFromUrl = (url) => {
     if (!url) return null;
     try {
@@ -74,6 +74,56 @@ function MainTabs() {
 
 export const AppNavigator = () => {
     const navigationRef = useRef(null);
+    const { showToast } = useToast();
+
+    // ── Global 401 handler — auto-logout on expired JWT ──────────────
+    const forceLogout = useCallback(async () => {
+        try {
+            await AsyncStorage.multiRemove(['auth_token', 'user_data', 'auth_login_time']);
+        } catch {}
+        if (navigationRef.current?.isReady()) {
+            navigationRef.current.resetRoot({
+                index: 0,
+                routes: [{ name: 'Login' }],
+            });
+        }
+    }, []);
+
+    useEffect(() => {
+        setOnAuthFailure(forceLogout);
+    }, [forceLogout]);
+
+    // ── JWT 30-min Session Expiry — works even when app is in background ──
+    const SESSION_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+
+    const checkSessionExpiry = useCallback(async () => {
+        try {
+            const loginTime = await AsyncStorage.getItem('auth_login_time');
+            if (!loginTime) return; // Not logged in
+
+            const elapsed = Date.now() - parseInt(loginTime, 10);
+            if (elapsed >= SESSION_DURATION_MS) {
+                showToast('warning', 'Session Expired', 'Your session has expired after 30 minutes. Please sign in again.');
+                await forceLogout();
+            }
+        } catch {}
+    }, [forceLogout]);
+
+    // Foreground interval — checks every 60s while app is active
+    useEffect(() => {
+        const intervalId = setInterval(checkSessionExpiry, 60_000);
+        return () => clearInterval(intervalId);
+    }, [checkSessionExpiry]);
+
+    // Background-to-foreground — instantly checks when app wakes up
+    useEffect(() => {
+        const subscription = AppState.addEventListener('change', (nextState) => {
+            if (nextState === 'active') {
+                checkSessionExpiry();
+            }
+        });
+        return () => subscription.remove();
+    }, [checkSessionExpiry]);
 
     // Handle deep link that opens the app from COLD START
     useEffect(() => {
@@ -122,6 +172,7 @@ export const AppNavigator = () => {
                 <Stack.Screen name="LeadList" component={LeadListScreen} />
                 <Stack.Screen name="LeadDetail" component={LeadDetailScreen} />
                 <Stack.Screen name="MainTabs" component={MainTabs} />
+                <Stack.Screen name="Notifications" component={NotificationsScreen} />
                 <Stack.Screen name="ConcernDetails" component={ConcernDetailsScreen} />
             </Stack.Navigator>
         </NavigationContainer>

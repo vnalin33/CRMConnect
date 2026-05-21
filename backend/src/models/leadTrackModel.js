@@ -4,34 +4,31 @@ const db = require('../config/db');
  * Status code → { label, progress }
  */
 const STATUS_MAP = {
-  // ── Contact-phase statuses ──
-  1:  { label: 'Unassigned',                 progress: 0 },    // New lead, stored in leadpersonaldetails only
-  2:  { label: 'Assigned',                   progress: 20 },   // Assigned by CRM web admin → leadtrackdetails
+ 
+  1:  { label: 'Unassigned',                 progress: 0 },   
+  2:  { label: 'Assigned',                   progress: 20 },   
   3:  { label: 'Following',                  progress: 30 },
   4:  { label: 'Approved',                   progress: 50 },
-  5:  { label: 'Reject',                     progress: 0 },    // All rejections = 0%
+  5:  { label: 'Reject',                     progress: 0 },    
   6:  { label: 'CIBIL Check',                progress: 30 },
-  7:  { label: 'CIBIL Rejected',             progress: 0 },    // Rejection = 0%
-  22: { label: 'No Response',                progress: 0 },    // 0% per corrected spec
+  7:  { label: 'CIBIL Rejected',             progress: 0 },    
+  22: { label: 'No Response',                progress: 0 },    
   24: { label: 'Not Exist/Out of Service',   progress: 10 },
 
-  // ── Lead-phase statuses (post-approved) ──
+
   10: { label: 'New Lead',                   progress: 0 },
-  11: { label: 'Assigned',                   progress: 20 },   // Web-only (post-approved), skip in mobile stepper
+  11: { label: 'Assigned',                   progress: 50 },   
   12: { label: 'Doc Collection',             progress: 60 },
   13: { label: 'File Login',                 progress: 70 },
-  14: { label: 'File Login Rejected',        progress: 0 },    // Rejection = 0%
+  14: { label: 'File Login Rejected',        progress: 0 },    
   15: { label: 'Sanction',                   progress: 80 },
-  16: { label: 'Sanction Rejected',          progress: 0 },    // Rejection = 0%
-  17: { label: 'Disbursement',               progress: 100 },  // Final stage
+  16: { label: 'Sanction Rejected',          progress: 0 },    
+  17: { label: 'Disbursement',               progress: 100 },  
   18: { label: 'Completed',                  progress: 100 },
-  23: { label: 'Doc Collection Rejected',    progress: 0 },    // Rejection = 0%
+  23: { label: 'Doc Collection Rejected',    progress: 0 },    
 };
 
-/**
- * Get all leads for a connector with their current tracking status.
- * Joins leadpersonaldetails ← leadtrackdetails (LEFT JOIN so new/unassigned leads also appear).
- */
+
 const getLeadsByConnector = async (connectorId) => {
   const query = `
     SELECT 

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "756251113053",
+    "project_id": "crmconnect-40187",
+    "storage_bucket": "crmconnect-40187.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:756251113053:android:d9b325cd48afd03ca7bfb4",
+        "android_client_info": {
+          "package_name": "com.crmconnect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDA2AESWFCfeR3FvvdP3cOnUUwFnO_TKtQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

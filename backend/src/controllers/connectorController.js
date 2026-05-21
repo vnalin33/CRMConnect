@@ -11,9 +11,10 @@ const getProfile = async (req, res, next) => {
 
 const updatePersonalInfo = async (req, res, next) => {
   try {
-    const { name, emailid, mobilenumber, location } = req.body;
+    const { name, emailid, mobilenumber, location, address, profession } = req.body;
+    console.log('[DEBUG] Update Personal Info Request Body:', req.body);
     const updated = await connectorService.updatePersonalInfo(req.user.id, {
-      name, emailid, mobilenumber, location,
+      name, emailid, mobilenumber, location, address, profession
     });
     res.status(200).json({ success: true, data: updated });
   } catch (error) {
@@ -23,9 +24,21 @@ const updatePersonalInfo = async (req, res, next) => {
 
 const updateBankDetails = async (req, res, next) => {
   try {
-    const { ifsc, accountnumber, branch } = req.body;
+    const { ifsc, accountnumber, branch, bank_name, account_holder_name } = req.body;
     const updated = await connectorService.updateBankDetails(req.user.id, {
-      ifsc, accountnumber, branch,
+      ifsc, accountnumber, branch, bank_name, account_holder_name
+    });
+    res.status(200).json({ success: true, data: updated });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateTaxDetails = async (req, res, next) => {
+  try {
+    const { pan_number, is_gst_registered, gst_number } = req.body;
+    const updated = await connectorService.updateTaxDetails(req.user.id, {
+      pan_number, is_gst_registered, gst_number,
     });
     res.status(200).json({ success: true, data: updated });
   } catch (error) {
@@ -70,6 +83,7 @@ module.exports = {
   getProfile,
   updatePersonalInfo,
   updateBankDetails,
+  updateTaxDetails,
   changePassword,
   uploadProfilePicture,
 };

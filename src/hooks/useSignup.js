@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ENV } from '../config/env';
+import api from '../api/apiClient';
 
 /**
  * useSignup – handles registration API call.
@@ -10,18 +11,7 @@ import { ENV } from '../config/env';
  *   signup({ name, email, phone, password, role, isActive });
  */
 const realSignupAPI = async (payload) => {
-    const response = await fetch(`${ENV.API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-        throw new Error(result?.error?.message || result?.message || 'Registration failed. Please try again.');
-    }
-
+    const result = await api.public.post('/auth/register', payload);
     return result.data;
 };
 

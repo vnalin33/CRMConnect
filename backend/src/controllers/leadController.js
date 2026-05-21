@@ -1,5 +1,6 @@
 const leadService = require('../services/leadService');
 const leadTrackService = require('../services/leadTrackService');
+const { createNotification } = require('../models/notificationModel');
 
 const createLead = async (req, res, next) => {
   try {
@@ -21,6 +22,15 @@ const createLead = async (req, res, next) => {
       data: newLead,
       message: 'Lead created successfully',
     });
+
+    // Fire-and-forget notification
+    createNotification(
+      connectorId,
+      'New Lead Created',
+      `Lead "${leadData.name || 'New Contact'}" has been submitted successfully.`,
+      'LEAD',
+      { leadId: newLead.id }
+    ).catch(() => {});
   } catch (error) {
     next(error);
   }
@@ -94,6 +104,15 @@ const assignLead = async (req, res, next) => {
       data: result,
       message: 'Lead assigned successfully',
     });
+
+    // Fire-and-forget notification
+    createNotification(
+      req.user.id,
+      'Lead Assigned',
+      `Lead #${leadId} has been assigned to you.`,
+      'LEAD',
+      { leadId }
+    ).catch(() => {});
   } catch (error) {
     next(error);
   }
@@ -127,6 +146,16 @@ const updateLeadStatus = async (req, res, next) => {
       data: result,
       message: 'Lead status updated successfully',
     });
+
+    // Fire-and-forget notification
+    const statusLabel = leadTrackService.STATUS_MAP?.[parseInt(status, 10)] || `Status ${status}`;
+    createNotification(
+      req.user.id,
+      'Lead Status Updated',
+      `Lead #${leadId} status changed to "${statusLabel}".`,
+      'LEAD',
+      { leadId, status }
+    ).catch(() => {});
   } catch (error) {
     next(error);
   }

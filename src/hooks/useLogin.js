@@ -7,27 +7,12 @@
 import { useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ENV } from '../config/env';
+import api from '../api/apiClient';
+import notificationService from '../services/NotificationService';
 
 const realLoginAPI = async ({ identifier, password }) => {
-  try {
-    const response = await fetch(`${ENV.API_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ identifier, password }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error?.message || 'Login failed');
-    }
-
-    return result.data;
-  } catch (error) {
-    throw error;
-  }
+  const result = await api.public.post('/auth/login', { identifier, password });
+  return result.data;
 };
 
 const mockLoginAPI = async ({ identifier, password }) => {
@@ -57,15 +42,20 @@ const useLogin = ({ onSuccess, onError } = {}) => {
     try {
       const result = await (ENV.USE_MOCK ? mockLoginAPI(credentials) : realLoginAPI(credentials));
 
-      // Store JWT token and user data in AsyncStorage
+      // Store JWT token, user data, and login timestamp in AsyncStorage
       if (result?.token) {
         await AsyncStorage.setItem('auth_token', result.token);
+        await AsyncStorage.setItem('auth_login_time', Date.now().toString());
       }
       if (result?.user) {
         await AsyncStorage.setItem('user_data', JSON.stringify(result.user));
       }
 
       setData(result);
+
+      // Register FCM token with backend after successful login
+      notificationService.registerAfterLogin().catch(() => {});
+
       onSuccess?.(result);
       return result;
     } catch (err) {
@@ -85,7 +75,10 @@ const useLogin = ({ onSuccess, onError } = {}) => {
   }, []);
 
   const logout = useCallback(async () => {
-    await AsyncStorage.multiRemove(['auth_token', 'user_data']);
+    // Unregister FCM token before clearing auth
+    await notificationService.unregisterOnLogout().catch(() => {});
+    await notificationService.reset();
+    await AsyncStorage.multiRemove(['auth_token', 'user_data', 'auth_login_time']);
     setData(null);
   }, []);
 

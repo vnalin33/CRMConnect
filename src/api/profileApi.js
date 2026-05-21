@@ -1,5 +1,7 @@
-import { ENV } from '../config/env';
+import api from './apiClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// ─── Legacy helpers (kept for backward-compatibility if any file still imports them) ──
 
 const getToken = async () => {
   return await AsyncStorage.getItem('auth_token');
@@ -20,17 +22,13 @@ export const authHeadersFormData = async () => {
   };
 };
 
+// ─── API Functions ──────────────────────────────────────────────────────────
+
 /**
  * Fetch the logged-in user's profile from the connector table
  */
 export const fetchProfile = async () => {
-  const headers = await authHeaders();
-  const response = await fetch(`${ENV.API_URL}/connector/profile`, { headers });
-  const result = await response.json();
-
-  if (!response.ok) {
-    throw new Error(result.error?.message || 'Failed to fetch profile');
-  }
+  const result = await api.get('/connector/profile');
   return result.data;
 };
 
@@ -38,17 +36,7 @@ export const fetchProfile = async () => {
  * Update personal info (name, emailid, mobilenumber, location)
  */
 export const updatePersonalInfoApi = async (data) => {
-  const headers = await authHeaders();
-  const response = await fetch(`${ENV.API_URL}/connector/profile/info`, {
-    method: 'PUT',
-    headers,
-    body: JSON.stringify(data),
-  });
-  const result = await response.json();
-
-  if (!response.ok) {
-    throw new Error(result.error?.message || 'Failed to update personal info');
-  }
+  const result = await api.put('/connector/profile/info', data);
   return result.data;
 };
 
@@ -56,17 +44,15 @@ export const updatePersonalInfoApi = async (data) => {
  * Update bank details (ifsc, accountnumber, branch)
  */
 export const updateBankDetailsApi = async (data) => {
-  const headers = await authHeaders();
-  const response = await fetch(`${ENV.API_URL}/connector/profile/bank`, {
-    method: 'PUT',
-    headers,
-    body: JSON.stringify(data),
-  });
-  const result = await response.json();
+  const result = await api.put('/connector/profile/bank', data);
+  return result.data;
+};
 
-  if (!response.ok) {
-    throw new Error(result.error?.message || 'Failed to update bank details');
-  }
+/**
+ * Update tax details (pan_number, is_gst_registered, gst_number)
+ */
+export const updateTaxDetailsApi = async (data) => {
+  const result = await api.put('/connector/profile/tax', data);
   return result.data;
 };
 
@@ -74,17 +60,10 @@ export const updateBankDetailsApi = async (data) => {
  * Change password
  */
 export const changePasswordApi = async ({ oldPassword, newPassword }) => {
-  const headers = await authHeaders();
-  const response = await fetch(`${ENV.API_URL}/connector/profile/password`, {
-    method: 'PUT',
-    headers,
-    body: JSON.stringify({ oldPassword, newPassword }),
+  const result = await api.put('/connector/profile/password', {
+    oldPassword,
+    newPassword,
   });
-  const result = await response.json();
-
-  if (!response.ok) {
-    throw new Error(result.error?.message || 'Failed to change password');
-  }
   return result.data;
 };
 
@@ -92,12 +71,11 @@ export const changePasswordApi = async ({ oldPassword, newPassword }) => {
  * Upload profile picture
  */
 export const uploadProfilePictureApi = async (imageUri) => {
-  const headers = await authHeadersFormData();
   const formData = new FormData();
-  
+
   const filename = imageUri.split('/').pop();
   const match = /\.(\w+)$/.exec(filename);
-  const type = match ? `image/${match[1]}` : `image`;
+  const type = match ? `image/${match[1]}` : 'image';
 
   formData.append('profilePicture', {
     uri: imageUri,
@@ -105,16 +83,6 @@ export const uploadProfilePictureApi = async (imageUri) => {
     type,
   });
 
-  const response = await fetch(`${ENV.API_URL}/connector/profile-picture`, {
-    method: 'POST',
-    headers,
-    body: formData,
-  });
-  
-  const result = await response.json();
-
-  if (!response.ok) {
-    throw new Error(result.error?.message || 'Failed to upload profile picture');
-  }
+  const result = await api.upload('/connector/profile-picture', formData);
   return result.data;
 };
