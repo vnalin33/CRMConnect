@@ -58,6 +58,10 @@ const login = async (identifier, password) => {
       ifsc: user.ifsc,
       accountnumber: user.accountnumber,
       branch: user.branch,
+      address: user.address,
+      profession: user.profession,
+      bank_name: user.bank_name,
+      account_holder_name: user.account_holder_name,
       profile_picture: user.profile_picture,
     },
   };
@@ -66,7 +70,7 @@ const login = async (identifier, password) => {
 /**
  * Register – handles new account creation.
  */
-const register = async ({ name, email, phone, password }) => {
+const register = async ({ name, email, phone, password, dob, role }) => {
   // Check if email already exists
   const existingEmail = await connectorModel.findByEmail(email);
   if (existingEmail) {
@@ -83,6 +87,9 @@ const register = async ({ name, email, phone, password }) => {
     throw error;
   }
 
+  // Profession comes directly as the display label from the frontend
+  const profession = role ? role.trim() : null;
+
   // Hash password
   const saltRounds = 10;
   const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -93,6 +100,8 @@ const register = async ({ name, email, phone, password }) => {
     emailid: email,
     mobilenumber: phone,
     password: hashedPassword,
+    dob,
+    profession,
     isactive: true,
   });
 
@@ -110,6 +119,10 @@ const register = async ({ name, email, phone, password }) => {
       name: newUser.name,
       email: newUser.emailid,
       mobile: newUser.mobilenumber,
+      dob: newUser.dob,
+      address: newUser.address,
+      profession: newUser.profession,
+      profile_picture: newUser.profile_picture,
     },
   };
 };
@@ -171,6 +184,8 @@ const resetPassword = async (token, newPassword) => {
       ifsc: user.ifsc,
       accountnumber: user.accountnumber,
       branch: user.branch,
+      bank_name: user.bank_name,
+      account_holder_name: user.account_holder_name,
       profile_picture: user.profile_picture,
     }
   };

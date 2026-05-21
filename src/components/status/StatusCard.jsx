@@ -6,6 +6,7 @@ import { useTheme } from '../../theme';
 import AppText from '../common/AppText';
 import AppCard from '../common/AppCard';
 import { BRAND_GRADIENT } from '../../theme/colors';
+import { STATUS_MAP } from '../../hooks/useLeadList';
 
 const StatusCard = ({ lead, onPress, onDelete }) => {
     const { colors, spacing, radius } = useTheme();
@@ -30,6 +31,13 @@ const StatusCard = ({ lead, onPress, onDelete }) => {
     };
 
     const config = getStatusConfig(lead.status);
+
+    // Get color from STATUS_MAP based on statusCode for precise gradient coloring
+    const statusMapEntry = STATUS_MAP[lead.statusCode] || {};
+    const statusColor = statusMapEntry.color || config.text || '#2DBFE6';
+    const isRejection = lead.status.toLowerCase().includes('reject') || lead.status.toLowerCase().includes('no response');
+    // Create a slightly darker shade for gradient end
+    const statusColorEnd = isRejection ? '#DC2626' : statusColor + 'CC';
 
     return (
         <TouchableOpacity 
@@ -75,12 +83,12 @@ const StatusCard = ({ lead, onPress, onDelete }) => {
                 <View style={styles.progressSection}>
                     <View style={styles.progressLabelRow}>
                         <AppText variant="label" color="secondary">Progress</AppText>
-                        <AppText variant="label" color="cyan" style={{ fontWeight: '700' }}>{lead.progress}%</AppText>
+                        <AppText variant="label" style={{ fontWeight: '700', color: statusColor }}>{lead.progress}%</AppText>
                     </View>
                     <View style={[styles.progressBarBg, { backgroundColor: colors.divider, borderRadius: radius.xs }]}>
                         {lead.progress > 0 && (
                             <LinearGradient
-                                colors={lead.status.toLowerCase().includes('rejected') ? [colors.error, colors.errorText] : ['#2DBFE6', '#22D3EE']}
+                                colors={isRejection ? ['#EF4444', '#DC2626'] : [statusColor, statusColorEnd]}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
                                 style={[

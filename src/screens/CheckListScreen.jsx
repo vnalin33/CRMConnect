@@ -44,7 +44,7 @@ const CheckListScreen = ({ navigation }) => {
     return (
         <ScreenWrapper
             withPadding={false}
-            edges={['bottom', 'left', 'right']}
+            edges={['left', 'right']}
             style={{ backgroundColor: colors.background }}
         >
             {/* Fixed top bar */}
@@ -65,7 +65,7 @@ const CheckListScreen = ({ navigation }) => {
                 renderItem={renderItem}
                 contentContainerStyle={[
                     styles.listContent,
-                    { paddingBottom: insets.bottom + 20 },
+                    { paddingBottom: 16 },
                 ]}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
@@ -95,3 +95,5 @@ const styles = StyleSheet.create({
 });
 
 export default CheckListScreen;
+
+

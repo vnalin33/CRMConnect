@@ -145,16 +145,24 @@ export const useLeadList = () => {
     }
   });
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
+  }, [refetch]);
+
   return {
     leads: filteredLeads,
     allLeads: leads,
     loading,
+    isRefreshing,
     error,
     activeTab,
     setActiveTab,
     searchQuery,
     setSearchQuery,
-    refresh: refetch,
+    refresh: handleRefresh,
     FILTER_TABS,
     tabCounts,
     STATUS_MAP,

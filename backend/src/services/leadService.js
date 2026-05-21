@@ -15,10 +15,53 @@ const createLead = async (connectorId, leadData) => {
     throw error;
   }
 
+  // Extract occupation data before creating the lead
+  const occupation = leadData.occupation || null;
+  const { occupation: _, ...leadFields } = leadData;
+
   const newLead = await leadModel.create({
-    ...leadData,
+    ...leadFields,
     connectorid: connectorId,
   });
+
+  // Insert occupation details if provided
+  if (occupation && occupation.occupationtype) {
+    try {
+      const db = require('../config/database');
+      await db.query(
+        `INSERT INTO leadoccupationdetails (
+          leadpersonal, occupationtype, incomeamount, otherincomeamount, organizationid,
+          compname, compcat, designation, totalexperience, currentexperience,
+          salarybank, salarymode,
+          businessname, businesstype, annualturnover, businessvintage,
+          companyaddress, officetelephonenumber, companygstinnumber
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
+        [
+          newLead.id,
+          occupation.occupationtype,
+          occupation.incomeamount || 0,
+          occupation.otherincomeamount || 0,
+          connectorId,
+          occupation.compname,
+          occupation.compcat,
+          occupation.designation,
+          occupation.totalexperience,
+          occupation.currentexperience,
+          occupation.salarybank,
+          occupation.salarymode,
+          occupation.businessname,
+          occupation.businesstype,
+          occupation.annualturnover,
+          occupation.businessvintage,
+          occupation.companyaddress,
+          occupation.officetelephonenumber,
+          occupation.companygstinnumber,
+        ]
+      );
+    } catch (err) {
+      console.error('Failed to save occupation details:', err.message);
+    }
+  }
 
   return newLead;
 };

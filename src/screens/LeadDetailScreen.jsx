@@ -165,7 +165,7 @@ const LeadDetailScreen = ({ route, navigation }) => {
 
     if (loading) {
         return (
-            <ScreenWrapper withPadding={false} edges={['bottom', 'left', 'right']}>
+            <ScreenWrapper withPadding={false} edges={['left', 'right']}>
                 <GradientScreenHeader title="Lead Detail" showBack navigation={navigation} />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={colors.primary} />
@@ -176,7 +176,7 @@ const LeadDetailScreen = ({ route, navigation }) => {
 
     if (!lead) {
         return (
-            <ScreenWrapper withPadding={false} edges={['bottom', 'left', 'right']}>
+            <ScreenWrapper withPadding={false} edges={['left', 'right']}>
                 <GradientScreenHeader title="Lead Detail" showBack navigation={navigation} />
                 <View style={styles.loadingContainer}>
                     <Feather name="alert-circle" size={48} color={colors.error} />
@@ -189,7 +189,7 @@ const LeadDetailScreen = ({ route, navigation }) => {
     }
 
     return (
-        <ScreenWrapper withPadding={false} edges={['bottom', 'left', 'right']}>
+        <ScreenWrapper withPadding={false} edges={['left', 'right']}>
             <GradientScreenHeader
                 title={`${lead.firstname || ''} ${lead.lastname || ''}`}
                 subtitle={`${mapped.label} · ${mapped.progress}%`}
@@ -197,7 +197,7 @@ const LeadDetailScreen = ({ route, navigation }) => {
                 navigation={navigation}
             />
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 16 }}>
 
                 {/* ── Status Summary Card ── */}
                 <View style={{ marginHorizontal: 16, marginTop: 16 }}>
@@ -233,6 +233,15 @@ const LeadDetailScreen = ({ route, navigation }) => {
                     <ProgressStepper currentStatus={statusCode} />
                 </View>
 
+                {/* ── Processing Details ── */}
+                <View style={[styles.section, { backgroundColor: colors.cardBg, borderColor: colors.border, borderRadius: radius.lg }]}>
+                    <AppText variant="h3" style={{ color: colors.textPrimary, fontWeight: '700', marginBottom: 12 }}>
+                        Processing Details
+                    </AppText>
+                    <InfoRow icon="layers" label="Service Type" value={lead.servicetype} />
+                    <InfoRow icon="zap" label="Payout Type" value={lead.processingtype} />
+                </View>
+
                 {/* ── Personal Info ── */}
                 <View style={[styles.section, { backgroundColor: colors.cardBg, borderColor: colors.border, borderRadius: radius.lg }]}>
                     <AppText variant="h3" style={{ color: colors.textPrimary, fontWeight: '700', marginBottom: 12 }}>
@@ -245,8 +254,6 @@ const LeadDetailScreen = ({ route, navigation }) => {
                     <InfoRow icon="dollar-sign" label="Loan Amount" value={lead.loanamount ? `₹${lead.loanamount}` : null} />
                     <InfoRow icon="trending-up" label="Annual Income" value={lead.annualincome ? `₹${lead.annualincome}` : null} />
                     <InfoRow icon="clipboard" label="Employment" value={lead.employmenttype} />
-                    <InfoRow icon="layers" label="Service Type" value={lead.servicetype} />
-                    <InfoRow icon="zap" label="Processing Type" value={lead.processingtype} />
                     {lead.tracknumber && <InfoRow icon="hash" label="Track Number" value={lead.tracknumber} />}
                 </View>
 
@@ -310,9 +317,15 @@ const LeadDetailScreen = ({ route, navigation }) => {
                         <AppText variant="h3" style={{ color: colors.textPrimary, fontWeight: '700', marginBottom: 12 }}>
                             Status History
                         </AppText>
-                        {history.map((item) => (
-                            <HistoryItem key={item.id} item={item} />
-                        ))}
+                        {/* Deduplicate: show only one entry per status code */}
+                        {history
+                            .filter((item, index, self) =>
+                                self.findIndex(h => h.status === item.status) === index
+                            )
+                            .map((item) => (
+                                <HistoryItem key={item.id} item={item} />
+                            ))
+                        }
                     </View>
                 )}
 
@@ -407,3 +420,5 @@ const styles = StyleSheet.create({
 });
 
 export default LeadDetailScreen;
+
+

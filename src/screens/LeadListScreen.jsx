@@ -142,6 +142,7 @@ const LeadListScreen = ({ navigation }) => {
     const {
         leads,
         loading,
+        isRefreshing,
         error,
         activeTab,
         setActiveTab,
@@ -201,7 +202,7 @@ const LeadListScreen = ({ navigation }) => {
     );
 
     return (
-        <ScreenWrapper withPadding={false} edges={['bottom', 'left', 'right']} style={styles.root}>
+        <ScreenWrapper withPadding={false} edges={['left', 'right']} style={styles.root}>
             <GradientScreenHeader
                 title="My Leads"
                 subtitle="Track your lead progress"
@@ -220,10 +221,10 @@ const LeadListScreen = ({ navigation }) => {
                 ListHeaderComponent={ListHeader}
                 ListEmptyComponent={ListEmpty}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 100 }}
+                contentContainerStyle={{ paddingBottom: 16 }}
                 keyboardShouldPersistTaps="handled"
                 refreshControl={
-                    <RefreshControl refreshing={loading} onRefresh={refresh} colors={[colors.primary]} />
+                    <RefreshControl refreshing={isRefreshing} onRefresh={refresh} colors={[colors.primary]} />
                 }
             />
         </ScreenWrapper>
@@ -290,3 +291,5 @@ const styles = StyleSheet.create({
 });
 
 export default LeadListScreen;
+
+

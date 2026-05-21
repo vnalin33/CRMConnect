@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Modal, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 import { useTheme } from '../theme';
@@ -9,39 +9,192 @@ import AppText from '../components/common/AppText';
 import WalletCard from '../components/dashboard/WalletCard';
 import AppButton from '../components/common/AppButton';
 import { useProfile } from '../hooks/useProfile';
+import useWalletData from '../hooks/useWalletData';
+import AppInput from '../components/common/AppInput';
+import { submitWithdrawalRequest } from '../api/withdrawalApi';
+import { useToast } from '../context/ToastContext';
 
 // Mask account number for privacy
 const maskAccount = (acc) => {
-  if (!acc || acc.length < 4) return acc || '';
-  return `XXXX XXXX ${acc.slice(-4)}`;
+    if (!acc || acc.length < 4) return acc || '';
+    return `XXXX XXXX ${acc.slice(-4)}`;
 };
 
-// ── Mock Data ──
-const MOCK_MONTHS = ['Feb 2026', 'Jan 2026', 'Dec 2025', 'Nov 2025', 'Oct 2025'];
-const TRANSACTIONS = [
-    { id: '1', type: 'credit', name: 'Manoj Kumar', description: 'Home Loan', amount: '+ ₹67,500', status: 'Credited' },
-    { id: '2', type: 'debit', name: 'Amazon', description: 'Spent wallet Amount', amount: '- ₹15,000', status: 'Debited' },
-    { id: '3', type: 'credit', name: 'Rahul', description: 'Personal Loan', amount: '+ ₹25,000', status: 'Credited' },
-    { id: '4', type: 'debit', name: 'Nalin', description: 'Food Order', amount: '- ₹1,250', status: 'Debited' },
-    { id: '5', type: 'credit', name: 'Sujith', description: 'Business Loan', amount: '+ ₹45,000', status: 'Credited' },
-    { id: '6', type: 'debit', name: 'Umesh', description: 'Travel', amount: '- ₹450', status: 'Debited' },
-];
+// Generate month labels from real data
+const getMonthsFromData = (payouts, withdrawals = []) => {
+    const monthSet = new Set();
+    const now = new Date();
+    // Always include the current month
+    monthSet.add(`${now.toLocaleString('en-IN', { month: 'short' })} ${now.getFullYear()}`);
+
+    const extractMonth = (dateString) => {
+        if (!dateString) return;
+        const d = new Date(dateString);
+        if (!isNaN(d.getTime())) {
+            monthSet.add(`${d.toLocaleString('en-IN', { month: 'short' })} ${d.getFullYear()}`);
+        }
+    };
+
+    payouts.forEach(p => extractMonth(p.dateRaw));
+    withdrawals.forEach(w => extractMonth(w.request_date));
+
+    // Sort months descending
+    const months = Array.from(monthSet).sort((a, b) => {
+        const da = new Date(`01 ${a}`);
+        const db = new Date(`01 ${b}`);
+        return db - da;
+    });
+
+    return months.length > 0 ? months : [formatCurrentMonth()];
+};
+
+const formatCurrentMonth = () => {
+    const now = new Date();
+    return `${now.toLocaleString('en-IN', { month: 'short' })} ${now.getFullYear()}`;
+};
+
+const formatAmount = (num) => {
+    const val = parseFloat(num) || 0;
+    return `₹${val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
 
 const WalletScreen = ({ navigation }) => {
     const { colors, spacing, radius } = useTheme();
     const insets = useSafeAreaInsets();
     const { profileData } = useProfile();
+    const { showToast } = useToast();
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedMonth, setSelectedMonth] = useState('Feb 2026');
+    const [selectedMonth, setSelectedMonth] = useState(formatCurrentMonth());
     const [showAll, setShowAll] = useState(false);
+    const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
+    const [withdrawAmount, setWithdrawAmount] = useState('');
+    const [withdrawing, setWithdrawing] = useState(false);
+
+    // Use shared wallet data hook (same cache as HomeScreen)
+    const { 
+        payouts, 
+        withdrawals, 
+        loading, 
+        formattedBalance, 
+        walletBalance,
+        refresh 
+    } = useWalletData();
 
     const bankAccount = profileData?.bankDetails?.account;
-    const bankBranch = profileData?.bankDetails?.branch;
-    const bankIfsc = profileData?.bankDetails?.ifsc;
+
+    // Generate dynamic month list
+    const months = useMemo(() => getMonthsFromData(payouts, withdrawals), [payouts, withdrawals]);
+
+    // Filter payouts by selected month
+    const filteredPayouts = useMemo(() => {
+        return payouts.filter(p => {
+            if (!p.dateRaw) return false;
+            const d = new Date(p.dateRaw);
+            if (isNaN(d.getTime())) return false;
+            const label = `${d.toLocaleString('en-IN', { month: 'short' })} ${d.getFullYear()}`;
+            return label === selectedMonth;
+        });
+    }, [payouts, selectedMonth]);
+
+    // Build transactions from real payout data and withdrawal history
+    const transactions = useMemo(() => {
+        const txns = filteredPayouts.map(p => ({
+            id: `p_${p.id}`,
+            type: 'credit',
+            name: p.name || 'Unknown',
+            description: p.loanType || 'Loan',
+            amount: `+ ${p.payoutAmountFormatted || formatAmount(p.payoutAmount)}`,
+            rawAmount: p.payoutAmount || 0,
+            status: p.status === 'paid' ? 'Credited' : 'Pending',
+            date: p.date || '',
+            dateRaw: p.dateRaw ? new Date(p.dateRaw).getTime() : 0,
+        }));
+
+        const filteredWithdrawals = withdrawals.filter(w => {
+            if (!w.request_date) return false;
+            const d = new Date(w.request_date);
+            if (isNaN(d.getTime())) return false;
+            return `${d.toLocaleString('en-IN', { month: 'short' })} ${d.getFullYear()}` === selectedMonth;
+        });
+
+        const withdrawalTxns = filteredWithdrawals.map(w => {
+            let statusText = 'Pending';
+            if (w.status === 'approved') statusText = 'Approved';
+            if (w.status === 'paid') statusText = 'Completed';
+            if (w.status === 'rejected') statusText = 'Rejected';
+
+            const d = new Date(w.request_date);
+            const dateStr = !isNaN(d.getTime()) ? `${d.getDate()} ${d.toLocaleString('en-IN', { month: 'short' })}` : '';
+
+            return {
+                id: `w_${w.id}`,
+                type: 'debit',
+                name: 'Wallet Withdrawal',
+                description: `Bank Transfer - ${statusText}`,
+                amount: `- ${formatAmount(w.amount)}`,
+                rawAmount: Number(w.amount) || 0,
+                status: statusText,
+                date: dateStr,
+                dateRaw: d.getTime() || 0,
+            };
+        });
+
+        return [...txns, ...withdrawalTxns].sort((a, b) => b.dateRaw - a.dateRaw);
+    }, [filteredPayouts, withdrawals, selectedMonth]);
+
+    // Monthly summary calculations
+    const monthlySummary = useMemo(() => {
+        const credited = transactions.filter(t => t.type === 'credit' && t.status === 'Credited');
+        const creditedTotal = credited.reduce((sum, t) => sum + t.rawAmount, 0);
+
+        const withdrawn = transactions.filter(t => t.type === 'debit' && (t.status === 'Approved' || t.status === 'Completed'));
+        const withdrawnTotal = withdrawn.reduce((sum, t) => sum + t.rawAmount, 0);
+
+        return {
+            creditedTotal,
+            creditedCount: credited.length,
+            withdrawnTotal,
+            withdrawnCount: withdrawn.length,
+            totalPayments: transactions.length,
+        };
+    }, [transactions]);
+
+    const handleWithdrawSubmit = async () => {
+        const amount = parseFloat(withdrawAmount);
+
+        if (isNaN(amount) || amount <= 0) {
+            showToast('warning', 'Invalid Amount', 'Please enter a valid amount to withdraw.');
+            return;
+        }
+
+        if (amount < 500) {
+            showToast('warning', 'Minimum Withdrawal', 'The minimum withdrawal amount is ₹500.');
+            return;
+        }
+
+        if (amount > walletBalance) {
+            showToast('warning', 'Insufficient Balance', `You cannot withdraw more than your available balance (${formattedBalance}).`);
+            return;
+        }
+
+        setWithdrawing(true);
+        try {
+            const bankDetails = profileData?.bankDetails || {};
+            await submitWithdrawalRequest(amount, bankDetails);
+            setWithdrawing(false);
+            setWithdrawModalVisible(false);
+            setWithdrawAmount('');
+            showToast('success', 'Request Submitted', `Withdrawal request for ${formatAmount(amount)} has been submitted successfully.`);
+            refresh();
+        } catch (error) {
+            setWithdrawing(false);
+            showToast('error', 'Error', error.message || 'Failed to submit withdrawal request. Please try again.');
+        }
+    };
 
     const renderMonthSelector = () => (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.monthScroll, { paddingHorizontal: spacing.base }]} style={{ marginVertical: spacing.lg }}>
-            {MOCK_MONTHS.map(month => {
+            {months.map(month => {
                 const isActive = selectedMonth === month;
                 return (
                     <TouchableOpacity
@@ -70,7 +223,7 @@ const WalletScreen = ({ navigation }) => {
             <View style={[styles.summaryHeader, { borderBottomColor: colors.border }]}>
                 <AppText variant="h6" style={{ color: colors.textPrimary }}>{selectedMonth} Summary</AppText>
                 <View style={[styles.paymentBadge, { backgroundColor: colors.primaryLight, borderRadius: radius.sm }]}>
-                    <AppText variant="caption" style={{ color: colors.primary, fontWeight: '600' }}>8 Payments</AppText>
+                    <AppText variant="caption" style={{ color: colors.primary, fontWeight: '600' }}>{monthlySummary.totalPayments} Payments</AppText>
                 </View>
             </View>
             <View style={styles.summaryBody}>
@@ -82,8 +235,8 @@ const WalletScreen = ({ navigation }) => {
                         </View>
                         <AppText variant="caption" style={{ color: colors.textSecondary, marginLeft: 6 }}>Credited</AppText>
                     </View>
-                    <AppText variant="h4" style={{ color: colors.success, marginTop: 8 }}>₹ 64,500.00</AppText>
-                    <AppText variant="caption" style={{ color: colors.textMuted, marginTop: 4 }}>6 Transactions</AppText>
+                    <AppText variant="h4" style={{ color: colors.success, marginTop: 8 }}>{formatAmount(monthlySummary.creditedTotal)}</AppText>
+                    <AppText variant="caption" style={{ color: colors.textMuted, marginTop: 4 }}>{monthlySummary.creditedCount} Transactions</AppText>
                 </View>
 
                 {/* Vertical Divider */}
@@ -97,8 +250,8 @@ const WalletScreen = ({ navigation }) => {
                         </View>
                         <AppText variant="caption" style={{ color: colors.textSecondary, marginLeft: 6 }}>Withdrawn</AppText>
                     </View>
-                    <AppText variant="h4" style={{ color: colors.info, marginTop: 8 }}>₹ 15,000.00</AppText>
-                    <AppText variant="caption" style={{ color: colors.textMuted, marginTop: 4 }}>2 Transactions</AppText>
+                    <AppText variant="h4" style={{ color: colors.info, marginTop: 8 }}>{formatAmount(monthlySummary.withdrawnTotal)}</AppText>
+                    <AppText variant="caption" style={{ color: colors.textMuted, marginTop: 4 }}>{monthlySummary.withdrawnCount} Transactions</AppText>
                 </View>
             </View>
         </View>
@@ -111,51 +264,76 @@ const WalletScreen = ({ navigation }) => {
                 <AppText variant="caption" style={{ color: colors.textSecondary }}>{selectedMonth}</AppText>
             </View>
 
-            <View style={styles.timelineRow}>
-                <AppText variant="caption" style={{ color: colors.textSecondary, fontWeight: '600' }}>Today</AppText>
-                <View style={[styles.timelineLine, { backgroundColor: colors.border }]} />
-                <AppText variant="caption" style={{ color: colors.textMuted }}>2 txn</AppText>
-            </View>
-
-            {TRANSACTIONS.slice(0, showAll ? TRANSACTIONS.length : 2).map(txn => {
-                const isCredit = txn.type === 'credit';
-                const statusColor = isCredit ? colors.success : colors.info;
-                const statusBg = isCredit ? colors.successBg : colors.infoBg;
-
-                return (
-                    <View key={txn.id} style={[styles.txnItem, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border }]}>
-                        <View style={[styles.txnIconWrap, { backgroundColor: statusBg, borderRadius: radius.md }]}>
-                            <Feather name={isCredit ? "arrow-down-left" : "arrow-up-right"} size={16} color={statusColor} />
-                        </View>
-
-                        <View style={styles.txnDetails}>
-                            <AppText variant="body" style={{ color: colors.textPrimary, fontWeight: '600' }}>{txn.name}</AppText>
-                            <AppText variant="caption" style={{ color: colors.textSecondary, marginTop: 4 }}>{txn.description}</AppText>
-                        </View>
-
-                        <View style={styles.txnAmounts}>
-                            <AppText variant="body" style={{ color: statusColor, fontWeight: '600' }}>{txn.amount}</AppText>
-                            <View style={[styles.txnBadge, { backgroundColor: statusBg, borderRadius: radius.sm }]}>
-                                <AppText variant="caption" style={{ color: statusColor, fontSize: 10, fontWeight: '600' }}>{txn.status}</AppText>
-                            </View>
-                        </View>
+            {transactions.length === 0 ? (
+                <View style={{ alignItems: 'center', paddingVertical: spacing.xxxl }}>
+                    <Feather name="inbox" size={40} color={colors.textMuted} />
+                    <AppText variant="body" style={{ color: colors.textMuted, marginTop: spacing.base }}>No transactions this month</AppText>
+                </View>
+            ) : (
+                <>
+                    <View style={styles.timelineRow}>
+                        <AppText variant="caption" style={{ color: colors.textSecondary, fontWeight: '600' }}>{selectedMonth}</AppText>
+                        <View style={[styles.timelineLine, { backgroundColor: colors.border }]} />
+                        <AppText variant="caption" style={{ color: colors.textMuted }}>{transactions.length} txn</AppText>
                     </View>
-                );
-            })}
 
-            <AppButton
-                title={showAll ? "Show Less" : "View All Transactions"}
-                onPress={() => setShowAll(!showAll)}
-                variant="outline"
-                size="md"
-                rightIcon={<Feather name={showAll ? "chevron-up" : "arrow-right"} size={16} color={colors.primary} />}
-                style={{ marginTop: spacing.base, marginBottom: spacing.base }}
-            />
+                    {transactions.slice(0, showAll ? transactions.length : 3).map(txn => {
+                        const isCredit = txn.type === 'credit';
+                        const isPending = txn.status === 'Pending';
+                        const isRejected = txn.status === 'Rejected';
+                        
+                        let statusColor = colors.info;
+                        let statusBg = colors.infoBg;
+
+                        if (isPending) {
+                            statusColor = colors.warning || '#F59E0B';
+                            statusBg = colors.warningBg || '#FEF3C7';
+                        } else if (isRejected) {
+                            statusColor = colors.error || '#EF4444';
+                            statusBg = colors.errorBg || '#FEE2E2';
+                        } else if (isCredit) {
+                            statusColor = colors.success;
+                            statusBg = colors.successBg;
+                        }
+
+                        return (
+                            <View key={txn.id} style={[styles.txnItem, { backgroundColor: colors.surface, borderRadius: radius.lg, borderColor: colors.border }]}>
+                                <View style={[styles.txnIconWrap, { backgroundColor: statusBg, borderRadius: radius.md }]}>
+                                    <Feather name={isCredit ? "arrow-down-left" : "arrow-up-right"} size={16} color={statusColor} />
+                                </View>
+
+                                <View style={styles.txnDetails}>
+                                    <AppText variant="body" style={{ color: colors.textPrimary, fontWeight: '600' }}>{txn.name}</AppText>
+                                    <AppText variant="caption" style={{ color: colors.textSecondary, marginTop: 4 }}>{txn.description}</AppText>
+                                </View>
+
+                                <View style={styles.txnAmounts}>
+                                    <AppText variant="body" style={{ color: statusColor, fontWeight: '600' }}>{txn.amount}</AppText>
+                                    <View style={[styles.txnBadge, { backgroundColor: statusBg, borderRadius: radius.sm }]}>
+                                        <AppText variant="caption" style={{ color: statusColor, fontSize: 10, fontWeight: '600' }}>{txn.status}</AppText>
+                                    </View>
+                                </View>
+                            </View>
+                        );
+                    })}
+
+                    {transactions.length > 3 && (
+                        <AppButton
+                            title={showAll ? "Show Less" : "View All Transactions"}
+                            onPress={() => setShowAll(!showAll)}
+                            variant="outline"
+                            size="md"
+                            rightIcon={<Feather name={showAll ? "chevron-up" : "arrow-right"} size={16} color={colors.primary} />}
+                            style={{ marginTop: spacing.base, marginBottom: spacing.base }}
+                        />
+                    )}
+                </>
+            )}
         </View>
     );
 
     return (
-        <ScreenWrapper withPadding={false} edges={['bottom', 'left', 'right']} style={{ backgroundColor: colors.background }}>
+        <ScreenWrapper withPadding={false} edges={['left', 'right']} style={{ backgroundColor: colors.background }}>
 
             {/* The standard App gradient header with back/search logic */}
             <GradientScreenHeader
@@ -170,24 +348,73 @@ const WalletScreen = ({ navigation }) => {
 
             <ScrollView
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxxl }}
+                contentContainerStyle={{ paddingBottom: spacing.base }}
             >
-                {/* Dynamically overlay WalletCard overlapping slightly or standardly configured */}
+                {/* Wallet balance card — uses same shared data as HomeScreen */}
                 <View style={{ marginTop: spacing.md, overflow: 'visible' }}>
                     <WalletCard
-                        balance="0.00"
-                        accountNumber={bankAccount && bankAccount !== 'Not Provided' ? maskAccount(bankAccount) : 'XXXX XXXX XXXX 1234'}
-                        onWithdraw={() => { }}
+                        balance={formattedBalance}
+                        accountNumber={bankAccount && bankAccount !== 'Not Provided' ? maskAccount(bankAccount) : 'XXXX XXXX XXXX'}
+                        onWithdraw={() => setWithdrawModalVisible(true)}
                         onViewWallet={() => { }}
-                        secondaryLabel="Spend Wallet"
                     />
                 </View>
 
-                {renderMonthSelector()}
-                {renderSummaryCard()}
-                {renderTransactions()}
+                {loading ? (
+                    <View style={{ paddingVertical: spacing.xxxl, alignItems: 'center' }}>
+                        <ActivityIndicator size="large" color={colors.primary} />
+                        <AppText variant="caption" style={{ color: colors.textMuted, marginTop: spacing.base }}>Loading wallet data...</AppText>
+                    </View>
+                ) : (
+                    <>
+                        {renderMonthSelector()}
+                        {renderSummaryCard()}
+                        {renderTransactions()}
+                    </>
+                )}
 
             </ScrollView>
+
+            {/* Withdrawal Modal */}
+            <Modal
+                visible={withdrawModalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setWithdrawModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.surface, borderRadius: radius.xl }]}>
+                        <View style={styles.modalHeader}>
+                            <AppText variant="h3" style={{ color: colors.textPrimary }}>Withdraw Funds</AppText>
+                            <TouchableOpacity onPress={() => setWithdrawModalVisible(false)}>
+                                <Feather name="x" size={24} color={colors.textSecondary} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.modalBody}>
+                            <AppText variant="body" style={{ color: colors.textSecondary, marginBottom: spacing.lg }}>
+                                Available Balance: <AppText variant="body" style={{ color: colors.success, fontWeight: '700' }}>{formattedBalance}</AppText>
+                            </AppText>
+
+                            <AppInput
+                                label="Withdrawal Amount"
+                                placeholder="Enter amount (e.g. 5000)"
+                                value={withdrawAmount}
+                                onChangeText={setWithdrawAmount}
+                                keyboardType="numeric"
+                                leftIcon={<Feather name="dollar-sign" size={18} color={colors.primary} />}
+                            />
+
+                            <AppButton
+                                title={withdrawing ? "Processing..." : "Confirm Withdrawal"}
+                                onPress={handleWithdrawSubmit}
+                                loading={withdrawing}
+                                style={{ marginTop: spacing.xl }}
+                            />
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </ScreenWrapper>
     );
 };
@@ -212,6 +439,32 @@ const styles = StyleSheet.create({
     txnDetails: { flex: 1 },
     txnAmounts: { alignItems: 'flex-end' },
     txnBadge: { paddingHorizontal: 8, paddingVertical: 2, marginTop: 4 },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        padding: 20,
+    },
+    modalContent: {
+        width: '100%',
+        padding: 24,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    modalBody: {
+        width: '100%',
+    },
 });
 
 export default WalletScreen;
+
+

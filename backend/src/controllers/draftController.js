@@ -29,10 +29,9 @@ const getDrafts = async (req, res, next) => {
 
 const deleteDraft = async (req, res, next) => {
   try {
-    const deleted = await draftModel.deleteDraft(req.params.id, req.user.id);
-    if (!deleted) {
-      return res.status(404).json({ success: false, error: { message: 'Draft not found' } });
-    }
+    await draftModel.deleteDraft(req.params.id, req.user.id);
+    // We return 200 even if the draft was not found to make the delete operation idempotent.
+    // This helps resolve issues where the client's local cache has a draft that was already deleted.
     res.status(200).json({ success: true, message: 'Draft deleted' });
   } catch (err) {
     next(err);

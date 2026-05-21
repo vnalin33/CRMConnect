@@ -37,7 +37,7 @@ const ConcernDetailsScreen = ({ route, navigation }) => {
     return (
         <ScreenWrapper
             withPadding={false}
-            edges={['bottom', 'left', 'right']}
+            edges={['left', 'right']}
             style={{ backgroundColor: colors.background }}
         >
             <GradientScreenHeader
@@ -48,7 +48,7 @@ const ConcernDetailsScreen = ({ route, navigation }) => {
 
             <ScrollView
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + spacing.xl }]}
+                contentContainerStyle={[styles.scrollContent, { paddingBottom: spacing.base }]}
             >
                 {/* ── Main Details Card ── */}
                 <AppCard style={styles.card}>
@@ -320,3 +320,5 @@ const styles = StyleSheet.create({
 });
 
 export default ConcernDetailsScreen;
+
+

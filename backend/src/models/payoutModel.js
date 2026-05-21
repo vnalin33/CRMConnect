@@ -13,8 +13,8 @@ const getPayoutsByConnector = async (connectorId) => {
       lt.id              AS track_id,
       lp.id              AS lead_id,
       COALESCE(lt.customername, TRIM(CONCAT(lp.firstname, ' ', lp.lastname))) AS customer_name,
-      COALESCE(lt.loantype, lp.loantype)       AS loan_type,
-      COALESCE(lt.desireloanamount, lp.loanamount::text)  AS loan_amount,
+      lp.loantype                              AS loan_type,
+      lp.loanamount::text                      AS loan_amount,
       lt.disbursementamount,
       lt.sanctionvalue,
       lt.sanctiondate,
@@ -27,7 +27,9 @@ const getPayoutsByConnector = async (connectorId) => {
       lt.status           AS track_status,
       lt.modifyon          AS disbursement_date,
       lp.createdon         AS lead_created,
-      lt.tracknumber
+      lt.tracknumber,
+      lp.servicetype,
+      lp.processingtype
     FROM leadtrackdetails lt
     INNER JOIN leadpersonaldetails lp ON lp.id = lt.leadid
     WHERE lp.connectorid = $1
@@ -75,7 +77,17 @@ const getPayoutSummary = async (connectorId) => {
   };
 };
 
+const updatePayoutPercent = async (trackId, percent) => {
+  const query = `
+    UPDATE leadtrackdetails
+    SET payoutpercent = $1
+    WHERE id = $2
+  `;
+  await db.query(query, [percent, trackId]);
+};
+
 module.exports = {
   getPayoutsByConnector,
   getPayoutSummary,
+  updatePayoutPercent,
 };

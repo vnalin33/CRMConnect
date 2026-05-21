@@ -38,7 +38,7 @@ const DraftsScreen = ({ navigation }) => {
     const insets = useSafeAreaInsets();
     const { showAlert } = useAlert();
     
-    const { drafts, loading, fetchDrafts, deleteDraft } = useDrafts();
+    const { drafts, loading, isRefreshing, fetchDrafts, refresh, deleteDraft } = useDrafts();
 
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -95,7 +95,7 @@ const DraftsScreen = ({ navigation }) => {
     return (
         <ScreenWrapper
             withPadding={false}
-            edges={['bottom', 'left', 'right']}
+            edges={['left', 'right']}
             style={{ backgroundColor: colors.background }}
         >
             {/* ── Fixed top bar ── */}
@@ -117,10 +117,10 @@ const DraftsScreen = ({ navigation }) => {
                 renderItem={renderItem}
                 contentContainerStyle={[
                     styles.listContent,
-                    { paddingBottom: insets.bottom + 20 },
+                    { paddingBottom: 16 },
                 ]}
                 showsVerticalScrollIndicator={false}
-                refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchDrafts} colors={[colors.primary]} />}
+                refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={refresh} colors={[colors.primary]} />}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
                         {loading ? (
@@ -154,3 +154,5 @@ const styles = StyleSheet.create({
 });
 
 export default DraftsScreen;
+
+

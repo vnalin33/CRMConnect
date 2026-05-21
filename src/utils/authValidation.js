@@ -1,9 +1,31 @@
 import { z } from 'zod';
 
 export const SIGNUP_ROLES = [
-    { id: 'agent', label: 'Agent' },
-    { id: 'real_estate_agent', label: 'Real Estate Agent' },
-    { id: 'lic_agent', label: 'LIC Agent' },
+    { id: 'auditor', label: 'Auditor' },
+    { id: 'gst_practitioner', label: 'GST Practitioner' },
+    { id: 'pf_esi_consultant', label: 'PF/ESI Consultant' },
+    { id: 'accountant', label: 'Accountant' },
+    { id: 'finance_manager', label: 'Finance Manager' },
+    { id: 'architect', label: 'Architect' },
+    { id: 'builder', label: 'Builder' },
+    { id: 'contractor', label: 'Contractor' },
+    { id: 'building_material_supplier', label: 'Building Material Supplier' },
+    { id: 'mason', label: 'Mason' },
+    { id: 'real_estate_broker', label: 'Real Estate Broker' },
+    { id: 'advocate', label: 'Advocate' },
+    { id: 'stamp_paper_vendor', label: 'Stamp Paper Vendor' },
+    { id: 'document_writer', label: 'Document Writer' },
+    { id: 'registration_office_assistant', label: 'Registration Office Assistant' },
+    { id: 'financier', label: 'Financier' },
+    { id: 'pawn_broker', label: 'Pawn Broker' },
+    { id: 'vehicle_loan_provider', label: 'Vehicle Loan Provider' },
+    { id: 'insurance_advisor', label: 'Insurance Advisor' },
+    { id: 'mutual_fund_advisor', label: 'Mutual Fund Advisor' },
+    { id: 'hr_manager', label: 'HR Manager' },
+    { id: 'manpower_consultant', label: 'Manpower Consultant' },
+    { id: 'association_secretary', label: 'Association Secretary' },
+    { id: 'shop_owner', label: 'Shop Owner' },
+    { id: 'others', label: 'Others' },
 ];
 
 export const signupSchema = z.object({
@@ -31,6 +53,10 @@ export const signupSchema = z.object({
     role: z
         .string()
         .min(1, 'Please select a role'),
+    dob: z
+        .string()
+        .min(1, 'Date of birth is required')
+        .regex(/^\d{4}-\d{2}-\d{2}$/, 'Format must be YYYY-MM-DD'),
     isActive: z.boolean().optional(),
 });
 

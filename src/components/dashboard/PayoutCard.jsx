@@ -24,6 +24,9 @@ const PayoutCard = ({
         if (lowerStatus === 'pending') {
             return { bg: colors.warningBg, text: colors.warningText };
         }
+        if (lowerStatus === 'paid') {
+            return { bg: 'rgba(0,200,150,0.15)', text: colors.success || '#00C896' };
+        }
         return { bg: colors.surfaceElevated, text: colors.textSecondary };
     };
 
@@ -71,9 +74,9 @@ const PayoutCard = ({
                     backgroundColor: colors.payoutCardBg,
                     borderColor: colors.payoutBorder,
                     borderRadius: radius.lg,
-                    padding: spacing.lg,
+                    padding: spacing.base,
                     marginHorizontal: spacing.base,
-                    marginTop: spacing.lg,
+                    marginTop: spacing.md,
                 },
             ]}
         >
@@ -89,7 +92,7 @@ const PayoutCard = ({
             <View style={[styles.divider, { backgroundColor: colors.border, marginTop: spacing.md }]} />
 
             {/* Details */}
-            <View style={[styles.detailRow, { marginTop: spacing.lg }]}>
+            <View style={[styles.detailRow, { marginTop: spacing.md }]}>
                 <AppText variant="body" color="secondary">Payable amount</AppText>
                 <AppText variant="h2" style={{ color: colors.textPrimary, fontWeight: '700' }}>{payableAmount}</AppText>
             </View>
@@ -105,7 +108,7 @@ const PayoutCard = ({
             </View>
 
 
-            <View style={[styles.divider, { backgroundColor: colors.border, marginTop: spacing.lg }]} />
+            <View style={[styles.divider, { backgroundColor: colors.border, marginTop: spacing.md }]} />
 
             <TouchableOpacity
                 onPress={onViewHistory}
@@ -114,7 +117,7 @@ const PayoutCard = ({
                 accessibilityLabel="View Payout History"
             >
                 <AppText variant="body" color="link" style={{ fontWeight: '600' }}>
-                    View Payout History
+                    View All
                 </AppText>
                 <Feather name="arrow-right" size={16} color={colors.textLink} style={{ marginLeft: 4 }} />
             </TouchableOpacity>

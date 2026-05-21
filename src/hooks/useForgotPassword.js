@@ -5,7 +5,7 @@
 
 import { useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ENV } from '../config/env';
+import api from '../api/apiClient';
 
 const useForgotPassword = ({ onSuccess, onError } = {}) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -21,17 +21,7 @@ const useForgotPassword = ({ onSuccess, onError } = {}) => {
     setError(null);
     setIsSuccess(false);
     try {
-      const response = await fetch(`${ENV.API_URL}/auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error?.message || 'Failed to send reset email');
-      }
+      const result = await api.public.post('/auth/forgot-password', { email });
 
       setIsSuccess(true);
       setMessage(result.data?.message || 'Reset link sent to your email.');
@@ -53,17 +43,7 @@ const useForgotPassword = ({ onSuccess, onError } = {}) => {
     setError(null);
     setIsSuccess(false);
     try {
-      const response = await fetch(`${ENV.API_URL}/auth/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, newPassword }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error?.message || 'Failed to reset password');
-      }
+      const result = await api.public.post('/auth/reset-password', { token, newPassword });
 
       if (result.data?.token) {
         await AsyncStorage.setItem('auth_token', result.data.token);

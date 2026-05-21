@@ -10,29 +10,34 @@ const create = async (leadData) => {
     loanamount,
     annualincome,
     employmenttype,
+    company_type,
+    sector_type,
+    cibilscore,
+    profession,
+    existingloans,
     notes,
     servicetype,
     processingtype,
     connectorid,
-    organizationid = 1002,   // Must match admin's org (1002)
-    locationid = 5005,       // Must be a valid LocationMaster ID (5005 = Erode)
-    contacttype = 'Company Contact',  // Default type used by CRM web
-    status = 1               // 1 = unassigned new contact
+    organizationid = 1002,  
+    locationid = 5005,      
+    contacttype = 'Connector Contact',  
+    status = 1               
   } = leadData;
 
   const query = `
     INSERT INTO leadpersonaldetails (
       firstname, lastname, email, mobilenumber, loantype, loanamount, 
-      annualincome, employmenttype, notes, servicetype, processingtype,
+      annualincome, employmenttype, company_type, sector_type, cibilscore, profession, existingloans, notes, servicetype, processingtype,
       connectorid, status, organizationid, locationid, contacttype, createdon
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, NOW())
     RETURNING id, firstname, lastname, email, mobilenumber, status, organizationid, createdon
   `;
 
   const values = [
     firstname, lastname, email, mobilenumber, loantype, loanamount,
-    annualincome, employmenttype, notes, servicetype, processingtype,
+    annualincome, employmenttype, company_type, sector_type, cibilscore, profession, existingloans, notes, servicetype, processingtype,
     connectorid, status, organizationid, locationid, contacttype
   ];
 

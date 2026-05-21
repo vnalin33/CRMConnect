@@ -44,7 +44,7 @@ const StatusScreen = ({ navigation }) => {
     const insets = useSafeAreaInsets();
     const { showAlert } = useAlert();
 
-    const { allLeads, loading, refresh } = useLeadList();
+    const { allLeads, loading, isRefreshing, refresh } = useLeadList();
     const leads = useMemo(() => allLeads.map(transformLead), [allLeads]);
     
     const [searchQuery, setSearchQuery] = useState('');
@@ -105,7 +105,7 @@ const StatusScreen = ({ navigation }) => {
     }, [leads, searchQuery, activeFilter]);
 
     return (
-        <ScreenWrapper withPadding={false} edges={['bottom', 'left', 'right']} style={{ backgroundColor: colors.background }}>
+        <ScreenWrapper withPadding={false} edges={['left', 'right']} style={{ backgroundColor: colors.background }}>
             <GradientScreenHeader
                 title="Status List"
                 subtitle={`All Leads : ${filteredLeads.length} total`}
@@ -129,10 +129,10 @@ const StatusScreen = ({ navigation }) => {
                         onDelete={handleDeleteLead}
                     />
                 )}
-                contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 20 }]}
+                contentContainerStyle={[styles.listContent, { paddingBottom: 16 }]}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
-                    <RefreshControl refreshing={loading} onRefresh={refresh} colors={[colors.primary]} />
+                    <RefreshControl refreshing={isRefreshing} onRefresh={refresh} colors={[colors.primary]} />
                 }
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
@@ -165,3 +165,5 @@ const styles = StyleSheet.create({
 });
 
 export default StatusScreen;
+
+

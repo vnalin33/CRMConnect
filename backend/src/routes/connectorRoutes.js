@@ -37,6 +37,7 @@ router.use(authenticate);
 router.get('/profile', connectorController.getProfile);
 router.put('/profile/info', connectorController.updatePersonalInfo);
 router.put('/profile/bank', connectorController.updateBankDetails);
+router.put('/profile/tax', connectorController.updateTaxDetails);
 router.put('/profile/password', connectorController.changePassword);
 router.post('/profile-picture', upload.single('profilePicture'), connectorController.uploadProfilePicture);
 

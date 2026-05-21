@@ -10,7 +10,7 @@ const WalletCard = ({
     accountNumber = 'XXXX XXXX XXXX 1234',
     onWithdraw,
     onViewWallet,
-    secondaryLabel = 'View Wallet',
+    secondaryLabel,
 }) => {
     const { colors, spacing, radius, isDark } = useTheme();
     const gradientColors = isDark ? BRAND_GRADIENT.colors : WALLET_GRADIENT_LIGHT;
@@ -74,21 +74,23 @@ const WalletCard = ({
                         </LinearGradient>
                     </TouchableOpacity>
 
-                    <TouchableOpacity
-                        onPress={onViewWallet}
-                        accessibilityRole="button"
-                        accessibilityLabel={secondaryLabel}
-                    >
-                        <LinearGradient
-                            colors={gradientColors}
-                            start={gradientCoords.start}
-                            end={gradientCoords.end}
-                            locations={gradientCoords.locations}
-                            style={[styles.actionBtn, { borderRadius: radius.full, borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)' }]}
+                    {secondaryLabel && (
+                        <TouchableOpacity
+                            onPress={onViewWallet}
+                            accessibilityRole="button"
+                            accessibilityLabel={secondaryLabel}
                         >
-                            <AppText variant="bodySm" style={styles.viewText}>{secondaryLabel}</AppText>
-                        </LinearGradient>
-                    </TouchableOpacity>
+                            <LinearGradient
+                                colors={gradientColors}
+                                start={gradientCoords.start}
+                                end={gradientCoords.end}
+                                locations={gradientCoords.locations}
+                                style={[styles.actionBtn, { borderRadius: radius.full, borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)' }]}
+                            >
+                                <AppText variant="bodySm" style={styles.viewText}>{secondaryLabel}</AppText>
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    )}
                 </View>
             </LinearGradient>
         </View>

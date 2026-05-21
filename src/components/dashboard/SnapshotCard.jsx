@@ -15,18 +15,19 @@ const SnapshotCard = ({ icon, iconBgColor, count, label, style }) => {
                     backgroundColor: colors.snapshotCardBg,
                     borderColor: colors.snapshotCardBorder,
                     borderRadius: radius.lg,
-                    padding: spacing.md,
+                    paddingVertical: spacing.md,
+                    paddingHorizontal: spacing.sm,
                 },
                 style,
             ]}
         >
-            <View style={[styles.iconCircle, { backgroundColor: iconBgColor, borderRadius: radius.full }]}>
-                <Feather name={icon} size={16} color="#FFFFFF" />
+            <View style={[styles.iconCircle, { backgroundColor: iconBgColor + '18', borderRadius: radius.full }]}>
+                <Feather name={icon} size={18} color={iconBgColor} />
             </View>
-            <AppText variant="h2" style={[styles.count, { color: colors.snapshotCountColor, marginTop: spacing.sm }]}>
+            <AppText variant="h2" style={[styles.count, { color: colors.snapshotCountColor, marginTop: spacing.xs }]}>
                 {count}
             </AppText>
-            <AppText variant="caption" numberOfLines={2} style={{ color: colors.snapshotLabelColor, marginTop: 2 }}>
+            <AppText variant="caption" numberOfLines={2} style={[styles.label, { color: colors.snapshotLabelColor }]}>
                 {label}
             </AppText>
         </View>
@@ -34,9 +35,28 @@ const SnapshotCard = ({ icon, iconBgColor, count, label, style }) => {
 };
 
 const styles = StyleSheet.create({
-    card: { borderWidth: 1, width: 110, minHeight: 100 },
-    iconCircle: { width: 32, height: 32, justifyContent: 'center', alignItems: 'center' },
-    count: { fontWeight: '700', fontSize: 22 },
+    card: {
+        flex: 1,
+        borderWidth: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 80,
+    },
+    iconCircle: {
+        width: 36,
+        height: 36,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    count: {
+        fontWeight: '800',
+        fontSize: 24,
+    },
+    label: {
+        marginTop: 2,
+        textAlign: 'center',
+        fontSize: 11,
+    },
 });
 
 export default SnapshotCard;

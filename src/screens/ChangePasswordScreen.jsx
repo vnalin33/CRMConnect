@@ -82,7 +82,7 @@ const ChangePasswordScreen = ({ navigation }) => {
     return (
         <ScreenWrapper
             withPadding={false}
-            edges={['bottom', 'left', 'right']}
+            edges={['left', 'right']}
             style={styles.root}
         >
             <GradientScreenHeader
@@ -289,3 +289,5 @@ const styles = StyleSheet.create({
 });
 
 export default ChangePasswordScreen;
+
+

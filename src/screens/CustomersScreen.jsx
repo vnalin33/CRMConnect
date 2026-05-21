@@ -61,7 +61,7 @@ const transformCustomer = (apiLead) => {
 const CustomersScreen = ({ navigation }) => {
     const { colors } = useTheme();
     const insets = useSafeAreaInsets();
-    const { allLeads, loading, refresh } = useLeadList();
+    const { allLeads, loading, isRefreshing, refresh } = useLeadList();
 
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
@@ -87,7 +87,7 @@ const CustomersScreen = ({ navigation }) => {
     return (
         <ScreenWrapper
             withPadding={false}
-            edges={['bottom', 'left', 'right']}
+            edges={['left', 'right']}
             style={{ backgroundColor: colors.background }}
         >
             {/* ── Fixed top bar ── */}
@@ -115,11 +115,11 @@ const CustomersScreen = ({ navigation }) => {
                 renderItem={renderItem}
                 contentContainerStyle={[
                     styles.listContent,
-                    { paddingBottom: insets.bottom + 20 },
+                    { paddingBottom: 16 },
                 ]}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
-                    <RefreshControl refreshing={loading} onRefresh={refresh} colors={[colors.primary]} />
+                    <RefreshControl refreshing={isRefreshing} onRefresh={refresh} colors={[colors.primary]} />
                 }
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
@@ -154,3 +154,5 @@ const styles = StyleSheet.create({
 });
 
 export default CustomersScreen;
+
+

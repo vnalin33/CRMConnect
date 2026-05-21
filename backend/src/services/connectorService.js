@@ -19,7 +19,7 @@ const getProfile = async (userId) => {
   // Fetch real-time stats using the same logic as the Leads tab
   const leadTrackModel = require('../models/leadTrackModel');
   const allLeads = await leadTrackModel.getLeadsByConnector(userId);
-  
+
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
 
@@ -29,13 +29,13 @@ const getProfile = async (userId) => {
 
   for (const lead of allLeads) {
     totalLeads++;
-    
+
     // Status 18 = Completed (after disbursement)
     const status = lead.track_status || lead.lead_status || 1;
     if (status === 18) {
-        closedDeals++;
+      closedDeals++;
     }
-    
+
     const leadDate = new Date(lead.createdon);
     if (leadDate.getMonth() === currentMonth && leadDate.getFullYear() === currentYear) {
       thisMonth++;
@@ -56,7 +56,7 @@ const getProfile = async (userId) => {
  * Update personal info fields: name, emailid, mobilenumber, location
  */
 const updatePersonalInfo = async (userId, data) => {
-  const { name, emailid, mobilenumber, location } = data;
+  const { name, emailid, mobilenumber, location, address, profession } = data;
 
   if (!name || !name.trim()) {
     const error = new Error('Name is required');
@@ -89,6 +89,8 @@ const updatePersonalInfo = async (userId, data) => {
     emailid: emailid ? emailid.trim() : null,
     mobilenumber: mobilenumber ? mobilenumber.trim() : null,
     location: location ? location.trim() : null,
+    address: address ? address.trim() : null,
+    profession: profession ? profession.trim() : null,
   });
 
   return updated;
@@ -98,12 +100,29 @@ const updatePersonalInfo = async (userId, data) => {
  * Update bank detail fields: ifsc, accountnumber, branch
  */
 const updateBankDetails = async (userId, data) => {
-  const { ifsc, accountnumber, branch } = data;
+  const { ifsc, accountnumber, branch, bank_name, account_holder_name } = data;
 
   const updated = await connectorModel.updateBankDetails(userId, {
     ifsc: ifsc ? ifsc.trim().toUpperCase() : null,
     accountnumber: accountnumber ? accountnumber.trim() : null,
     branch: branch ? branch.trim() : null,
+    bank_name: bank_name ? bank_name.trim() : null,
+    account_holder_name: account_holder_name ? account_holder_name.trim() : null,
+  });
+
+  return updated;
+};
+
+/**
+ * Update tax details: pan_number, is_gst_registered, gst_number
+ */
+const updateTaxDetails = async (userId, data) => {
+  const { pan_number, is_gst_registered, gst_number } = data;
+
+  const updated = await connectorModel.updateTaxDetails(userId, {
+    pan_number: pan_number ? pan_number.trim().toUpperCase() : null,
+    is_gst_registered: is_gst_registered !== null && is_gst_registered !== undefined ? Boolean(is_gst_registered) : null,
+    gst_number: gst_number ? gst_number.trim().toUpperCase() : null,
   });
 
   return updated;
@@ -158,7 +177,7 @@ const changePassword = async (userId, oldPassword, newPassword) => {
 const uploadProfilePicture = async (userId, pictureUrl) => {
   // Get current profile to check for existing picture
   const user = await connectorModel.findById(userId);
-  
+
   // If there's an old picture, delete it
   if (user && user.profile_picture) {
     try {
@@ -180,6 +199,7 @@ module.exports = {
   getProfile,
   updatePersonalInfo,
   updateBankDetails,
+  updateTaxDetails,
   changePassword,
   uploadProfilePicture,
 };

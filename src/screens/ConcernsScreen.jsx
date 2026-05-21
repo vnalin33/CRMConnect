@@ -11,7 +11,9 @@ import GradientScreenHeader from '../components/layout/GradientScreenHeader';
 import ScreenWrapper from '../components/layout/ScreenWrapper';
 import FilterChips from '../components/status/FilterChips';
 import ConcernCard from '../components/concerns/ConcernCard';
-import { CONCERNS_DATA, CONCERN_FILTER_OPTIONS } from '../api/mockData';
+// Concerns data will come from API; placeholder until integrated
+const CONCERNS_DATA = [];
+const CONCERN_FILTER_OPTIONS = ['All', 'Open', 'In Progress', 'Resolved'];
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
@@ -59,7 +61,7 @@ const ConcernsScreen = ({ navigation }) => {
     return (
         <ScreenWrapper
             withPadding={false}
-            edges={['bottom', 'left', 'right']}
+            edges={['left', 'right']}
             style={{ backgroundColor: colors.background }}
         >
             {/* Fixed Top Bar */}
@@ -74,48 +76,30 @@ const ConcernsScreen = ({ navigation }) => {
                 searchPlaceholder="Search concerns..."
             />
 
-            {/* Filter Chips */}
-            <View style={{ paddingTop: spacing.sm }}>
-                <FilterChips
-                    activeFilter={activeFilter}
-                    onFilterChange={handleFilterChange}
-                    filters={CONCERN_FILTER_OPTIONS}
-                />
+            {/* Coming Soon Placeholder */}
+            <View style={styles.comingSoonContainer}>
+                <View style={[styles.iconCircle, { backgroundColor: colors.primaryLight }]}>
+                    <Feather name="tool" size={scale(48)} color={colors.primary} />
+                </View>
+                <AppText variant="h2" style={[styles.comingSoonTitle, { color: colors.textPrimary }]}>
+                    Coming Soon!
+                </AppText>
+                <AppText variant="body" style={[styles.comingSoonText, { color: colors.textSecondary }]}>
+                    We are working hard to bring you a comprehensive issue management system. Stay tuned!
+                </AppText>
             </View>
 
-            {/* Concerns List */}
-            <FlatList
-                data={filteredConcerns}
-                keyExtractor={keyExtractor}
-                renderItem={renderItem}
-                contentContainerStyle={[
-                    styles.listContent,
-                    { paddingBottom: insets.bottom + spacing.huge },
-                ]}
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={
-                    <View style={styles.emptyContainer}>
-                        <Feather name="inbox" size={scale(48)} color={colors.textDisabled} />
-                        <AppText color="secondary" style={styles.emptyText}>
-                            No concerns found
-                        </AppText>
-                    </View>
-                }
-            />
-
-            {/* Gradient FAB — Raise Concern */}
+            {/* Gradient FAB — Raise Concern (Disabled for now) */}
             <TouchableOpacity
                 activeOpacity={0.85}
                 accessibilityRole="button"
                 accessibilityLabel="Raise a new concern"
-                onPress={() => {}}
-                style={[styles.fabWrapper, { bottom: insets.bottom + spacing.lg, right: spacing.base }]}
+                style={[styles.fabWrapper, { bottom: insets.bottom + spacing.lg, right: spacing.base, opacity: 0.6 }]}
             >
                 <LinearGradient
-                    colors={BRAND_GRADIENT.colors}
-                    start={BRAND_GRADIENT.start}
-                    end={BRAND_GRADIENT.end}
-                    locations={BRAND_GRADIENT.locations}
+                    colors={['#9CA3AF', '#6B7280']} // Grayed out gradient
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
                     style={[styles.fab, { borderRadius: radius.full }]}
                 >
                     <Feather name="plus" size={scale(22)} color="#FFF" />
@@ -131,15 +115,28 @@ const ConcernsScreen = ({ navigation }) => {
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-    listContent: {
-        paddingTop: scale(12),
-    },
-    emptyContainer: {
+    comingSoonContainer: {
+        flex: 1,
         alignItems: 'center',
-        marginTop: scale(60),
+        justifyContent: 'center',
+        paddingHorizontal: scale(32),
+        marginTop: scale(-40), // slight visual adjustment
     },
-    emptyText: {
-        marginTop: scale(12),
+    iconCircle: {
+        width: scale(100),
+        height: scale(100),
+        borderRadius: scale(50),
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: scale(24),
+    },
+    comingSoonTitle: {
+        marginBottom: scale(12),
+        textAlign: 'center',
+    },
+    comingSoonText: {
+        textAlign: 'center',
+        lineHeight: 24,
     },
     fabWrapper: {
         position: 'absolute',
@@ -158,3 +155,5 @@ const styles = StyleSheet.create({
 });
 
 export default ConcernsScreen;
+
+
