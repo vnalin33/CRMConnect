@@ -63,6 +63,7 @@ const login = async (identifier, password) => {
       bank_name: user.bank_name,
       account_holder_name: user.account_holder_name,
       profile_picture: user.profile_picture,
+      createdDate: user.createdDate || user.createddate,
     },
   };
 };

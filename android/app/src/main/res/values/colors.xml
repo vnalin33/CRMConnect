@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Light theme: matches React Native splash light bg -->
+    <color name="bootsplash_background">#D5E1EF</color>
+</resources>

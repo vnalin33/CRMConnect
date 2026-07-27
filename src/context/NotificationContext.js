@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { AppState } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     getNotificationsApi,
     markNotificationReadApi,
@@ -19,10 +20,7 @@ const NotificationContext = createContext({
 
 export const useNotifications = () => useContext(NotificationContext);
 
-/**
- * Global notification provider — single source of truth for bell badge + notification list.
- * Auto-refreshes on mount, app foreground, and every 60 seconds.
- */
+
 export const NotificationProvider = ({ children }) => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -30,8 +28,24 @@ export const NotificationProvider = ({ children }) => {
     const mountedRef = useRef(true);
     const intervalRef = useRef(null);
 
+
+    const isAuthenticated = async () => {
+        try {
+            const token = await AsyncStorage.getItem('auth_token');
+            return !!token;
+        } catch {
+            return false;
+        }
+    };
+
     const fetchNotifications = useCallback(async () => {
         try {
+            // Skip if not logged in — prevents 401 spam
+            if (!(await isAuthenticated())) {
+                if (mountedRef.current) setLoading(false);
+                return;
+            }
+
             const response = await getNotificationsApi();
             if (!mountedRef.current) return;
 
@@ -43,6 +57,11 @@ export const NotificationProvider = ({ children }) => {
                 setUnreadCount(response.unreadCount || 0);
             }
         } catch (error) {
+            // Silently ignore auth errors (token expired, user logged out)
+            if (error?.name === 'AuthError' || error?.statusCode === 401) {
+                console.debug('[Notifications] Skipping fetch — not authenticated');
+                return;
+            }
             console.warn('[Notifications] Fetch failed:', error.message);
         } finally {
             if (mountedRef.current) setLoading(false);
@@ -51,10 +70,16 @@ export const NotificationProvider = ({ children }) => {
 
     const markAsRead = useCallback(async (id) => {
         try {
+            if (!(await isAuthenticated())) return;
+
             setNotifications(prev => prev.filter(n => n.id !== id));
             setUnreadCount(prev => Math.max(0, prev - 1));
             await markNotificationReadApi(id);
         } catch (error) {
+            if (error?.name === 'AuthError' || error?.statusCode === 401) {
+                console.debug('[Notifications] Skipping mark-read — not authenticated');
+                return;
+            }
             console.error('Failed to mark as read', error);
             fetchNotifications();
         }
@@ -62,10 +87,16 @@ export const NotificationProvider = ({ children }) => {
 
     const markAllAsRead = useCallback(async () => {
         try {
+            if (!(await isAuthenticated())) return;
+
             setNotifications([]);
             setUnreadCount(0);
             await markAllNotificationsReadApi();
         } catch (error) {
+            if (error?.name === 'AuthError' || error?.statusCode === 401) {
+                console.debug('[Notifications] Skipping mark-all-read — not authenticated');
+                return;
+            }
             console.error('Failed to mark all as read', error);
             fetchNotifications();
         }
@@ -73,10 +104,16 @@ export const NotificationProvider = ({ children }) => {
 
     const clearAll = useCallback(async () => {
         try {
+            if (!(await isAuthenticated())) return;
+
             setNotifications([]);
             setUnreadCount(0);
             await clearAllNotificationsApi();
         } catch (error) {
+            if (error?.name === 'AuthError' || error?.statusCode === 401) {
+                console.debug('[Notifications] Skipping clear — not authenticated');
+                return;
+            }
             console.error('Failed to clear notifications', error);
             fetchNotifications();
         }

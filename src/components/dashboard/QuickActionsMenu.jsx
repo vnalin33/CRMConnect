@@ -27,7 +27,7 @@ const QUICK_ACTIONS = [
 const RM_DATA = {
     name: 'Rahul Krishnan',
     phone: '+91 98400 12345',
-    email: 'rahul.k@crmconnect.in',
+    email: 'rahul.k@onebind.in',
     assignedLabel: 'Assigned',
 };
 const ActionIcon = ({ name, lib }) => {

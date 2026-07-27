@@ -7,7 +7,8 @@ globalThis.RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS = true;
 
 import { AppRegistry } from 'react-native';
 import { getMessaging, onMessage, setBackgroundMessageHandler } from '@react-native-firebase/messaging';
-import notifee, { EventType } from '@notifee/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import notifee, { EventType, AndroidImportance } from '@notifee/react-native';
 import App from './App';
 import { name as appName } from './app.json';
 
@@ -15,9 +16,45 @@ import { name as appName } from './app.json';
 // This runs when the app is in background or killed state.
 const messaging = getMessaging();
 setBackgroundMessageHandler(messaging, async (remoteMessage) => {
-  console.log('[FCM BG] Message received:', remoteMessage.notification?.title);
-  // FCM automatically displays the notification when app is in background
-  // No need to call notifee.displayNotification here — Android handles it natively
+  console.log('[FCM BG] Message received:', remoteMessage.data);
+  const data = remoteMessage.data || {};
+  const title = data.title;
+  const body = data.body;
+  const isHighPriority = ['INVOICE', 'PAYOUT'].includes(data.type);
+
+  if (title) {
+    if (data.notificationId) {
+      try {
+        const LAST_SEEN_KEY = '@notification_last_seen_id';
+        const currentLastSeen = parseInt(await AsyncStorage.getItem(LAST_SEEN_KEY)) || 0;
+        const notifIdNum = parseInt(data.notificationId);
+        if (!isNaN(notifIdNum) && notifIdNum > currentLastSeen) {
+          await AsyncStorage.setItem(LAST_SEEN_KEY, String(notifIdNum));
+        }
+      } catch (err) {
+        console.warn('[FCM BG] Error updating last seen:', err.message);
+      }
+    }
+
+    try {
+      await notifee.displayNotification({
+        title,
+        body: body || '',
+        data,
+        android: {
+          channelId: isHighPriority ? 'crm_high_priority' : 'crm_default',
+          importance: isHighPriority ? AndroidImportance.HIGH : AndroidImportance.DEFAULT,
+          smallIcon: 'logo',
+          color: '#6C5CE7',
+          pressAction: { id: 'default' },
+          showTimestamp: true,
+          timestamp: Date.now(),
+        },
+      });
+    } catch (err) {
+      console.warn('[FCM BG] Display notification error:', err.message);
+    }
+  }
 });
 
 // Register background notification event handler for Notifee.

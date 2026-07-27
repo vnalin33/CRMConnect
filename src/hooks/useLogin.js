@@ -1,6 +1,6 @@
 /**
  * useLogin.js
- * CRM Connect — Login Hook
+ * ONEBind — Login Hook
  * Integrated with Real Node.js / PostgreSQL Backend (connector table)
  */
 

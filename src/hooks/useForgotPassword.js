@@ -1,6 +1,6 @@
 /**
  * useForgotPassword.js
- * CRM Connect — Forgot / Reset Password Hook
+ * ONEBind — Forgot / Reset Password Hook
  */
 
 import { useState, useCallback } from 'react';

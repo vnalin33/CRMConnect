@@ -66,14 +66,14 @@ const resetPassword = async (req, res, next) => {
 
 const deepLinkRedirect = (req, res) => {
   const { token } = req.query;
-  const appLink = `crmconnect://reset-password?token=${token}`;
+  const appLink = `onebind://reset-password?token=${token}`;
   
   // Return a simple HTML page that auto-redirects to the app via JavaScript.
   // This bypasses email clients blocking custom URL schemes.
   res.send(`
     <html>
       <head>
-        <title>Redirecting to CRM Connect...</title>
+        <title>Redirecting to ONEBind...</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
           body { font-family: sans-serif; text-align: center; padding: 40px; background: #f4f6f9; }
@@ -85,7 +85,7 @@ const deepLinkRedirect = (req, res) => {
       </head>
       <body>
         <div class="container">
-          <h2>Opening CRM Connect</h2>
+          <h2>Opening ONEBind</h2>
           <p>If you aren't redirected automatically, click the button below.</p>
           <a href="${appLink}">Open App</a>
         </div>
@@ -121,7 +121,7 @@ const register = async (req, res, next) => {
     if (data?.user?.id) {
       createNotification(
         data.user.id,
-        'Welcome to CRM Connect!',
+        'Welcome to ONEBind!',
         'Your account has been created successfully. Complete your profile to start adding leads.',
         'SYSTEM',
         {}

@@ -20,11 +20,36 @@ const maskAccount = (acc) => {
     return `XXXX XXXX ${acc.slice(-4)}`;
 };
 
-// Generate month labels from real data
-const getMonthsFromData = (payouts, withdrawals = []) => {
-    const monthSet = new Set();
+// Generate month labels from account creation date to current month (continuous)
+const getMonthsFromData = (payouts, withdrawals = [], accountCreatedDate) => {
     const now = new Date();
-    // Always include the current month
+    const nowYear = now.getFullYear();
+    const nowMonth = now.getMonth();
+
+    let startDate;
+    if (accountCreatedDate) {
+        startDate = new Date(accountCreatedDate);
+        if (isNaN(startDate.getTime())) {
+            startDate = null;
+        }
+    }
+
+    // If we have account creation date, generate continuous months
+    if (startDate) {
+        const startYear = startDate.getFullYear();
+        const startMonth = startDate.getMonth();
+        const totalMonths = (nowYear - startYear) * 12 + (nowMonth - startMonth) + 1;
+
+        const months = [];
+        for (let i = 0; i < totalMonths; i++) {
+            const d = new Date(nowYear, nowMonth - i, 1);
+            months.push(`${d.toLocaleString('en-IN', { month: 'short' })} ${d.getFullYear()}`);
+        }
+        return months.length > 0 ? months : [formatCurrentMonth()];
+    }
+
+    // Fallback: generate from data only
+    const monthSet = new Set();
     monthSet.add(`${now.toLocaleString('en-IN', { month: 'short' })} ${now.getFullYear()}`);
 
     const extractMonth = (dateString) => {
@@ -38,7 +63,6 @@ const getMonthsFromData = (payouts, withdrawals = []) => {
     payouts.forEach(p => extractMonth(p.dateRaw));
     withdrawals.forEach(w => extractMonth(w.request_date));
 
-    // Sort months descending
     const months = Array.from(monthSet).sort((a, b) => {
         const da = new Date(`01 ${a}`);
         const db = new Date(`01 ${b}`);
@@ -83,7 +107,7 @@ const WalletScreen = ({ navigation }) => {
     const bankAccount = profileData?.bankDetails?.account;
 
     // Generate dynamic month list
-    const months = useMemo(() => getMonthsFromData(payouts, withdrawals), [payouts, withdrawals]);
+    const months = useMemo(() => getMonthsFromData(payouts, withdrawals, profileData?.accountCreatedDate), [payouts, withdrawals, profileData?.accountCreatedDate]);
 
     // Filter payouts by selected month
     const filteredPayouts = useMemo(() => {

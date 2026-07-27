@@ -357,9 +357,9 @@ const ProfileScreen = ({ navigation }) => {
                                         if (item.title === 'Help & Support') {
                                             handlePress = () => navigation.navigate('Support');
                                         } else if (item.title === 'Privacy Policy') {
-                                            handlePress = () => Linking.openURL('mailto:oneassistconsultant@gmail.com?subject=Privacy Policy Inquiry');
+                                            handlePress = () => navigation.navigate('PrivacyPolicy');
                                         } else if (item.title === 'Report an Issue') {
-                                            handlePress = () => Linking.openURL('mailto:oneassistconsultant@gmail.com?subject=Bug Report - CRM Connect');
+                                            handlePress = () => navigation.navigate('ReportIssue');
                                         }
 
                                         return (

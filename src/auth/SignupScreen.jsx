@@ -36,6 +36,7 @@ const UserIcon  = ({ color }) => <Feather name="user"       size={18} color={col
 const MailIcon  = ({ color }) => <Feather name="mail"       size={18} color={color} />;
 const PhoneIcon = ({ color }) => <Feather name="phone"      size={18} color={color} />;
 const LockIcon  = ({ color }) => <Feather name="lock"       size={18} color={color} />;
+const ShieldIcon = ({ color }) => <Feather name="shield"    size={18} color={color} />;
 const CalendarIcon = ({ color }) => <Feather name="calendar" size={18} color={color} />;
 const ArrowIcon = ()          => <Feather name="arrow-right" size={18} color="#FFFFFF" />;
 
@@ -77,6 +78,7 @@ const SignupScreen = ({ navigation }) => {
     const [phone, setPhone]       = useState('');
     const [dob, setDob]           = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [roleLabel, setRoleLabel] = useState('');
     const [customRole, setCustomRole] = useState('');
     const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
@@ -88,6 +90,7 @@ const SignupScreen = ({ navigation }) => {
     const phoneRef    = useRef(null);
     const dobRef      = useRef(null);
     const passwordRef = useRef(null);
+    const confirmPasswordRef = useRef(null);
 
     const { signup, isLoading, error: apiError } = useSignup({
         onSuccess: () => navigation.replace('MainTabs'),
@@ -115,6 +118,7 @@ const SignupScreen = ({ navigation }) => {
             phone: phone.trim(),
             dob: dob.trim(),
             password,
+            confirmPassword,
             role,
         });
 
@@ -134,7 +138,7 @@ const SignupScreen = ({ navigation }) => {
             password,
             role: role === 'others' ? customRole.trim() : roleLabel.trim(),
         });
-    }, [name, email, phone, password, roleLabel, customRole, dob, signup]);
+    }, [name, email, phone, password, confirmPassword, roleLabel, customRole, dob, signup]);
 
     const maxWidth = IS_TABLET ? 480 : SW;
 
@@ -170,7 +174,7 @@ const SignupScreen = ({ navigation }) => {
                                         backgroundColor: 'translucent',
                                     }}
                                 >
-                                    CRM Connect
+                                    ONE Bind
                                 </AppText>
                             }
                         >
@@ -190,7 +194,7 @@ const SignupScreen = ({ navigation }) => {
                                         marginTop: spacing.lg,
                                     }}
                                 >
-                                    CRM Connect
+                                    ONE Bind
                                 </AppText>
                             </LinearGradient>
                         </MaskedView>
@@ -314,12 +318,28 @@ const SignupScreen = ({ navigation }) => {
                             secureTextEntry
                             showPasswordToggle
                             autoCapitalize="none"
-                            returnKeyType="done"
-                            onSubmitEditing={handleSubmit}
+                            returnKeyType="next"
+                            onSubmitEditing={() => confirmPasswordRef.current?.focus()}
                             error={formErrors.password}
                             leftIcon={<LockIcon color={colors.iconColor || colors.textDisabled} />}
                         />
                         <PasswordStrengthBar password={password} />
+
+                        {/* Confirm Password */}
+                        <AppInput
+                            ref={confirmPasswordRef}
+                            label="Confirm Password"
+                            placeholder="Re-enter your password"
+                            value={confirmPassword}
+                            onChangeText={val => { setConfirmPassword(val); clearFieldError('confirmPassword'); }}
+                            secureTextEntry
+                            showPasswordToggle
+                            autoCapitalize="none"
+                            returnKeyType="done"
+                            onSubmitEditing={handleSubmit}
+                            error={formErrors.confirmPassword}
+                            leftIcon={<ShieldIcon color={colors.iconColor || colors.textDisabled} />}
+                        />
 
                         {/* Role Dropdown */}
                         <DropdownSelect
@@ -401,7 +421,7 @@ const SignupScreen = ({ navigation }) => {
                         </AppText>
 
                         <AppText variant="caption" color="disabled" align="center" style={{ marginTop: spacing.base }}>
-                            © 2026 CRM Connect · All rights reserved
+                            © 2026 ONE Bind · All rights reserved
                         </AppText>
                     </View>
 

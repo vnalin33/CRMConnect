@@ -1,9 +1,10 @@
 
-import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Image, View, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Image, View, Text, StyleSheet } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { useTheme } from '../../theme';
 
-const LOGO = require('../../assets/images/logo.png');
+const LOGO_JPG = require('../../assets/images/logo.jpg');
 
 
 const BRAND_GRADIENT = {
@@ -13,37 +14,31 @@ const BRAND_GRADIENT = {
     end: { x: 1, y: 0 },
 };
 
-const AppLogo = ({ size = 72, animated = true, style }) => {
-    const pulseAnim = useRef(new Animated.Value(1)).current;
+const AppLogo = ({ size = 96, style, isDashboard = false }) => {
     const [imgError, setImgError] = useState(false);
+    const { isDark } = useTheme();
+
+    const logoSource = LOGO_JPG;
 
     useEffect(() => {
-        if (!animated) return;
-        Animated.loop(
-            Animated.sequence([
-                Animated.timing(pulseAnim, { toValue: 1.06, duration: 2400, useNativeDriver: true }),
-                Animated.timing(pulseAnim, { toValue: 1, duration: 2400, useNativeDriver: true }),
-            ])
-        ).start();
-    }, [animated, pulseAnim]);
+        setImgError(false);
+    }, [logoSource]);
 
     return (
-        <Animated.View
+        <View
             style={[
                 {
                     width: size,
                     height: size,
-                    transform: animated ? [{ scale: pulseAnim }] : [],
                 },
                 style,
             ]}
-            accessibilityLabel="CRM Connect logo"
+            accessibilityLabel="ONEBind logo"
             accessibilityRole="image"
         >
             {!imgError ? (
-
                 <Image
-                    source={LOGO}
+                    source={logoSource}
                     style={{ width: size, height: size, borderRadius: size / 2 }}
                     resizeMode="cover"
                     onError={() => setImgError(true)}
@@ -60,7 +55,7 @@ const AppLogo = ({ size = 72, animated = true, style }) => {
                     <Text style={[styles.letter, { fontSize: size * 0.47 }]}>d</Text>
                 </LinearGradient>
             )}
-        </Animated.View>
+        </View>
     );
 };
 

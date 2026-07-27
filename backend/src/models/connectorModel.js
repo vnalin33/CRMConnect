@@ -32,7 +32,7 @@ const findByMobileExcludingUser = async (mobile, userId) => {
 
 const findById = async (id) => {
   const query = `
-    SELECT id, name, emailid, mobilenumber, location, address, profession, ifsc, accountnumber, branch, bank_name, account_holder_name, isactive, profile_picture, dob, pan_number, is_gst_registered, gst_number
+    SELECT id, name, emailid, mobilenumber, location, address, profession, ifsc, accountnumber, branch, bank_name, account_holder_name, isactive, profile_picture, dob, pan_number, is_gst_registered, gst_number, "createdDate"
     FROM connector WHERE id = $1
   `;
   const { rows } = await db.query(query, [id]);

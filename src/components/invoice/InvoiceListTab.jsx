@@ -7,6 +7,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { generatePDF } from 'react-native-html-to-pdf';
+import { downloadInvoicePdf, openDownloadedPdf } from '../../utils/downloadPdf';
 import Share from 'react-native-share';
 import { useTheme } from '../../theme';
 import { BRAND_GRADIENT } from '../../theme/colors';
@@ -18,6 +19,7 @@ import { submitInvoiceRequest, getInvoiceRequestStatuses, getInvoiceHtmlByTrackI
 import { buildInvoiceHTML } from '../../utils/invoiceTemplate';
 import { useToast } from '../../context/ToastContext';
 import { useProfile } from '../../hooks/useProfile';
+import { useAlert } from '../../context/AlertContext';
 
 const GST_RATE = 0.09;
 const AVATAR_COLORS = ['#816FF5', '#2DBFE6', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6'];
@@ -37,12 +39,33 @@ const getAvatarColor = (name) => {
     return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 };
 
-// Generate last 12 month labels
-const generateMonthPeriods = () => {
+// Generate month labels dynamically from account creation date to now
+const generateMonthPeriods = (accountCreatedDate) => {
     const months = [];
     const now = new Date();
-    for (let i = 0; i < 12; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const nowYear = now.getFullYear();
+    const nowMonth = now.getMonth();
+
+    let startDate;
+    if (accountCreatedDate) {
+        startDate = new Date(accountCreatedDate);
+        // If parsing fails, fallback to 12 months ago
+        if (isNaN(startDate.getTime())) {
+            startDate = new Date(nowYear, nowMonth - 11, 1);
+        }
+    } else {
+        // Fallback: last 12 months
+        startDate = new Date(nowYear, nowMonth - 11, 1);
+    }
+
+    const startYear = startDate.getFullYear();
+    const startMonth = startDate.getMonth();
+
+    // Calculate total months from start to now
+    const totalMonths = (nowYear - startYear) * 12 + (nowMonth - startMonth) + 1;
+
+    for (let i = 0; i < totalMonths; i++) {
+        const d = new Date(nowYear, nowMonth - i, 1);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         const label = d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
         months.push({ key, label });
@@ -225,7 +248,14 @@ const DisbursementCard = React.memo(({ item, invoice, approvalStatus, onGenerate
 
 const InvoiceListTab = ({ type = 'cycle' }) => {
     const { colors, spacing, radius } = useTheme();
-    const monthPeriods = useMemo(() => generateMonthPeriods(), []);
+    const { showToast } = useToast();
+    const { profileData } = useProfile();
+    const { showAlert } = useAlert();
+    const isGstRegistered = profileData?.taxDetails?.isGstRegistered === true &&
+        profileData?.taxDetails?.gst &&
+        profileData?.taxDetails?.gst !== 'Not Provided';
+
+    const monthPeriods = useMemo(() => generateMonthPeriods(profileData?.accountCreatedDate), [profileData?.accountCreatedDate]);
     const [selectedMonth, setSelectedMonth] = useState(monthPeriods[0]?.key);
     const [payouts, setPayouts] = useState([]);
     const [invoiceMap, setInvoiceMap] = useState({});
@@ -234,11 +264,6 @@ const InvoiceListTab = ({ type = 'cycle' }) => {
     const [generating, setGenerating] = useState(null);
     const [generatingAll, setGeneratingAll] = useState(false);
     const [errorMsg, setErrorMsg] = useState(null);
-    const { showToast } = useToast();
-    const { profileData } = useProfile();
-    const isGstRegistered = profileData?.taxDetails?.isGstRegistered === true &&
-        profileData?.taxDetails?.gst &&
-        profileData?.taxDetails?.gst !== 'Not Provided';
 
     // Fetch payouts
     const fetchData = useCallback(async () => {
@@ -328,7 +353,7 @@ const InvoiceListTab = ({ type = 'cycle' }) => {
             const inv = type === 'instant' ? await generateInvoice(item) : await generateCycleInvoice(item);
             setInvoiceMap(prev => ({ ...prev, [item.id]: inv }));
 
-            // 2. Send invoice request to CRMConnect-Backend for admin approval
+            // 2. Send invoice request to ONEBind Backend for admin approval
             try {
                 const reqResult = await submitInvoiceRequest(item, type);
                 if (reqResult.success) {
@@ -387,10 +412,30 @@ const InvoiceListTab = ({ type = 'cycle' }) => {
                 html = buildInvoiceHTML(invoice);
             }
 
-            const pdf = await generatePDF({ html, fileName: invoice.invoiceNumber, directory: 'Documents' });
             if (mode === 'pdf') {
-                showToast('success', 'PDF Saved', `Saved to:\n${pdf.filePath}`);
+                // Download to public Downloads folder
+                const result = await downloadInvoicePdf(html, invoice.invoiceNumber);
+                showToast('success', '✅ Invoice Downloaded', `Saved to Downloads:\n${result.fileName}`);
+
+                // Prompt to open the PDF immediately
+                showAlert({
+                    type: 'success',
+                    title: 'Download Complete',
+                    message: `Invoice ${result.fileName} has been saved to your Downloads folder.`,
+                    buttonText: 'Open PDF',
+                    cancelText: 'Close',
+                    showConfirm: true,
+                    onConfirm: async () => {
+                        try {
+                            await openDownloadedPdf(result.filePath);
+                        } catch (e) {
+                            showToast('error', 'Error', e.message);
+                        }
+                    }
+                });
             } else {
+                // Share via share sheet (use private dir — share sheet can access it)
+                const pdf = await generatePDF({ html, fileName: invoice.invoiceNumber, directory: 'Documents' });
                 await Share.open({
                     title: `Invoice ${invoice.invoiceNumber}`,
                     message: `Invoice ${invoice.invoiceNumber} - ${invoice.customerName}`,
@@ -399,7 +444,10 @@ const InvoiceListTab = ({ type = 'cycle' }) => {
                 });
             }
         } catch (err) {
-            if (err?.message !== 'User did not share') console.error('Share/PDF error:', err);
+            if (err?.message !== 'User did not share') {
+                console.error('Share/PDF error:', err);
+                showToast('error', 'Error', err.message || 'Failed to process invoice');
+            }
         }
     }, []);
 

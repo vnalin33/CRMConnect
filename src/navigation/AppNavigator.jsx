@@ -1,11 +1,12 @@
-import React, { useEffect, useRef, useCallback } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useEffect, useRef, useCallback, useMemo } from 'react';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Linking, AppState, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setOnAuthFailure } from '../api/apiClient';
 import { useToast } from '../context/ToastContext';
+import { useTheme } from '../theme/ThemeContext';
 
 import LoginScreen from '../auth/LoginScreen';
 import SignupScreen from '../auth/SignupScreen';
@@ -27,6 +28,9 @@ import LeadDetailScreen from '../screens/LeadDetailScreen';
 import ConcernDetailsScreen from '../screens/ConcernDetailsScreen';
 import SupportScreen from '../screens/SupportScreen';
 import WalletScreen from '../screens/WalletScreen';
+import SplashScreen from '../screens/SplashScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
+import ReportIssueScreen from '../screens/ReportIssueScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 
 import CustomTabBar from './CustomTabBar';
@@ -39,7 +43,7 @@ const CustomTabBarWrapper = (props) => <CustomTabBar {...props} />;
 const extractTokenFromUrl = (url) => {
     if (!url) return null;
     try {
-        // Handle crmconnect://reset-password?token=XXXX
+        // Handle onebind://reset-password?token=XXXX
         const match = url.match(/[?&]token=([^&]+)/);
         return match ? decodeURIComponent(match[1]) : null;
     } catch {
@@ -75,6 +79,16 @@ function MainTabs() {
 export const AppNavigator = () => {
     const navigationRef = useRef(null);
     const { showToast } = useToast();
+    const { isDark } = useTheme();
+
+    // Theme-aware navigation background — prevents white flash between screens
+    const navTheme = useMemo(() => ({
+        ...(isDark ? DarkTheme : DefaultTheme),
+        colors: {
+            ...(isDark ? DarkTheme : DefaultTheme).colors,
+            background: isDark ? '#06081A' : '#D5E1EF',
+        },
+    }), [isDark]);
 
     // ── Global 401 handler — auto-logout on expired JWT ──────────────
     const forceLogout = useCallback(async () => {
@@ -162,8 +176,9 @@ export const AppNavigator = () => {
     };
 
     return (
-        <NavigationContainer ref={navigationRef}>
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <NavigationContainer ref={navigationRef} theme={navTheme}>
+            <Stack.Navigator screenOptions={{ headerShown: false, animation: 'none' }}>
+                <Stack.Screen name="Splash" component={SplashScreen} />
                 <Stack.Screen name="Login" component={LoginScreen} />
                 <Stack.Screen name="Signup" component={SignupScreen} />
                 <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
@@ -174,7 +189,9 @@ export const AppNavigator = () => {
                 <Stack.Screen name="MainTabs" component={MainTabs} />
                 <Stack.Screen name="Notifications" component={NotificationsScreen} />
                 <Stack.Screen name="ConcernDetails" component={ConcernDetailsScreen} />
+                <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+                <Stack.Screen name="ReportIssue" component={ReportIssueScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );
-};
+};

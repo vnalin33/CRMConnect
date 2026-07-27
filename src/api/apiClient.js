@@ -173,10 +173,10 @@ const request = async (endpoint, options = {}) => {
         result = await response.json();
       } catch {
         if (response.status !== 401) {
-            throw new ApiError(
+          throw new ApiError(
             `Server returned an unexpected response (${response.status})`,
             response.status
-            );
+          );
         }
       }
 

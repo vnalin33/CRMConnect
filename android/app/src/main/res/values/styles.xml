@@ -6,4 +6,11 @@
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
     </style>
 
+    <!-- Boot splash theme — plain dark background, no logo, shown while RN loads -->
+    <style name="BootTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:statusBarColor">@color/bootsplash_background</item>
+        <item name="android:navigationBarColor">@color/bootsplash_background</item>
+    </style>
+
 </resources>

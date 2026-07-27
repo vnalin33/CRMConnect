@@ -6,14 +6,13 @@ import {
     TouchableOpacity,
     Alert,
     ActivityIndicator,
-    Platform,
-    PermissionsAndroid,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { generatePDF } from 'react-native-html-to-pdf';
+import { downloadInvoicePdf, openDownloadedPdf } from '../utils/downloadPdf';
 import Share from 'react-native-share';
 import { useTheme } from '../theme';
 import { BRAND_GRADIENT } from '../theme/colors';
@@ -25,8 +24,12 @@ import { generateInvoice, getInvoicesByTrackIds } from '../api/invoiceApi';
 import { buildInvoiceHTML } from '../utils/invoiceTemplate';
 import InvoiceListTab from '../components/invoice/InvoiceListTab';
 import { submitInvoiceRequest, getInvoiceRequestStatuses } from '../api/invoiceRequestApi';
+import { ENV } from '../config/env';
 import { useProfile } from '../hooks/useProfile';
 import { useToast } from '../context/ToastContext';
+import { useAlert } from '../context/AlertContext';
+
+
 
 // ─── Sub-Components ─────────────────────────────────────────────────────────
 
@@ -161,6 +164,7 @@ const RaiseInvoiceScreen = ({ navigation, route }) => {
     const { payoutData } = route?.params || {};
     const { profileData } = useProfile();
     const { showToast } = useToast();
+    const { showAlert } = useAlert();
 
     const [activeTab, setActiveTab] = useState(payoutData ? 'instant' : 'cycle');
     const [invoice, setInvoice] = useState(null);
@@ -244,43 +248,18 @@ const RaiseInvoiceScreen = ({ navigation, route }) => {
     /**
      * Request storage permission on Android < 13 (SDK 33).
      */
-    const requestStoragePermission = async () => {
-        if (Platform.OS !== 'android') return true;
-        try {
-            // Android 13+ doesn't need WRITE_EXTERNAL_STORAGE for app-specific dirs
-            if (Platform.Version >= 33) return true;
-            const granted = await PermissionsAndroid.request(
-                PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-                {
-                    title: 'Storage Permission',
-                    message: 'App needs storage access to save invoice PDFs.',
-                    buttonPositive: 'Allow',
-                }
-            );
-            return granted === PermissionsAndroid.RESULTS.GRANTED;
-        } catch {
-            return false;
-        }
-    };
-
     /**
-     * Generate PDF from HTML and save to device.
+     * Generate PDF from HTML and save to device's Downloads folder.
      */
     const handleDownloadPDF = useCallback(async () => {
         if (!invoice) return;
-
-        const hasPermission = await requestStoragePermission();
-        if (!hasPermission) {
-            showToast('error', 'Permission Denied', 'Storage permission is required to save PDFs.');
-            return;
-        }
 
         setGenerating(true);
         try {
             let html = '';
             if (invoice.id) { // It's an existing/submitted invoice, fetch from backend
                 try {
-                    const response = await fetch(`http://10.0.2.2:8080/api/invoice-requests/${invoice.id}/invoice-html`);
+                    const response = await fetch(`${ENV.CRM_API_URL}/invoice-requests/${invoice.id}/invoice-html`);
                     if (response.ok) {
                         html = await response.text();
                     }
@@ -304,17 +283,30 @@ const RaiseInvoiceScreen = ({ navigation, route }) => {
                 };
                 html = buildInvoiceHTML(localData);
             }
-            const options = {
-                html,
-                fileName: `${invoice.invoiceNumber || 'Invoice'}`,
-                directory: 'Documents',
-            };
-            const pdf = await generatePDF(options);
-            setPdfPath(pdf.filePath);
-            showToast('success', 'PDF Saved', `Invoice saved to:\n${pdf.filePath}`);
+
+            const result = await downloadInvoicePdf(html, invoice.invoiceNumber || 'Invoice');
+            setPdfPath(result.filePath);
+            showToast('success', '✅ Invoice Downloaded', `Saved to Downloads:\n${result.fileName}`);
+
+            // Industry Standard prompt to view/open the PDF immediately
+            showAlert({
+                type: 'success',
+                title: 'Download Complete',
+                message: `Invoice ${result.fileName} has been saved to your Downloads folder.`,
+                buttonText: 'Open PDF',
+                cancelText: 'Close',
+                showConfirm: true,
+                onConfirm: async () => {
+                    try {
+                        await openDownloadedPdf(result.filePath);
+                    } catch (e) {
+                        showToast('error', 'Error', e.message);
+                    }
+                }
+            });
         } catch (err) {
             console.error('PDF generation failed:', err);
-            showToast('error', 'Error', 'Failed to generate PDF. Please try again.');
+            showToast('error', 'Error', err.message || 'Failed to generate PDF. Please try again.');
         } finally {
             setGenerating(false);
         }
@@ -345,7 +337,7 @@ const RaiseInvoiceScreen = ({ navigation, route }) => {
                 let html = '';
                 if (invoice.id) { // It's an existing/submitted invoice, fetch from backend
                     try {
-                        const response = await fetch(`http://10.0.2.2:8080/api/invoice-requests/${invoice.id}/invoice-html`);
+                        const response = await fetch(`${ENV.CRM_API_URL}/invoice-requests/${invoice.id}/invoice-html`);
                         if (response.ok) {
                             html = await response.text();
                         }

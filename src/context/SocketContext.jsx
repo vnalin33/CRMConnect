@@ -26,8 +26,7 @@ export const SocketProvider = ({ children }) => {
             const token = await AsyncStorage.getItem('auth_token');
             if (token) {
                 newSocket.connect();
-                // If you have a way to get the user ID, join the room here.
-                // Assuming backend decodes token or handles it.
+                
             }
         };
 

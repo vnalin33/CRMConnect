@@ -1,13 +1,4 @@
-/**
- * ToastContext.js
- * Global toast notification system for CRM Connect.
- * Provides success, error, warning, and info toasts with animated transitions.
- * 
- * Usage:
- *   const { showToast } = useToast();
- *   showToast('success', 'Profile updated successfully');
- *   showToast('error', 'Failed to save', 'Please try again');
- */
+
 
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import {

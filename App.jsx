@@ -26,32 +26,49 @@ const queryClient = new QueryClient({
 export default function App() {
     console.log('App component rendering');
 
-    // Request notification permission immediately on first launch (Android 13+)
+    // Request only necessary permissions on first launch
     useEffect(() => {
-        const requestNotificationPermission = async () => {
-            if (Platform.OS === 'android' && Platform.Version >= 33) {
+        const requestAppPermissions = async () => {
+            if (Platform.OS === 'android') {
                 try {
-                    const granted = await PermissionsAndroid.request(
-                        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-                        {
-                            title: 'CRMConnect Notifications',
-                            message:
-                                'CRMConnect needs notification access to alert you about invoice approvals, payouts, and withdrawal updates.',
-                            buttonPositive: 'Allow',
-                            buttonNegative: 'Deny',
-                        }
-                    );
-                    console.log('[Permissions] POST_NOTIFICATIONS:', granted);
+                    // ── 1. Notifications (Android 13+) ──────────────────────────────
+                    if (Platform.Version >= 33) {
+                        await PermissionsAndroid.request(
+                            PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+                            {
+                                title: 'Allow Notifications',
+                                message:
+                                    'ONEBind sends alerts for invoice approvals, payout updates, and lead status changes. Allow notifications to stay informed.',
+                                buttonPositive: 'Allow',
+                                buttonNegative: 'Skip',
+                            }
+                        );
+                    }
+
+                    // ── 2. Storage – for saving invoice PDFs (Android ≤ 12 only) ───
+                    // Android 13+ uses scoped storage — no WRITE_EXTERNAL_STORAGE needed
+                    if (Platform.Version < 33) {
+                        await PermissionsAndroid.request(
+                            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+                            {
+                                title: 'Allow Storage Access',
+                                message:
+                                    'ONEBind needs storage access to save invoice PDFs to your device for offline viewing and sharing.',
+                                buttonPositive: 'Allow',
+                                buttonNegative: 'Skip',
+                            }
+                        );
+                    }
                 } catch (err) {
-                    console.warn('[Permissions] Error:', err);
+                    console.warn('[Permissions] Error requesting permissions:', err);
                 }
             }
 
-            // Initialize push notification service after permission is granted/denied
+            // Initialize push notification service after permissions resolved
             notificationService.initialize();
         };
 
-        requestNotificationPermission();
+        requestAppPermissions();
         return () => notificationService.destroy();
     }, []);
 

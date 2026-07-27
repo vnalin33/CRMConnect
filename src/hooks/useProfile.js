@@ -14,6 +14,7 @@ const mapDataToProfile = (data) => ({
     role: data.profession || 'Partner',
     rating: '4.2',
     ratingText: 'Top Performer',
+    accountCreatedDate: data.createdDate || data.createddate || null,
     stats: {
         leads: { count: data.stats?.totalLeads ?? '0', label: 'Total Leads' },
         deals: { count: data.stats?.closedDeals ?? '0', label: 'Closed Deals' },

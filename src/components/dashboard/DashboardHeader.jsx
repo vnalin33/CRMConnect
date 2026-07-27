@@ -13,12 +13,12 @@ const DashboardHeader = ({ onNotification, onMenu }) => {
     return (
         <View style={[styles.container, { paddingHorizontal: spacing.base, paddingVertical: spacing.md }]}>
             <View style={styles.left}>
-                <AppLogo size={36} animated={false} />
+                <AppLogo size={48} isDashboard={true} />
                 <AppText
                     variant="h2"
                     style={{ marginLeft: spacing.sm, color: '#FFFFFF', fontWeight: '700' }}
                 >
-                    CRM Connect
+                    ONE Bind
                 </AppText>
             </View>
 

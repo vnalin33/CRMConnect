@@ -87,7 +87,7 @@ const buildResetEmailHTML = (resetLink) => {
             <tr>
               <td style="background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #A855F7 100%); padding:32px 40px; text-align:center;">
                 <h1 style="margin:0; color:#ffffff; font-size:24px; font-weight:700; letter-spacing:-0.5px;">
-                  CRM Connect
+                  ONE Bind
                 </h1>
                 <p style="margin:8px 0 0; color:rgba(255,255,255,0.85); font-size:13px;">
                   Financial Suite
@@ -124,7 +124,7 @@ const buildResetEmailHTML = (resetLink) => {
                 <hr style="border:none; border-top:1px solid #F3F4F6; margin:24px 0;" />
 
                 <p style="margin:0; color:#D1D5DB; font-size:11px; text-align:center;">
-                  © 2026 CRM Connect · All rights reserved
+                  © 2026 ONEBind · All rights reserved
                 </p>
               </td>
             </tr>
@@ -159,7 +159,7 @@ const sendPasswordResetEmail = async (toEmail, resetToken) => {
   const mailOptions = {
     from: EMAIL_FROM,
     to: toEmail,
-    subject: 'Reset Your Password — CRM Connect',
+    subject: 'Reset Your Password — ONE Bind',
     html: buildResetEmailHTML(resetLink),
     text: `Reset your password by opening this link on your device: ${resetLink}\n\nThis link expires in 15 minutes.\n\nIf you didn't request this, please ignore this email.`,
   };

@@ -87,7 +87,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
                     backgroundColor: 'translucent',
                   }}
                 >
-                  CRM Connect
+                  ONE Bind
                 </AppText>
               }
             >
@@ -107,7 +107,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
                     marginTop: spacing.lg,
                   }}
                 >
-                  CRM Connect
+                  ONE Bind
                 </AppText>
               </LinearGradient>
             </MaskedView>
@@ -230,7 +230,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
           <View style={styles.footer}>
             <AppText variant="caption" color="disabled" align="center">
-              © 2026 CRM Connect · All rights reserved
+              © 2026 ONE Bind · All rights reserved
             </AppText>
           </View>
 

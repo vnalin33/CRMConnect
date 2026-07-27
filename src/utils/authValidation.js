@@ -50,6 +50,9 @@ export const signupSchema = z.object({
         .regex(/[a-z]/, 'Must contain at least one lowercase letter')
         .regex(/[0-9]/, 'Must contain at least one number')
         .regex(/[^A-Za-z0-9]/, 'Must contain at least one special character'),
+    confirmPassword: z
+        .string()
+        .min(1, 'Please confirm your password'),
     role: z
         .string()
         .min(1, 'Please select a role'),
@@ -58,6 +61,9 @@ export const signupSchema = z.object({
         .min(1, 'Date of birth is required')
         .regex(/^\d{4}-\d{2}-\d{2}$/, 'Format must be YYYY-MM-DD'),
     isActive: z.boolean().optional(),
+}).refine(data => data.password === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
 });
 
 export const validateSignupForm = (data) => {

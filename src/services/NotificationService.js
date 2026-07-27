@@ -30,6 +30,7 @@ class NotificationService {
     this._fcmToken = null;
     this._unsubscribeMessage = null;
     this._unsubscribeTokenRefresh = null;
+    this.processedIds = new Set();
   }
 
   /**
@@ -45,7 +46,7 @@ class NotificationService {
       await notifee.createChannel({
         id: CHANNEL_ID,
         name: 'General Notifications',
-        description: 'General CRMConnect notifications',
+        description: 'General ONEBind notifications',
         importance: AndroidImportance.DEFAULT,
         sound: 'default',
       });
@@ -126,12 +127,35 @@ class NotificationService {
 
       // Handle foreground messages — display via Notifee
       this._unsubscribeMessage = onMessage(messaging, async (remoteMessage) => {
-        console.log('[FCM] Foreground message:', remoteMessage.notification?.title);
-        const { title, body } = remoteMessage.notification || {};
+        console.log('[FCM] Foreground message:', remoteMessage.data);
         const data = remoteMessage.data || {};
+        const title = data.title;
+        const body = data.body;
+        const notificationId = data.notificationId;
         const isHighPriority = ['INVOICE', 'PAYOUT'].includes(data.type);
 
         if (title) {
+          if (notificationId) {
+            if (this.processedIds.has(notificationId)) {
+              console.log('[FCM] Skipping duplicate foreground notification:', notificationId);
+              return;
+            }
+            this.processedIds.add(notificationId);
+            if (this.processedIds.size > 100) {
+              const firstVal = this.processedIds.values().next().value;
+              this.processedIds.delete(firstVal);
+            }
+            // Update last seen key to avoid polling the same notification
+            try {
+              const currentLastSeen = parseInt(await AsyncStorage.getItem(LAST_SEEN_KEY)) || 0;
+              const notifIdNum = parseInt(notificationId);
+              if (!isNaN(notifIdNum) && notifIdNum > currentLastSeen) {
+                await AsyncStorage.setItem(LAST_SEEN_KEY, String(notifIdNum));
+              }
+            } catch (err) {
+              console.warn('[FCM] Error updating last seen:', err.message);
+            }
+          }
           await this.displayNotification(title, body || '', data, isHighPriority);
         }
       });
@@ -201,7 +225,7 @@ class NotificationService {
         android: {
           channelId: highPriority ? CHANNEL_HIGH_ID : CHANNEL_ID,
           importance: highPriority ? AndroidImportance.HIGH : AndroidImportance.DEFAULT,
-          smallIcon: 'ic_launcher',
+          smallIcon: 'logo',
           color: '#6C5CE7',
           pressAction: { id: 'default' },
           showTimestamp: true,
@@ -228,11 +252,22 @@ class NotificationService {
         const newNotifications = response.data;
 
         for (const notif of newNotifications) {
+          const notifIdStr = String(notif.id);
+          if (this.processedIds.has(notifIdStr)) {
+            console.log('[NotificationService] Skipping already displayed poll notification:', notifIdStr);
+            continue;
+          }
+          this.processedIds.add(notifIdStr);
+          if (this.processedIds.size > 100) {
+            const firstVal = this.processedIds.values().next().value;
+            this.processedIds.delete(firstVal);
+          }
+
           const isHighPriority = ['INVOICE', 'PAYOUT'].includes(notif.type);
           await this.displayNotification(
             notif.title,
             notif.body,
-            { id: String(notif.id), type: notif.type },
+            { id: notifIdStr, type: notif.type },
             isHighPriority
           );
         }

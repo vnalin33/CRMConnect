@@ -6,21 +6,8 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
-
-// Oneassist-CRMConnect backend runs on port 8086
-const getCRMBackendUrl = () => {
-  if (__DEV__) {
-    if (Platform.OS === 'android') {
-      return 'http://127.0.0.1:8086';
-    }
-    return 'http://localhost:8086';
-  }
-  // Production URL — update when deployed
-  return 'http://localhost:8086';
-};
-
-const CRM_BACKEND_URL = getCRMBackendUrl();
+import { ENV } from '../config/env';
+import safeFetch from './safeFetch';
 
 /**
  * Submit an invoice request to CRM backend for admin approval.
@@ -81,14 +68,11 @@ export const submitInvoiceRequest = async (item, type = 'instant') => {
       is_gst_registered: isGstRegistered,
     };
 
-    const response = await fetch(`${CRM_BACKEND_URL}/submitInvoiceRequest`, {
+    return await safeFetch(`${ENV.CRM_API_URL}/submitInvoiceRequest`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-
-    const result = await response.json();
-    return result;
 
   } catch (err) {
     console.error('Failed to submit invoice request:', err.message);
@@ -109,10 +93,9 @@ export const getInvoiceRequestStatuses = async () => {
 
     if (!connectorid) return { success: true, data: [] };
 
-    const response = await fetch(
-      `${CRM_BACKEND_URL}/getInvoiceRequestsByConnector?connectorid=${connectorid}`
+    return await safeFetch(
+      `${ENV.CRM_API_URL}/getInvoiceRequestsByConnector?connectorid=${connectorid}`
     );
-    return await response.json();
   } catch (err) {
     console.warn('Failed to get invoice request statuses:', err.message);
     return { success: false, data: [] };
@@ -128,10 +111,9 @@ export const getWalletBalance = async () => {
 
     if (!connectorid) return { success: true, data: { walletBalance: '0.00' } };
 
-    const response = await fetch(
-      `${CRM_BACKEND_URL}/getWalletBalance?connectorid=${connectorid}`
+    return await safeFetch(
+      `${ENV.CRM_API_URL}/getWalletBalance?connectorid=${connectorid}`
     );
-    return await response.json();
   } catch (err) {
     console.warn('Failed to get wallet balance:', err.message);
     return { success: true, data: { walletBalance: '0.00' } };
@@ -146,7 +128,7 @@ export const getWalletBalance = async () => {
  */
 export const getInvoiceHtmlByTrackId = async (trackId) => {
   const response = await fetch(
-    `${CRM_BACKEND_URL}/api/invoice-requests/by-track/${trackId}/invoice-pdf`
+    `${ENV.CRM_API_URL}/invoice-requests/by-track/${trackId}/invoice-pdf`
   );
   if (!response.ok) {
     const err = await response.text();

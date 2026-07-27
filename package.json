@@ -1,5 +1,5 @@
 {
-  "name": "crmconnect",
+  "name": "onebind",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -11,7 +11,7 @@
     "postinstall": "node scripts/fix-vector-icons.js",
     "backend": "cd backend && node src/server.js",
     "backend:dev": "cd backend && npx nodemon src/server.js",
-    "adb-setup": "adb reverse tcp:5005 tcp:5005 && adb reverse tcp:5050 tcp:5050 && adb reverse tcp:8081 tcp:8081 && echo ADB reverse configured",
+    "adb-setup": "adb reverse tcp:5005 tcp:5005 && adb reverse tcp:8086 tcp:8086 && adb reverse tcp:8081 tcp:8081 && echo ADB reverse configured",
     "dev:full": "powershell -ExecutionPolicy Bypass -File scripts/start-dev.ps1"
   },
   "dependencies": {
@@ -30,6 +30,7 @@
     "react": "19.2.3",
     "react-hook-form": "^7.71.2",
     "react-native": "0.84.1",
+    "react-native-blob-util": "^0.24.9",
     "react-native-chart-kit": "^6.12.2",
     "react-native-html-to-pdf": "^1.3.0",
     "react-native-image-picker": "^8.2.1",

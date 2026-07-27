@@ -22,6 +22,7 @@ import AppStatusModal from '../components/common/AppStatusModal';
 import { getPayoutsApi } from '../api/payoutApi';
 import { getInvoiceRequestStatuses, getInvoiceHtmlByTrackId } from '../api/invoiceRequestApi';
 import { generatePDF } from 'react-native-html-to-pdf';
+import { downloadInvoicePdf, openDownloadedPdf } from '../utils/downloadPdf';
 import { useToast } from '../context/ToastContext';
 import { useProfile } from '../hooks/useProfile';
 
@@ -312,7 +313,7 @@ const PayoutScreen = ({ navigation }) => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
-    const [downloadModal, setDownloadModal] = useState({ visible: false, fileName: '' });
+    const [downloadModal, setDownloadModal] = useState({ visible: false, fileName: '', filePath: '' });
 
     const isGstRegistered = profileData?.taxDetails?.isGstRegistered === true &&
         profileData?.taxDetails?.gst &&
@@ -441,21 +442,10 @@ const PayoutScreen = ({ navigation }) => {
                 throw new Error('Invoice HTML content is empty or invalid. Ensure the invoice has been generated on the admin portal.');
             }
 
-            // Generate PDF and save to device
-            const pdf = await generatePDF({ 
-                html: htmlContent, 
-                fileName: `Invoice_${invoiceReq.track_id}`,
-                directory: Platform.OS === 'android' ? 'Downloads' : 'Documents',
-            });
+            // Generate PDF and save to device's Downloads folder
+            const result = await downloadInvoicePdf(htmlContent, `Invoice_${invoiceReq.track_id}`);
             
-            const filePath = pdf?.filePath || pdf?.uri;
-            if (!filePath) {
-                throw new Error('PDF generation failed — no file path returned.');
-            }
-
-            // Extract just the filename for display
-            const fileName = filePath.split('/').pop();
-            setDownloadModal({ visible: true, fileName });
+            setDownloadModal({ visible: true, fileName: result.fileName, filePath: result.filePath });
         } catch (err) {
             console.error('PDF error:', err);
             showToast('error', 'Download Failed', err.message || 'Failed to download invoice');
@@ -609,9 +599,18 @@ const PayoutScreen = ({ navigation }) => {
                 visible={downloadModal.visible}
                 type="success"
                 title="Invoice Downloaded"
-                message={`Saved as:\n${downloadModal.fileName}\n\nYou can find it in your Downloads / Documents folder.`}
-                buttonText="OK"
-                onClose={() => setDownloadModal({ visible: false, fileName: '' })}
+                message={`Saved as:\n${downloadModal.fileName}\n\nYou can find it in your Downloads folder.`}
+                buttonText="Open PDF"
+                cancelText="Close"
+                showConfirm={true}
+                onConfirm={async () => {
+                    try {
+                        await openDownloadedPdf(downloadModal.filePath);
+                    } catch (e) {
+                        showToast('error', 'Error', e.message);
+                    }
+                }}
+                onClose={() => setDownloadModal({ visible: false, fileName: '', filePath: '' })}
             />
         </ScreenWrapper>
     );

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
@@ -6,65 +6,99 @@ import { LineChart } from 'react-native-chart-kit';
 import { useTheme } from '../../theme';
 import MaskedView from '@react-native-masked-view/masked-view';
 import AppText from '../common/AppText';
+import MonthYearPicker, { MONTH_FULL } from '../common/MonthYearPicker';
 import { BRAND_GRADIENT } from '../../theme/colors';
 import { useLeadList } from '../../hooks/useLeadList';
+import { useProfile } from '../../hooks/useProfile';
 
 const screenWidth = Dimensions.get('window').width;
 
 const TABS = ['Earnings', 'Files', 'Conversions'];
 
+const SHORT_MONTHS = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
 const PerformanceOverview = () => {
     const { colors, radius, spacing } = useTheme();
     const { allLeads, tabCounts } = useLeadList();
-    
+    const { profileData } = useProfile();
+
     const [activeTab, setActiveTab] = useState('Earnings');
+    const [pickerVisible, setPickerVisible] = useState(false);
 
-    // Calculate bottom stats
-    const filesInProgress = tabCounts?.progress || 0;
-    
-    // Calculate disbursed files based on status >= 17
-    const disbursedFiles = useMemo(() => {
+    // ── Selected month state (defaults to current month) ────────────────────
+    const now = useMemo(() => new Date(), []);
+    const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+    const [selectedMonth, setSelectedMonth] = useState(now.getMonth()); // 0-indexed
+
+    // ── Account creation date (lower bound for the picker) ──────────────────
+    const accountCreatedDate = useMemo(() => {
+        if (profileData?.accountCreatedDate) {
+            const d = new Date(profileData.accountCreatedDate);
+            if (!isNaN(d.getTime())) return d;
+        }
+        // Fallback: 12 months back
+        const fallback = new Date();
+        fallback.setMonth(fallback.getMonth() - 11);
+        return fallback;
+    }, [profileData?.accountCreatedDate]);
+
+    // ── Derived: start & end of selected month ─────────────────────────────
+    const { monthStart, monthEnd } = useMemo(() => {
+        const start = new Date(selectedYear, selectedMonth, 1);
+        const end = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999);
+        return { monthStart: start, monthEnd: end };
+    }, [selectedYear, selectedMonth]);
+
+    // ── Filter leads for the selected month ─────────────────────────────────
+    const monthLeads = useMemo(() => {
         return allLeads.filter(lead => {
-            const status = lead.track_status || lead.status || 1;
-            return status >= 17;
-        }).length;
-    }, [allLeads]);
-    
-    const totalFiles = tabCounts?.all || 0;
-    const conversionRate = totalFiles > 0 ? Math.round((disbursedFiles / totalFiles) * 100) : 0;
-    
-    const currentMonthYear = useMemo(() => {
-        return new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-    }, []);
+            const d = new Date(lead.createdon || 0);
+            return d >= monthStart && d <= monthEnd;
+        });
+    }, [allLeads, monthStart, monthEnd]);
 
-    // Calculate chart data
+    // ── Bottom stats for selected month ─────────────────────────────────────
+    const filesInProgress = useMemo(() => {
+        return monthLeads.filter(lead => {
+            const s = lead.track_status || lead.status || 1;
+            return s >= 1 && s < 17;
+        }).length;
+    }, [monthLeads]);
+
+    const disbursedFiles = useMemo(() => {
+        return monthLeads.filter(lead => {
+            const s = lead.track_status || lead.status || 1;
+            return s >= 17;
+        }).length;
+    }, [monthLeads]);
+
+    const totalFiles = monthLeads.length;
+    const conversionRate = totalFiles > 0 ? Math.round((disbursedFiles / totalFiles) * 100) : 0;
+
+    // ── Chart data grouped by week for the selected month ───────────────────
     const chartData = useMemo(() => {
-        // Group data by week (W1, W2, W3, W4, W5)
         const weeklyData = [0, 0, 0, 0, 0];
-        
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        
-        allLeads.forEach(lead => {
+
+        monthLeads.forEach(lead => {
             const leadDate = new Date(lead.createdon || Date.now());
-            // Only process leads for current month
-            if (leadDate >= startOfMonth) {
-                const dayOfMonth = leadDate.getDate();
-                const weekIndex = Math.min(Math.floor((dayOfMonth - 1) / 7), 4);
-                
-                if (activeTab === 'Files') {
+            const dayOfMonth = leadDate.getDate();
+            const weekIndex = Math.min(Math.floor((dayOfMonth - 1) / 7), 4);
+
+            if (activeTab === 'Files') {
+                weeklyData[weekIndex] += 1;
+            } else if (activeTab === 'Earnings') {
+                const status = lead.track_status || lead.status || 1;
+                if (status >= 17) {
+                    const amount = parseFloat(lead.disbursementamount) || 0;
+                    weeklyData[weekIndex] += amount;
+                }
+            } else if (activeTab === 'Conversions') {
+                const status = lead.track_status || lead.status || 1;
+                if (status >= 17) {
                     weeklyData[weekIndex] += 1;
-                } else if (activeTab === 'Earnings') {
-                    const status = lead.track_status || lead.status || 1;
-                    if (status >= 17) {
-                        const amount = parseFloat(lead.disbursementamount) || 0;
-                        weeklyData[weekIndex] += amount;
-                    }
-                } else if (activeTab === 'Conversions') {
-                    const status = lead.track_status || lead.status || 1;
-                    if (status >= 17) {
-                        weeklyData[weekIndex] += 1;
-                    }
                 }
             }
         });
@@ -77,14 +111,58 @@ const PerformanceOverview = () => {
         }
 
         return weeklyData;
-    }, [allLeads, activeTab]);
+    }, [monthLeads, activeTab]);
 
+    // ── Month label for the picker button ───────────────────────────────────
+    const monthLabel = useMemo(() => {
+        return `${SHORT_MONTHS[selectedMonth]} ${selectedYear}`;
+    }, [selectedMonth, selectedYear]);
+
+    // ── Quick nav: check if can go prev/next month ──────────────────────────
+    const canGoPrev = useMemo(() => {
+        const prev = new Date(selectedYear, selectedMonth - 1, 1);
+        const min = new Date(accountCreatedDate.getFullYear(), accountCreatedDate.getMonth(), 1);
+        return prev >= min;
+    }, [selectedYear, selectedMonth, accountCreatedDate]);
+
+    const canGoNext = useMemo(() => {
+        const next = new Date(selectedYear, selectedMonth + 1, 1);
+        const max = new Date(now.getFullYear(), now.getMonth(), 1);
+        return next <= max;
+    }, [selectedYear, selectedMonth, now]);
+
+    const goToPrevMonth = useCallback(() => {
+        if (!canGoPrev) return;
+        if (selectedMonth === 0) {
+            setSelectedYear(y => y - 1);
+            setSelectedMonth(11);
+        } else {
+            setSelectedMonth(m => m - 1);
+        }
+    }, [canGoPrev, selectedMonth]);
+
+    const goToNextMonth = useCallback(() => {
+        if (!canGoNext) return;
+        if (selectedMonth === 11) {
+            setSelectedYear(y => y + 1);
+            setSelectedMonth(0);
+        } else {
+            setSelectedMonth(m => m + 1);
+        }
+    }, [canGoNext, selectedMonth]);
+
+    const handleMonthSelect = useCallback((year, month) => {
+        setSelectedYear(year);
+        setSelectedMonth(month);
+    }, []);
+
+    // ── Chart config ────────────────────────────────────────────────────────
     const data = {
         labels: ['W1', 'W2', 'W3', 'W4', 'W5'],
         datasets: [
             {
                 data: chartData,
-                color: (opacity = 1) => `rgba(129, 111, 245, ${opacity})`, // Solid blue/purple
+                color: (opacity = 1) => `rgba(129, 111, 245, ${opacity})`,
                 strokeWidth: 4,
             },
         ],
@@ -95,7 +173,7 @@ const PerformanceOverview = () => {
         backgroundGradientFrom: colors.cardBg,
         backgroundGradientTo: colors.cardBg,
         decimalPlaces: 0,
-        color: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`, // grid line color
+        color: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`,
         labelColor: (opacity = 1) => `rgba(148, 163, 184, ${opacity})`,
         fillShadowGradientFrom: '#FFFFFF',
         fillShadowGradientFromOpacity: 0,
@@ -108,8 +186,8 @@ const PerformanceOverview = () => {
             fill: '#FFFFFF',
         },
         propsForBackgroundLines: {
-            strokeDasharray: '', // solid lines
-            stroke: 'rgba(203, 213, 225, 0.5)', // light gray
+            strokeDasharray: '',
+            stroke: 'rgba(203, 213, 225, 0.5)',
         },
     };
 
@@ -118,10 +196,40 @@ const PerformanceOverview = () => {
             {/* Header */}
             <View style={styles.header}>
                 <GradientText style={styles.title}>Performance Overview</GradientText>
-                <TouchableOpacity style={[styles.monthPicker, { borderColor: colors.border }]}>
-                    <AppText variant="caption" style={{ color: colors.textSecondary, marginRight: 4 }}>{currentMonthYear}</AppText>
-                    <Feather name="chevron-down" size={12} color={colors.textSecondary} />
-                </TouchableOpacity>
+
+                <View style={styles.monthNavRow}>
+                    {/* Left arrow for quick prev month */}
+                    <TouchableOpacity
+                        onPress={goToPrevMonth}
+                        disabled={!canGoPrev}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        style={[styles.navArrow, !canGoPrev && { opacity: 0.3 }]}
+                    >
+                        <Feather name="chevron-left" size={16} color={colors.textSecondary} />
+                    </TouchableOpacity>
+
+                    {/* Month picker button */}
+                    <TouchableOpacity
+                        style={[styles.monthPicker, { borderColor: colors.border }]}
+                        onPress={() => setPickerVisible(true)}
+                        activeOpacity={0.7}
+                    >
+                        <AppText variant="caption" style={{ color: colors.textSecondary, marginRight: 4, fontWeight: '500' }}>
+                            {monthLabel}
+                        </AppText>
+                        <Feather name="chevron-down" size={12} color={colors.textSecondary} />
+                    </TouchableOpacity>
+
+                    {/* Right arrow for quick next month */}
+                    <TouchableOpacity
+                        onPress={goToNextMonth}
+                        disabled={!canGoNext}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        style={[styles.navArrow, !canGoNext && { opacity: 0.3 }]}
+                    >
+                        <Feather name="chevron-right" size={16} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             {/* Tabs */}
@@ -157,7 +265,7 @@ const PerformanceOverview = () => {
             <View style={styles.chartWrapper}>
                 <LineChart
                     data={data}
-                    width={screenWidth - 48} // Padding adjustments
+                    width={screenWidth - 48}
                     height={180}
                     chartConfig={chartConfig}
                     bezier
@@ -188,6 +296,17 @@ const PerformanceOverview = () => {
                     <AppText variant="caption" style={styles.statLabel}>Conversion</AppText>
                 </View>
             </View>
+
+            {/* Month/Year Picker Modal */}
+            <MonthYearPicker
+                visible={pickerVisible}
+                onClose={() => setPickerVisible(false)}
+                onSelect={handleMonthSelect}
+                selectedYear={selectedYear}
+                selectedMonth={selectedMonth}
+                minDate={accountCreatedDate}
+                maxDate={now}
+            />
         </View>
     );
 };
@@ -236,6 +355,14 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 18,
+    },
+    monthNavRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    navArrow: {
+        padding: 4,
     },
     monthPicker: {
         flexDirection: 'row',

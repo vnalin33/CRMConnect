@@ -176,13 +176,13 @@ const ResetPasswordScreen = ({ navigation, route }) => {
             <MaskedView
               maskElement={
                 <AppText variant="display" style={{ fontSize: IS_TABLET ? 38 : 32, fontWeight: '700', letterSpacing: -1, marginTop: spacing.lg, backgroundColor: 'translucent' }}>
-                  CRM Connect
+                  ONE Bind
                 </AppText>
               }
             >
               <LinearGradient colors={BRAND_GRADIENT.colors} start={BRAND_GRADIENT.start} end={BRAND_GRADIENT.end} locations={BRAND_GRADIENT.locations}>
                 <AppText variant="display" style={{ opacity: 0, fontSize: IS_TABLET ? 38 : 32, fontWeight: '700', letterSpacing: -1, marginTop: spacing.lg }}>
-                  CRM Connect
+                  ONE Bind
                 </AppText>
               </LinearGradient>
             </MaskedView>
@@ -305,7 +305,7 @@ const ResetPasswordScreen = ({ navigation, route }) => {
 
           <View style={styles.footer}>
             <AppText variant="caption" color="disabled" align="center">
-              © 2026 CRM Connect · All rights reserved
+              © 2026 ONE Bind · All rights reserved
             </AppText>
           </View>
         </Animated.View>

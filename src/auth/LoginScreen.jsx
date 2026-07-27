@@ -130,7 +130,7 @@ const LoginScreen = ({ navigation }) => {
                     backgroundColor: 'translucent',
                   }}
                 >
-                  CRM Connect
+                  ONE Bind
                 </AppText>
               }
             >
@@ -150,7 +150,7 @@ const LoginScreen = ({ navigation }) => {
                     marginTop: spacing.lg,
                   }}
                 >
-                  CRM Connect
+                  ONE Bind
                 </AppText>
               </LinearGradient>
             </MaskedView>
@@ -279,7 +279,7 @@ const LoginScreen = ({ navigation }) => {
               </AppText>
             </AppText>
             <AppText variant="caption" color="disabled" align="center" style={{ marginTop: 8 }}>
-              © 2026 CRM Connect · All rights reserved
+              © 2026 ONE Bind · All rights reserved
             </AppText>
           </View>
 

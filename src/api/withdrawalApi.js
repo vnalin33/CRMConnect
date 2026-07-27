@@ -5,20 +5,8 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
-
-// Oneassist-CRMConnect backend runs on port 8086
-const getCRMBackendUrl = () => {
-  if (__DEV__) {
-    if (Platform.OS === 'android') {
-      return 'http://127.0.0.1:8086';
-    }
-    return 'http://localhost:8086';
-  }
-  return 'http://localhost:8086';
-};
-
-const CRM_BACKEND_URL = getCRMBackendUrl();
+import { ENV } from '../config/env';
+import safeFetch from './safeFetch';
 
 /**
  * Submit a withdrawal request to CRM backend for admin processing.
@@ -46,14 +34,11 @@ export const submitWithdrawalRequest = async (amount, bankDetails) => {
       bank_details: formattedBank,
     };
 
-    const response = await fetch(`${CRM_BACKEND_URL}/submitWithdrawalRequest`, {
+    return await safeFetch(`${ENV.CRM_API_URL}/submitWithdrawalRequest`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-
-    const result = await response.json();
-    return result;
   } catch (err) {
     console.error('Failed to submit withdrawal request:', err.message);
     throw new Error(err.message || 'Failed to submit withdrawal request');
@@ -71,10 +56,9 @@ export const getWithdrawalHistory = async () => {
 
     if (!connectorId) return { success: true, data: [] };
 
-    const response = await fetch(
-      `${CRM_BACKEND_URL}/getWithdrawalsByConnector?connector_id=${connectorId}`
+    return await safeFetch(
+      `${ENV.CRM_API_URL}/getWithdrawalsByConnector?connector_id=${connectorId}`
     );
-    return await response.json();
   } catch (err) {
     console.warn('Failed to get withdrawal history:', err.message);
     return { success: false, data: [] };
