@@ -5,6 +5,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from '../../theme';
 
 const LOGO_JPG = require('../../assets/images/logo.jpg');
+const DASH_LIGHT_JPG = require('../../assets/images/dash_light.jpg');
 
 
 const BRAND_GRADIENT = {
@@ -18,7 +19,7 @@ const AppLogo = ({ size = 96, style, isDashboard = false }) => {
     const [imgError, setImgError] = useState(false);
     const { isDark } = useTheme();
 
-    const logoSource = LOGO_JPG;
+    const logoSource = (isDashboard && !isDark) ? DASH_LIGHT_JPG : LOGO_JPG;
 
     useEffect(() => {
         setImgError(false);

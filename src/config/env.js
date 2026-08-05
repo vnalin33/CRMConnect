@@ -13,11 +13,11 @@ const getApiBaseUrl = () => {
 
 const getCrmApiBaseUrl = () => {
   if (__DEV__) {
-    // For USB devices: run `adb reverse tcp:8086 tcp:8086`
-    return 'http://localhost:8086';
+    // Unified backend — admin routes are now at /api/admin on the same server
+    return 'http://localhost:5005';
   }
   // Production URL — update when deployed
-  return 'https://crm-api.onebind.app';
+  return 'https://api.onebind.app';
 };
 
 const API_BASE_URL = getApiBaseUrl();

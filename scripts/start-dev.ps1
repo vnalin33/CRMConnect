@@ -20,8 +20,7 @@ if ($hasDevice) {
     Write-Host "  Device detected. Setting up port forwarding..." -ForegroundColor Green
     adb reverse tcp:5005 tcp:5005 2>&1 | Out-Null
     adb reverse tcp:8081 tcp:8081 2>&1 | Out-Null
-    adb reverse tcp:8086 tcp:8086 2>&1 | Out-Null
-    Write-Host "  ✓ ADB reverse configured (5005, 8081 & 8086)" -ForegroundColor Green
+    Write-Host "  ✓ ADB reverse configured (5005 & 8081)" -ForegroundColor Green
     
     # Show current reverse list
     $reverseList = adb reverse --list 2>&1
@@ -37,7 +36,6 @@ if ($hasDevice) {
     Write-Host "  ⚠ No device connected. ADB reverse skipped." -ForegroundColor DarkYellow
     Write-Host "    Connect device and run:" -ForegroundColor DarkYellow
     Write-Host "      adb reverse tcp:5005 tcp:5005" -ForegroundColor DarkYellow
-    Write-Host "      adb reverse tcp:8086 tcp:8086" -ForegroundColor DarkYellow
 }
 
 # ─── Step 2: Check if backend is already running ────────────────────────────

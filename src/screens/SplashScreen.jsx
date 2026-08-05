@@ -46,7 +46,7 @@ const THEMES = {
         ],
         taglineColor: 'rgba(104,85,240,0.50)',
         statusBar: 'dark-content',
-        logoSource: LOGO_PNG,
+        logoSource: LOGO_JPG,
         logoBorderColors: ['#816FF5', '#6395EC', '#2DBFE6'],
         logoShadow: 'rgba(129,111,245,0.15)',
         orb1: 'rgba(129,111,245,0.06)',

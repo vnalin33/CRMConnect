@@ -9,7 +9,26 @@
       "client_info": {
         "mobilesdk_app_id": "1:756251113053:android:d9b325cd48afd03ca7bfb4",
         "android_client_info": {
-          "package_name": "com.onebind"
+          "package_name": "com.crmconnect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDA2AESWFCfeR3FvvdP3cOnUUwFnO_TKtQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:756251113053:android:fd00d94da7f57358a7bfb4",
+        "android_client_info": {
+          "package_name": "com.oneassist.onebind"
         }
       },
       "oauth_client": [],
