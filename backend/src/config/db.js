@@ -4,20 +4,31 @@ const { Pool } = require('pg');
 // Ensure .env is loaded from the backend root regardless of cwd
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
-// Build pool config: prefer DATABASE_URL, fall back to individual vars
-const poolConfig = process.env.DATABASE_URL
-  ? {
+// Build pool config: validate DATABASE_URL first, fall back to individual vars
+let poolConfig;
+
+if (process.env.DATABASE_URL && (process.env.DATABASE_URL.startsWith('postgres://') || process.env.DATABASE_URL.startsWith('postgresql://'))) {
+  try {
+    new URL(process.env.DATABASE_URL);
+    poolConfig = {
       connectionString: process.env.DATABASE_URL,
       ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    }
-  : {
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT, 10) || 5432,
-      database: process.env.DB_NAME || 'ncrm',
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || '',
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     };
+  } catch (err) {
+    console.warn('⚠️ DATABASE_URL is invalid, falling back to individual DB parameters:', err.message);
+  }
+}
+
+if (!poolConfig) {
+  poolConfig = {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT, 10) || 5432,
+    database: process.env.DB_NAME || 'ncrm',
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || '',
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  };
+}
 
 const pool = new Pool(poolConfig);
 

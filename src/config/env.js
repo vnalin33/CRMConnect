@@ -7,7 +7,7 @@ const getApiBaseUrl = () => {
     // For USB devices: run `adb reverse tcp:5005 tcp:5005`
     return 'http://localhost:5005/api';
   }
-  return 'https://api.onebind.app/api';
+  return 'https://oneassist.net.in/onebindapi/api';
 };
 
 
@@ -16,8 +16,8 @@ const getCrmApiBaseUrl = () => {
     // Unified backend — admin routes are now at /api/admin on the same server
     return 'http://localhost:5005';
   }
-  // Production URL — update when deployed
-  return 'https://api.onebind.app';
+  // Production — unified backend behind Nginx reverse proxy
+  return 'https://oneassist.net.in/onebindapi';
 };
 
 const API_BASE_URL = getApiBaseUrl();

@@ -239,7 +239,9 @@ const request = async (endpoint, options = {}) => {
   // All retries exhausted
   throw new NetworkError(
     lastError?.message ||
-    'Unable to connect to the server. Please check that the backend is running and your device is connected via USB (adb reverse).'
+    (__DEV__
+      ? 'Unable to connect to the server. Please check that the backend is running and your device is connected via USB (adb reverse).'
+      : 'Unable to connect to the server. Please check your internet connection and try again.')
   );
 };
 

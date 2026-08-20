@@ -12,7 +12,8 @@
     "backend": "cd backend && node src/server.js",
     "backend:dev": "cd backend && npx nodemon src/server.js",
     "adb-setup": "adb reverse tcp:5005 tcp:5005 && adb reverse tcp:8086 tcp:8086 && adb reverse tcp:8081 tcp:8081 && echo ADB reverse configured",
-    "dev:full": "powershell -ExecutionPolicy Bypass -File scripts/start-dev.ps1"
+    "dev:full": "powershell -ExecutionPolicy Bypass -File scripts/start-dev.ps1",
+    "build:android:aab": "cd android && gradlew bundleRelease && cd .. && powershell -Command \"New-Item -ItemType Directory -Force -Path 'dist'; Copy-Item -Path 'android\\app\\build\\outputs\\bundle\\release\\app-release.aab' -Destination 'dist\\app-release.aab' -Force\""
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

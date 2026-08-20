@@ -114,6 +114,7 @@ Thumbs.db
 # Backend specific
 backend/node_modules/
 backend/.env
+backend/.env.production
 
 # Temporary tools
 backend/test_db.js
